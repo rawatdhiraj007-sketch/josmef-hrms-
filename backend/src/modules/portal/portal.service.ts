@@ -3,13 +3,20 @@ import { DataSource } from 'typeorm';
 import { Employee } from '../employees/entities/employee.entity';
 import { LeaveRequest, LeaveStatus } from '../leave/entities/leave-request.entity';
 import { LeaveService } from '../leave/leave.service';
+import { TrainingService } from '../training/training.service';
 
 @Injectable()
 export class PortalService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly leaveService: LeaveService,
+    private readonly trainingService: TrainingService,
   ) {}
+
+  async getMyTrainings(userEmail: string) {
+    const emp = await this.resolveEmployee(userEmail);
+    return this.trainingService.getEmployeeEnrollments(emp.id);
+  }
 
   private async resolveEmployee(userEmail: string): Promise<Employee> {
     const repo = this.dataSource.getRepository(Employee);

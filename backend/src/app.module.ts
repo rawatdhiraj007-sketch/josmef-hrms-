@@ -25,6 +25,8 @@ import { AuditModule } from './modules/audit/audit.module';
 import { LeaveModule } from './modules/leave/leave.module';
 import { PortalModule } from './modules/portal/portal.module';
 import { GovReportsModule } from './modules/gov-reports/gov-reports.module';
+import { TrainingModule } from './modules/training/training.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { NumberingModule } from './common/modules/numbering.module';
 import { NotificationModule } from './common/modules/notification.module';
 import { User } from './modules/users/entities/user.entity';
@@ -97,6 +99,8 @@ import { SeedService } from './seeds/seed.service';
     LeaveModule,
     PortalModule,
     GovReportsModule,
+    TrainingModule,
+    AnalyticsModule,
   ],
   providers: [SeedService],
 })

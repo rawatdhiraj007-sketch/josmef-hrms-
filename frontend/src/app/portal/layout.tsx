@@ -5,11 +5,12 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import Logo from '@/components/Logo';
-import { LayoutDashboard, Plane, DollarSign, Clock, User, LogOut } from 'lucide-react';
+import { LayoutDashboard, Plane, DollarSign, Clock, User, LogOut, GraduationCap } from 'lucide-react';
 
 const navItems = [
   { href: '/portal', label: 'Overview', icon: LayoutDashboard },
   { href: '/portal/leave', label: 'My Leaves', icon: Plane },
+  { href: '/portal/training', label: 'Trainings', icon: GraduationCap },
   { href: '/portal/payslips', label: 'Payslips', icon: DollarSign },
   { href: '/portal/attendance', label: 'Attendance', icon: Clock },
   { href: '/portal/profile', label: 'Profile', icon: User },

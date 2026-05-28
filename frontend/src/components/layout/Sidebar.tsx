@@ -31,6 +31,7 @@ import {
   User,
   Gift,
   FileBarChart,
+  BarChart3,
 } from 'lucide-react';
 import { useState } from 'react';
 import Logo from '@/components/Logo';
@@ -58,6 +59,8 @@ const twoOhOneItems = [
 
 const bottomItems = [
   { label: 'Leave Management', href: '/dashboard/leave', icon: Plane },
+  { label: 'Training', href: '/dashboard/training', icon: GraduationCap },
+  { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
   { label: 'Gov Reports', href: '/dashboard/gov-reports', icon: FileBarChart },
   { label: 'Compliance', href: '/dashboard/compliance', icon: ShieldAlert },
   { label: 'Audit Log', href: '/dashboard/audit', icon: History },

@@ -30,4 +30,9 @@ export class PortalController {
   myAttendance(@Req() req: any, @Query('month') month?: string) {
     return this.svc.getMyAttendance(req.user?.email, month);
   }
+
+  @Get('trainings')
+  myTrainings(@Req() req: any) {
+    return this.svc.getMyTrainings(req.user?.email);
+  }
 }
