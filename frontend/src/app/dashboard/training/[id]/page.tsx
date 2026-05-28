@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
-import { ArrowLeft, GraduationCap, ExternalLink, UserPlus, Award } from 'lucide-react';
+import { ArrowLeft, GraduationCap, ExternalLink, UserPlus, Award, RefreshCw, AlertCircle } from 'lucide-react';
 
 interface Course {
   id: string;
@@ -51,6 +51,9 @@ export default function CourseDetailPage() {
   const [showAssign, setShowAssign] = useState(false);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [dueDate, setDueDate] = useState('');
+  const [graphyStatus, setGraphyStatus] = useState<{ configured: boolean } | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<string | null>(null);
 
   async function load() {
     const [c, e] = await Promise.all([
@@ -62,6 +65,24 @@ export default function CourseDetailPage() {
   }
 
   useEffect(() => { if (id) load(); }, [id]);
+
+  useEffect(() => {
+    api.get('/training/graphy/status').then(r => setGraphyStatus(r.data)).catch(() => setGraphyStatus({ configured: false }));
+  }, []);
+
+  async function syncFromGraphy() {
+    setSyncing(true);
+    setSyncResult(null);
+    try {
+      const r = await api.post(`/training/graphy/sync/course/${id}`);
+      setSyncResult(`Synced ${r.data.synced}/${r.data.total} — ${r.data.skipped} skipped, ${r.data.errors} errors`);
+      await load();
+    } catch (e: any) {
+      setSyncResult(e?.response?.data?.message || 'Sync failed');
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   async function openAssign() {
     if (employees.length === 0) {
@@ -122,6 +143,47 @@ export default function CourseDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Graphy sync status */}
+      {course.provider === 'graphy' && (
+        <div className={`rounded-xl p-4 flex items-center gap-3 ${
+          graphyStatus?.configured ? 'bg-purple-50 border border-purple-200' : 'bg-amber-50 border border-amber-200'
+        }`}>
+          {graphyStatus?.configured ? (
+            <>
+              <RefreshCw className="w-5 h-5 text-purple-600" />
+              <div className="flex-1">
+                <div className="font-semibold text-purple-900">Graphy API connected</div>
+                <div className="text-xs text-purple-700">
+                  Click sync to pull latest progress for all enrolled employees, or rely on webhook auto-sync.
+                </div>
+              </div>
+              <button
+                onClick={syncFromGraphy}
+                disabled={syncing || !course.externalId}
+                title={!course.externalId ? 'Set Graphy course ID on this course first' : ''}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
+                {syncing ? 'Syncing...' : 'Sync from Graphy'}
+              </button>
+            </>
+          ) : (
+            <>
+              <AlertCircle className="w-5 h-5 text-amber-600" />
+              <div className="flex-1">
+                <div className="font-semibold text-amber-900">Graphy auto-sync not configured</div>
+                <div className="text-xs text-amber-700">
+                  Set the <code className="bg-amber-100 px-1 rounded">GRAPHY_API_KEY</code> env var on the backend to enable progress auto-sync and webhooks.
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+      {syncResult && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 text-sm text-blue-800">{syncResult}</div>
+      )}
 
       {/* Enrollments */}
       <div className="flex items-center justify-between">

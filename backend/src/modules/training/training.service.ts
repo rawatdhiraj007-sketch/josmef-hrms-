@@ -8,6 +8,7 @@ import {
   CourseProvider,
   CourseCategory,
 } from './entities/course.entity';
+import { GraphyClient } from './graphy/graphy.client';
 
 export interface CreateCourseDto {
   title: string;
@@ -43,6 +44,7 @@ export class TrainingService {
     private readonly courseRepo: Repository<Course>,
     @InjectRepository(CourseEnrollment)
     private readonly enrollRepo: Repository<CourseEnrollment>,
+    private readonly graphy: GraphyClient,
   ) {}
 
   // ─── Courses ─────────────────────────────────────────
@@ -157,5 +159,148 @@ export class TrainingService {
       relations: ['course'],
       order: { createdAt: 'DESC' },
     });
+  }
+
+  // ─── Graphy integration ──────────────────────────────
+  /**
+   * Sync a single enrollment's progress from Graphy.
+   * Only acts on enrollments whose course is provider=GRAPHY with externalId set.
+   */
+  async syncEnrollmentFromGraphy(enrollmentId: string): Promise<{
+    ok: boolean;
+    synced: boolean;
+    reason?: string;
+    enrollment?: CourseEnrollment;
+  }> {
+    const enr = await this.enrollRepo.findOne({
+      where: { id: enrollmentId },
+      relations: ['course', 'employee'],
+    });
+    if (!enr) return { ok: false, synced: false, reason: 'enrollment not found' };
+    if (enr.course.provider !== CourseProvider.GRAPHY) {
+      return { ok: false, synced: false, reason: 'course is not a Graphy course' };
+    }
+    if (!enr.course.externalId) {
+      return { ok: false, synced: false, reason: 'course missing Graphy externalId' };
+    }
+    if (!this.graphy.enabled()) {
+      return { ok: false, synced: false, reason: 'Graphy API not configured (GRAPHY_API_KEY)' };
+    }
+
+    const progress = await this.graphy.getLearnerProgress(
+      enr.employee.email,
+      enr.course.externalId,
+    );
+    if (!progress) {
+      return { ok: false, synced: false, reason: 'Graphy returned no data' };
+    }
+
+    enr.progressPercent = progress.progressPercent;
+    if (progress.score !== undefined) enr.score = progress.score;
+    if (progress.certificateUrl) enr.certificateUrl = progress.certificateUrl;
+
+    if (progress.status === 'completed') {
+      enr.status = EnrollmentStatus.COMPLETED;
+      enr.completedAt = progress.completedAt
+        ? new Date(progress.completedAt)
+        : new Date();
+      enr.progressPercent = 100;
+      if (enr.course.issuesCertificate && !enr.certificateNumber) {
+        enr.certificateNumber = `CERT-${Date.now().toString().slice(-9)}`;
+      }
+    } else if (progress.status === 'in_progress') {
+      enr.status = EnrollmentStatus.IN_PROGRESS;
+      if (!enr.startedAt) enr.startedAt = new Date();
+    }
+
+    await this.enrollRepo.save(enr);
+    return { ok: true, synced: true, enrollment: enr };
+  }
+
+  /** Sync all enrollments for a course. Returns counts. */
+  async syncCourseFromGraphy(courseId: string): Promise<{
+    total: number;
+    synced: number;
+    skipped: number;
+    errors: number;
+  }> {
+    const enrollments = await this.enrollRepo.find({
+      where: { courseId, status: In([EnrollmentStatus.ASSIGNED, EnrollmentStatus.IN_PROGRESS]) },
+      relations: ['course', 'employee'],
+    });
+    let synced = 0, skipped = 0, errors = 0;
+    for (const enr of enrollments) {
+      try {
+        const r = await this.syncEnrollmentFromGraphy(enr.id);
+        if (r.synced) synced++;
+        else if (r.reason?.includes('not configured')) {
+          // Hard stop — no point retrying
+          errors++;
+          break;
+        } else skipped++;
+      } catch {
+        errors++;
+      }
+    }
+    return { total: enrollments.length, synced, skipped, errors };
+  }
+
+  /**
+   * Handle a webhook event from Graphy. Called after signature is verified.
+   * Supports: enrollment.completed, enrollment.progress
+   */
+  async handleGraphyWebhook(event: {
+    type: string;
+    data: {
+      learnerEmail?: string;
+      email?: string;
+      courseId?: string;
+      progress?: number;
+      progressPercent?: number;
+      score?: number;
+      completedAt?: string;
+      certificateUrl?: string;
+    };
+  }): Promise<{ matched: boolean; updated?: boolean }> {
+    const learnerEmail = event.data.learnerEmail ?? event.data.email;
+    const courseExternalId = event.data.courseId;
+    if (!learnerEmail || !courseExternalId) return { matched: false };
+
+    // Find matching enrollment
+    const course = await this.courseRepo.findOne({
+      where: { externalId: courseExternalId, provider: CourseProvider.GRAPHY },
+    });
+    if (!course) return { matched: false };
+
+    const enrollment = await this.enrollRepo
+      .createQueryBuilder('e')
+      .innerJoinAndSelect('e.employee', 'emp')
+      .innerJoinAndSelect('e.course', 'c')
+      .where('c.id = :cid', { cid: course.id })
+      .andWhere('emp.email = :email', { email: learnerEmail })
+      .getOne();
+    if (!enrollment) return { matched: false };
+
+    const pct = event.data.progressPercent ?? event.data.progress ?? 0;
+    enrollment.progressPercent = Number(pct);
+    if (event.data.score !== undefined) enrollment.score = Number(event.data.score);
+    if (event.data.certificateUrl) enrollment.certificateUrl = event.data.certificateUrl;
+
+    if (event.type === 'enrollment.completed' || pct >= 100) {
+      enrollment.status = EnrollmentStatus.COMPLETED;
+      enrollment.completedAt = event.data.completedAt
+        ? new Date(event.data.completedAt)
+        : new Date();
+      enrollment.progressPercent = 100;
+      if (course.issuesCertificate && !enrollment.certificateNumber) {
+        enrollment.certificateNumber = `CERT-${Date.now().toString().slice(-9)}`;
+      }
+    } else if (pct > 0) {
+      enrollment.status = EnrollmentStatus.IN_PROGRESS;
+      if (!enrollment.startedAt) enrollment.startedAt = new Date();
+    }
+
+    await this.enrollRepo.save(enrollment);
+    return { matched: true, updated: true };
   }
 }

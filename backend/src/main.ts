@@ -104,7 +104,7 @@ async function bootstrap() {
       console.log(`[nest] Initialization attempt #${attempt}...`);
       // abortOnError: false → re-throws on init failure instead of process.exit(1)
       // This lets our retry loop catch TypeORM connection errors and try again.
-      const app = await NestFactory.create(AppModule, { logger: ['error', 'warn', 'log'], abortOnError: false });
+      const app = await NestFactory.create(AppModule, { logger: ['error', 'warn', 'log'], abortOnError: false, rawBody: true });
 
       app.setGlobalPrefix('api/v1');
 
