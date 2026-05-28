@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Shield, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
@@ -125,18 +126,16 @@ export default function ApplyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-50 to-blue-50 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-violet-50 py-8 px-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-brand-600 rounded-xl flex items-center justify-center">
-              <Shield className="w-7 h-7 text-white" />
-            </div>
-            <div className="text-left">
-              <h1 className="text-2xl font-bold text-gray-900">JOSMEF</h1>
-              <p className="text-sm text-gray-500">Human Resource Management</p>
-            </div>
+          <div className="flex justify-center mb-4">
+            <Logo
+              size={64}
+              textClassName="text-2xl text-gray-900"
+              taglineClassName="text-xs text-gray-500"
+            />
           </div>
           <h2 className="text-3xl font-bold text-gray-900">Job Application</h2>
           <p className="text-gray-600 mt-2">Fill out this form to apply for a position. All fields marked with <span className="text-red-500">*</span> are required.</p>

@@ -7,7 +7,7 @@ import api from '@/lib/api';
 import {
   Users, UserPlus, GraduationCap, Clock, DollarSign, AlertCircle,
   TrendingUp, TrendingDown, CheckCircle, XCircle, ArrowRight,
-  Calendar, Briefcase,
+  Calendar, Briefcase, AlertTriangle, ShieldAlert,
 } from 'lucide-react';
 
 interface Stats {
@@ -38,6 +38,7 @@ export default function DashboardPage() {
   const [appByStatus, setAppByStatus] = useState<ChartData[]>([]);
   const [recentHires, setRecentHires] = useState<RecentHire[]>([]);
   const [events, setEvents] = useState<UpcomingEvent[]>([]);
+  const [complianceSummary, setComplianceSummary] = useState<{ total: number; critical: number; high: number } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,13 +49,15 @@ export default function DashboardPage() {
       api.get('/dashboard/charts/applicants-by-status').catch(() => ({ data: [] })),
       api.get('/dashboard/recent-hires').catch(() => ({ data: [] })),
       api.get('/dashboard/upcoming-events').catch(() => ({ data: [] })),
-    ]).then(([s, d, st, ap, rh, ev]) => {
+      api.get('/compliance/alerts').catch(() => ({ data: { summary: null } })),
+    ]).then(([s, d, st, ap, rh, ev, comp]) => {
       setStats(s.data);
       setEmpByDept(d.data);
       setEmpByStatus(st.data);
       setAppByStatus(ap.data);
       setRecentHires(rh.data);
       setEvents(ev.data);
+      if (comp.data?.summary) setComplianceSummary(comp.data.summary);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -88,6 +91,37 @@ export default function DashboardPage() {
         <KPI icon={Clock} label="Present Today" value={s.presentToday} sub={`${s.lateToday} late • ${s.absentToday} absent`} color="bg-amber-500" onClick={() => router.push('/dashboard/attendance')} />
         <KPI icon={DollarSign} label="Pending Payroll" value={s.pendingPayroll} color="bg-rose-500" onClick={() => router.push('/dashboard/payroll')} />
       </div>
+
+      {/* Compliance Alert Banner */}
+      {complianceSummary && complianceSummary.total > 0 && (
+        <div
+          className={`mb-6 rounded-xl border p-4 flex items-center justify-between cursor-pointer hover:opacity-90 transition-opacity ${
+            complianceSummary.critical > 0
+              ? 'bg-red-50 border-red-200'
+              : complianceSummary.high > 0
+              ? 'bg-orange-50 border-orange-200'
+              : 'bg-yellow-50 border-yellow-200'
+          }`}
+          onClick={() => router.push('/dashboard/compliance')}
+        >
+          <div className="flex items-center gap-3">
+            <ShieldAlert className={`w-6 h-6 flex-shrink-0 ${
+              complianceSummary.critical > 0 ? 'text-red-500' : complianceSummary.high > 0 ? 'text-orange-500' : 'text-yellow-500'
+            }`} />
+            <div>
+              <p className="font-semibold text-gray-900">
+                {complianceSummary.critical > 0
+                  ? `${complianceSummary.critical} Critical Compliance Issue${complianceSummary.critical !== 1 ? 's' : ''}`
+                  : `${complianceSummary.total} Compliance Alert${complianceSummary.total !== 1 ? 's' : ''}`}
+              </p>
+              <p className="text-sm text-gray-500">
+                {complianceSummary.critical} critical · {complianceSummary.high} high · {complianceSummary.total} total — click to review
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="w-5 h-5 text-gray-400" />
+        </div>
+      )}
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">

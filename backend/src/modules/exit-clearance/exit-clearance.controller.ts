@@ -1,6 +1,6 @@
 import {
   Controller, Get, Post, Put, Delete,
-  Body, Param, Query, UseGuards, Request,
+  Body, Param, Query, UseGuards, Request, Patch,
 } from '@nestjs/common';
 import { ExitClearanceService } from './exit-clearance.service';
 import {
@@ -41,6 +41,22 @@ export class ExitClearanceController {
   @Roles(UserRole.SUPER_ADMIN, UserRole.HR_ADMIN, UserRole.HR_STAFF, UserRole.MANAGER)
   clearItem(@Body() dto: ClearItemDto, @Request() req) {
     return this.service.clearItem(dto, req.user.id);
+  }
+
+  @Patch(':id/sign')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.HR_ADMIN, UserRole.HR_STAFF, UserRole.MANAGER)
+  sign(
+    @Param('id') id: string,
+    @Body() body: { signerType: 'employee' | 'hr'; signatureData: string; signerName?: string },
+    @Request() req,
+  ) {
+    return this.service.sign(id, body.signerType, body.signatureData, body.signerName);
+  }
+
+  @Delete(':id/sign/:signerType')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.HR_ADMIN, UserRole.HR_STAFF)
+  clearSignature(@Param('id') id: string, @Param('signerType') signerType: 'employee' | 'hr') {
+    return this.service.clearSignature(id, signerType);
   }
 
   @Delete(':id')

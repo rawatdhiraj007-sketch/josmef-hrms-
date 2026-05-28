@@ -25,8 +25,15 @@ import {
   Award,
   ChevronDown,
   ChevronRight,
+  ShieldAlert,
+  History,
+  Plane,
+  User,
+  Gift,
+  FileBarChart,
 } from 'lucide-react';
 import { useState } from 'react';
+import Logo from '@/components/Logo';
 
 const navItems = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -36,6 +43,7 @@ const navItems = [
   { label: 'Former Employees', href: '/dashboard/former-employees', icon: Archive },
   { label: 'Attendance', href: '/dashboard/attendance', icon: Clock },
   { label: 'Payroll', href: '/dashboard/payroll', icon: DollarSign },
+  { label: 'Bonus Runs', href: '/dashboard/bonus', icon: Gift },
   { label: 'Exit Clearance', href: '/dashboard/exit-clearance', icon: ClipboardCheck },
 ];
 
@@ -49,6 +57,10 @@ const twoOhOneItems = [
 ];
 
 const bottomItems = [
+  { label: 'Leave Management', href: '/dashboard/leave', icon: Plane },
+  { label: 'Gov Reports', href: '/dashboard/gov-reports', icon: FileBarChart },
+  { label: 'Compliance', href: '/dashboard/compliance', icon: ShieldAlert },
+  { label: 'Audit Log', href: '/dashboard/audit', icon: History },
   { label: 'AI Hub', href: '/dashboard/ai', icon: Sparkles },
 ];
 
@@ -87,9 +99,8 @@ export default function Sidebar() {
         <button onClick={() => setCollapsed(!collapsed)} className="text-gray-600">
           <Menu className="w-6 h-6" />
         </button>
-        <div className="flex items-center gap-2 ml-3">
-          <Shield className="w-5 h-5 text-brand-600" />
-          <span className="font-bold text-gray-900">JOSMEF</span>
+        <div className="ml-3">
+          <Logo size={28} textClassName="text-base text-gray-900" taglineClassName="hidden" />
         </div>
       </div>
 
@@ -105,13 +116,10 @@ export default function Sidebar() {
       >
         {/* Logo */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-surface-200">
-          {!collapsed && (
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center">
-                <Shield className="w-5 h-5 text-white" />
-              </div>
-              <span className="font-bold text-gray-900 text-lg">JOSMEF</span>
-            </div>
+          {!collapsed ? (
+            <Logo size={36} textClassName="text-base text-gray-900" taglineClassName="text-[10px] text-gray-500" />
+          ) : (
+            <Logo size={36} showText={false} />
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}

@@ -6,6 +6,8 @@ import {
   CreateExitClearanceDto, UpdateExitClearanceDto,
   ClearItemDto, QueryExitClearanceDto,
 } from './dto/exit-clearance.dto';
+import { NotificationService } from '@common/services/notification.service';
+import { Employee } from '../employees/entities/employee.entity';
 
 const DEFAULT_CLEARANCE_ITEMS = [
   { department: 'HR', requirement: 'Return company ID and access cards' },
@@ -26,6 +28,8 @@ export class ExitClearanceService {
   constructor(
     @InjectRepository(ExitClearance) private readonly repo: Repository<ExitClearance>,
     @InjectRepository(ClearanceItem) private readonly itemRepo: Repository<ClearanceItem>,
+    @InjectRepository(Employee) private readonly empRepo: Repository<Employee>,
+    private readonly notification: NotificationService,
   ) {}
 
   async create(dto: CreateExitClearanceDto, userId: string): Promise<ExitClearance> {
@@ -53,6 +57,20 @@ export class ExitClearanceService {
       }),
     );
     await this.itemRepo.save(items);
+
+    // Send notification to employee (non-blocking)
+    const emp = await this.empRepo.findOne({
+      where: { id: dto.employeeId },
+      select: ['email', 'firstName', 'lastName'],
+    });
+    if (emp?.email) {
+      this.notification.sendExitClearanceCreated({
+        employeeEmail: emp.email,
+        employeeName: `${emp.firstName} ${emp.lastName}`,
+        lastWorkingDay: dto.lastWorkingDay?.toString() || '',
+        separationType: dto.separationType,
+      }).catch(() => {});
+    }
 
     return this.findOne(saved.id);
   }
@@ -119,6 +137,38 @@ export class ExitClearanceService {
     }
 
     return saved;
+  }
+
+  async sign(
+    id: string,
+    signerType: 'employee' | 'hr',
+    signatureData: string,
+    signerName?: string,
+  ): Promise<ExitClearance> {
+    const rec = await this.findOne(id);
+    const now = new Date();
+    if (signerType === 'employee') {
+      rec.employeeSignature = signatureData;
+      rec.employeeSignedAt = now;
+    } else {
+      rec.hrSignature = signatureData;
+      rec.hrSignedAt = now;
+      rec.hrSignedBy = signerName || 'HR Officer';
+    }
+    return this.repo.save(rec);
+  }
+
+  async clearSignature(id: string, signerType: 'employee' | 'hr'): Promise<ExitClearance> {
+    const rec = await this.findOne(id);
+    if (signerType === 'employee') {
+      rec.employeeSignature = null;
+      rec.employeeSignedAt = null;
+    } else {
+      rec.hrSignature = null;
+      rec.hrSignedAt = null;
+      rec.hrSignedBy = null;
+    }
+    return this.repo.save(rec);
   }
 
   async remove(id: string): Promise<void> {

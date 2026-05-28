@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { LogIn, Eye, EyeOff, Shield } from 'lucide-react';
+import { LogIn, Eye, EyeOff } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 export default function LoginPage() {
   const { login, error } = useAuth();
@@ -26,31 +27,34 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left panel - branding */}
-      <div className="hidden lg:flex lg:w-[45%] bg-brand-950 text-white flex-col justify-between p-12">
+      <div className="hidden lg:flex lg:w-[45%] bg-gradient-to-br from-rose-900 via-pink-800 to-violet-900 text-white flex-col justify-between p-12">
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-brand-500 rounded-lg flex items-center justify-center">
-              <Shield className="w-6 h-6" />
-            </div>
-            <span className="text-2xl font-bold tracking-tight">JOSMEF</span>
-          </div>
-          <p className="text-brand-300 text-sm">Human Resource Management System</p>
+          <Logo
+            size={64}
+            textClassName="text-3xl text-white"
+            taglineClassName="text-pink-200"
+          />
+          <p className="text-pink-200/80 text-sm mt-3 ml-[76px] -mt-1">
+            Human Resource Management System
+          </p>
         </div>
 
         <div className="space-y-6">
           <h1 className="text-4xl font-bold leading-tight">
-            Manage your<br />
-            workforce with<br />
-            <span className="text-brand-400">confidence.</span>
+            Caring for those<br />
+            who care for<br />
+            <span className="bg-gradient-to-r from-amber-300 to-pink-300 bg-clip-text text-transparent">
+              others.
+            </span>
           </h1>
-          <p className="text-brand-300 text-lg leading-relaxed max-w-md">
-            Recruitment, attendance, payroll, and employee lifecycle — 
-            all in one enterprise platform.
+          <p className="text-pink-100/90 text-lg leading-relaxed max-w-md">
+            Recruitment, attendance, payroll, compliance, and the full
+            employee lifecycle — built for healthcare teams.
           </p>
         </div>
 
-        <p className="text-brand-400 text-xs">
-          © {new Date().getFullYear()} JOSMEF HRMS. All rights reserved.
+        <p className="text-pink-200/60 text-xs">
+          © {new Date().getFullYear()} JOSMEF. All rights reserved.
         </p>
       </div>
 
@@ -58,11 +62,8 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-10">
-            <div className="w-10 h-10 bg-brand-600 rounded-lg flex items-center justify-center">
-              <Shield className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold text-gray-900 tracking-tight">JOSMEF</span>
+          <div className="lg:hidden mb-10">
+            <Logo size={48} textClassName="text-xl text-gray-900" />
           </div>
 
           <h2 className="text-2xl font-bold text-gray-900 mb-1">Welcome back</h2>

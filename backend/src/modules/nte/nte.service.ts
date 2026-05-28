@@ -4,19 +4,44 @@ import { Repository } from 'typeorm';
 import { NteRecord } from './entities/nte.entity';
 import { CreateNteDto, UpdateNteDto, QueryNteDto } from './dto/nte.dto';
 import { NumberingService } from '@common/services/numbering.service';
+import { NotificationService } from '@common/services/notification.service';
+import { Employee } from '../employees/entities/employee.entity';
 
 @Injectable()
 export class NteService {
   constructor(
     @InjectRepository(NteRecord)
     private readonly repo: Repository<NteRecord>,
+    @InjectRepository(Employee)
+    private readonly empRepo: Repository<Employee>,
     private readonly numbering: NumberingService,
+    private readonly notification: NotificationService,
   ) {}
 
   async create(dto: CreateNteDto, userId: string): Promise<NteRecord> {
     const nteNumber = await this.numbering.next('NTE');
     const record = this.repo.create({ ...dto, nteNumber, createdBy: userId });
-    return this.repo.save(record);
+    const saved = await this.repo.save(record);
+
+    // Send email notification (non-blocking)
+    if (dto.employeeId) {
+      const emp = await this.empRepo.findOne({
+        where: { id: dto.employeeId },
+        select: ['email', 'firstName', 'lastName'],
+      });
+      if (emp?.email) {
+        this.notification.sendNteIssued({
+          employeeEmail: emp.email,
+          employeeName: `${emp.firstName} ${emp.lastName}`,
+          nteNumber,
+          subject: dto.subject,
+          deadline: dto.deadlineToReply?.toString() || 'N/A',
+          issuedBy: dto.issuedBy || 'HR Department',
+        }).catch(() => {}); // fire-and-forget
+      }
+    }
+
+    return saved;
   }
 
   async findAll(query: QueryNteDto) {

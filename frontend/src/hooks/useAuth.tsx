@@ -48,7 +48,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await api.post<AuthResponse>('/auth/login', payload);
       Cookies.set('token', res.data.accessToken, { expires: 1 });
       setUser(res.data.user);
-      router.push('/dashboard');
+      // Route employees to self-service portal; HR/Admin/Manager to dashboard
+      const role = res.data.user?.role;
+      if (role === 'employee') router.push('/portal');
+      else router.push('/dashboard');
     } catch (err: any) {
       const msg = err.response?.data?.message;
       setError(Array.isArray(msg) ? msg[0] : msg || 'Login failed');

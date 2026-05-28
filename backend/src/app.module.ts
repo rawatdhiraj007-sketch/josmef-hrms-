@@ -20,8 +20,15 @@ import { DisciplinaryModule } from './modules/disciplinary/disciplinary.module';
 import { NteModule } from './modules/nte/nte.module';
 import { IncidentReportsModule } from './modules/incident-reports/incident-reports.module';
 import { WorkCertificatesModule } from './modules/work-certificates/work-certificates.module';
+import { ComplianceModule } from './modules/compliance/compliance.module';
+import { AuditModule } from './modules/audit/audit.module';
+import { LeaveModule } from './modules/leave/leave.module';
+import { PortalModule } from './modules/portal/portal.module';
+import { GovReportsModule } from './modules/gov-reports/gov-reports.module';
 import { NumberingModule } from './common/modules/numbering.module';
+import { NotificationModule } from './common/modules/notification.module';
 import { User } from './modules/users/entities/user.entity';
+import { LeaveType } from './modules/leave/entities/leave-type.entity';
 import { SeedService } from './seeds/seed.service';
 
 @Module({
@@ -42,6 +49,10 @@ import { SeedService } from './seeds/seed.service';
             synchronize: true,
             ssl: { rejectUnauthorized: false },
             logging: false,
+            // Render free tier: limit connections; main.ts retry-loop handles reconnects
+            extra: { max: 2, min: 0, idleTimeoutMillis: 10000 },
+            retryAttempts: 15,   // 15 × 3 s = 45 s per bootstrap attempt
+            retryDelay: 3000,
           };
         }
         return {
@@ -58,9 +69,11 @@ import { SeedService } from './seeds/seed.service';
       },
       inject: [ConfigService],
     }),
-    TypeOrmModule.forFeature([User]),
-    // Core global module
+    TypeOrmModule.forFeature([User, LeaveType]),
+    // Core global modules
     NumberingModule,
+    NotificationModule,
+    AuditModule,
     // Feature modules
     AuthModule,
     UsersModule,
@@ -80,6 +93,10 @@ import { SeedService } from './seeds/seed.service';
     NteModule,
     IncidentReportsModule,
     WorkCertificatesModule,
+    ComplianceModule,
+    LeaveModule,
+    PortalModule,
+    GovReportsModule,
   ],
   providers: [SeedService],
 })

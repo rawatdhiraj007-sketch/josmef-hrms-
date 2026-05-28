@@ -2,8 +2,13 @@ import '@/styles/globals.css';
 import { AuthProvider } from '@/hooks/useAuth';
 
 export const metadata = {
-  title: 'JOSMEF HRMS',
-  description: 'Enterprise HR Management System',
+  title: 'JOSMEF HRMS — God Cures, We Care',
+  description: 'Enterprise HR Management System for healthcare teams',
+  icons: {
+    icon: '/logo.png',
+    shortcut: '/logo.png',
+    apple: '/logo.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
