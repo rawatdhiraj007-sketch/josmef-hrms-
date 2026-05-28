@@ -31,6 +31,7 @@ import { NumberingModule } from './common/modules/numbering.module';
 import { NotificationModule } from './common/modules/notification.module';
 import { User } from './modules/users/entities/user.entity';
 import { LeaveType } from './modules/leave/entities/leave-type.entity';
+import { Employee } from './modules/employees/entities/employee.entity';
 import { SeedService } from './seeds/seed.service';
 
 @Module({
@@ -71,7 +72,7 @@ import { SeedService } from './seeds/seed.service';
       },
       inject: [ConfigService],
     }),
-    TypeOrmModule.forFeature([User, LeaveType]),
+    TypeOrmModule.forFeature([User, LeaveType, Employee]),
     // Core global modules
     NumberingModule,
     NotificationModule,

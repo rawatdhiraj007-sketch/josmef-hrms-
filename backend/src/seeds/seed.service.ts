@@ -4,7 +4,8 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { User } from '../modules/users/entities/user.entity';
 import { LeaveType } from '../modules/leave/entities/leave-type.entity';
-import { UserRole } from '../common/enums';
+import { Employee } from '../modules/employees/entities/employee.entity';
+import { UserRole, EmploymentStatus } from '../common/enums';
 
 @Injectable()
 export class SeedService implements OnModuleInit {
@@ -15,11 +16,50 @@ export class SeedService implements OnModuleInit {
     private userRepo: Repository<User>,
     @InjectRepository(LeaveType)
     private leaveTypeRepo: Repository<LeaveType>,
+    @InjectRepository(Employee)
+    private employeeRepo: Repository<Employee>,
   ) {}
 
   async onModuleInit() {
     await this.seedAdmin();
+    await this.seedDemoEmployee();
     await this.seedLeaveTypes();
+  }
+
+  private async seedDemoEmployee() {
+    try {
+      const email = 'demo.employee@josmef.com';
+      const existing = await this.userRepo.findOne({ where: { email } });
+      if (existing) {
+        this.logger.log('Demo employee user already exists, skipping');
+        return;
+      }
+      const password = await bcrypt.hash('Demo@2025', 12);
+      await this.userRepo.save({
+        firstName: 'Maria',
+        lastName: 'Santos',
+        email,
+        password,
+        role: UserRole.EMPLOYEE,
+        isActive: true,
+      });
+
+      // Create a matching Employee record so portal endpoints work
+      const empExists = await this.employeeRepo.findOne({ where: { email } });
+      if (!empExists) {
+        await this.employeeRepo.save({
+          employeeId: 'EMP-DEMO-001',
+          firstName: 'Maria',
+          lastName: 'Santos',
+          email,
+          mobile: '+639170000000',
+          employmentStatus: EmploymentStatus.REGULAR,
+        } as any);
+      }
+      this.logger.log('Demo employee created: demo.employee@josmef.com / Demo@2025');
+    } catch (err) {
+      this.logger.error('Demo employee seed failed', err);
+    }
   }
 
   private async seedAdmin() {

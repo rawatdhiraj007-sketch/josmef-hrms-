@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -21,6 +22,20 @@ export default function LoginPage() {
       // error handled by context
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleDemoLogin(role: 'admin' | 'employee') {
+    setDemoLoading(true);
+    try {
+      const creds = role === 'admin'
+        ? { email: 'admin@josmef.com', password: 'Admin@2025' }
+        : { email: 'demo.employee@josmef.com', password: 'Demo@2025' };
+      await login(creds);
+    } catch {
+      // error shown by context
+    } finally {
+      setDemoLoading(false);
     }
   }
 
@@ -115,7 +130,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={submitting}
+              disabled={submitting || demoLoading}
               className="btn-primary w-full flex items-center justify-center gap-2 py-3"
             >
               {submitting ? (
@@ -128,6 +143,41 @@ export default function LoginPage() {
               )}
             </button>
           </form>
+
+          {/* ── Quick-access demo logins (for testing — remove before launch) ── */}
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200"></div>
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-white px-3 text-xs text-gray-400 uppercase tracking-wider">
+                  Testing Mode
+                </span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <button
+                type="button"
+                onClick={() => handleDemoLogin('admin')}
+                disabled={submitting || demoLoading}
+                className="border-2 border-rose-600 text-rose-700 hover:bg-rose-50 font-medium py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {demoLoading ? '...' : '🔑 HR Admin'}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDemoLogin('employee')}
+                disabled={submitting || demoLoading}
+                className="border-2 border-violet-600 text-violet-700 hover:bg-violet-50 font-medium py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {demoLoading ? '...' : '👤 Employee'}
+              </button>
+            </div>
+            <p className="text-[11px] text-gray-400 text-center mt-3">
+              One-click access for testing. Remove these buttons before going live.
+            </p>
+          </div>
 
           <p className="mt-8 text-center text-xs text-gray-400">
             Protected by enterprise-grade security
