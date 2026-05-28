@@ -1,9 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { LogIn, Eye, EyeOff } from 'lucide-react';
 import Logo from '@/components/Logo';
+
+// ⚠️ TESTING MODE: when true, page auto-logs you in as admin on load.
+// To disable: set this to false (or wire it to an env var).
+const TESTING_OPEN_MODE = true;
 
 export default function LoginPage() {
   const { login, error } = useAuth();
@@ -37,6 +41,39 @@ export default function LoginPage() {
     } finally {
       setDemoLoading(false);
     }
+  }
+
+  // ⚠️ TESTING MODE: auto-login as admin on page load
+  useEffect(() => {
+    if (TESTING_OPEN_MODE && !submitting && !demoLoading) {
+      const timer = setTimeout(() => {
+        handleDemoLogin('admin');
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Show full-screen "logging you in" overlay during auto-login
+  if (TESTING_OPEN_MODE && demoLoading && !error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-rose-50 via-pink-50 to-violet-50">
+        <div className="text-center">
+          <div className="mb-6 flex justify-center">
+            <Logo size={80} textClassName="text-2xl text-gray-900" taglineClassName="text-sm text-gray-500" />
+          </div>
+          <div className="flex items-center justify-center gap-3 text-rose-700">
+            <div className="w-6 h-6 border-2 border-rose-300 border-t-rose-700 rounded-full animate-spin"></div>
+            <span className="font-medium">Signing you in for testing...</span>
+          </div>
+          <p className="text-xs text-gray-400 mt-4 max-w-xs">
+            Auto-login is on. To require credentials,
+            set <code className="bg-gray-100 px-1 rounded">TESTING_OPEN_MODE = false</code>
+            {' '}in <code className="bg-gray-100 px-1 rounded">auth/login/page.tsx</code>.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
