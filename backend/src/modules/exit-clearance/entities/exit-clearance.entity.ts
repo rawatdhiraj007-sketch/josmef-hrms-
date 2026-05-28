@@ -57,6 +57,22 @@ export class ExitClearance extends BaseEntity {
   @Column({ default: false })
   finalPayReleased: boolean;
 
+  // E-signatures (base64 data URLs from canvas)
+  @Column({ type: 'text', nullable: true })
+  employeeSignature: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  employeeSignedAt: Date | null;
+
+  @Column({ type: 'text', nullable: true })
+  hrSignature: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  hrSignedAt: Date | null;
+
+  @Column({ type: 'varchar', length: 150, nullable: true })
+  hrSignedBy: string | null;
+
   @OneToMany(() => ClearanceItem, (item) => item.clearance, { cascade: true, eager: true })
   items: ClearanceItem[];
 }
