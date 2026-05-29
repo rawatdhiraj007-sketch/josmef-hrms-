@@ -156,7 +156,7 @@ export default function DashboardPage() {
       {compliance && compliance.critical > 0 && (
         <Link
           href="/dashboard/compliance"
-          className="block bg-gradient-to-r from-rose-50 to-amber-50 border border-rose-200 rounded-xl p-4 hover:shadow-card transition-all group"
+          className="block bg-gradient-to-r from-rose-50 via-pink-50 to-rose-50 border border-rose-200 rounded-xl p-4 hover:shadow-card-hover hover:border-rose-300 transition-all group"
         >
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-lg bg-rose-100 flex items-center justify-center flex-shrink-0">
@@ -242,8 +242,8 @@ export default function DashboardPage() {
               <LineChart data={trend}>
                 <defs>
                   <linearGradient id="headcountGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#e11d48" stopOpacity={0.2} />
-                    <stop offset="100%" stopColor="#e11d48" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#4f46e5" stopOpacity={0.2} />
+                    <stop offset="100%" stopColor="#4f46e5" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" vertical={false} />
@@ -260,10 +260,10 @@ export default function DashboardPage() {
                 <Line
                   type="monotone"
                   dataKey="headcount"
-                  stroke="#e11d48"
+                  stroke="#4f46e5"
                   strokeWidth={2.5}
                   dot={{ r: 0 }}
-                  activeDot={{ r: 5, fill: '#e11d48' }}
+                  activeDot={{ r: 5, fill: '#4f46e5' }}
                   fill="url(#headcountGrad)"
                 />
               </LineChart>
@@ -396,7 +396,7 @@ export default function DashboardPage() {
             <div className="space-y-1">
               {widgets?.birthdays.slice(0, 6).map(b => (
                 <div key={b.id} className="flex items-center gap-3 px-2 py-2 -mx-2 rounded-lg hover:bg-surface-50 transition-colors">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-rose-400 to-pink-600 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
                     {b.firstName?.[0]?.toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
