@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
+import Topbar from '@/components/layout/Topbar';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -19,8 +20,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface-50">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-3 border-brand-200 border-t-brand-600 rounded-full animate-spin" />
-          <p className="text-sm text-gray-500">Loading JOSMEF HRMS...</p>
+          <div className="w-10 h-10 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
+          <p className="text-sm text-surface-500">Loading JOSMEF HRMS...</p>
         </div>
       </div>
     );
@@ -31,9 +32,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen bg-surface-50">
       <Sidebar />
-      <main className="lg:ml-64 pt-14 lg:pt-0">
-        <div className="p-6 lg:p-8">{children}</div>
-      </main>
+      <div className="lg:ml-64">
+        <Topbar />
+        <main className="px-6 lg:px-8 py-6 lg:py-8 max-w-[1600px] mx-auto">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

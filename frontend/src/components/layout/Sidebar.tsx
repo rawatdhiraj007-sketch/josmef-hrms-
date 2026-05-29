@@ -12,9 +12,6 @@ import {
   DollarSign,
   LogOut,
   FileText,
-  Shield,
-  ChevronLeft,
-  Menu,
   ClipboardCheck,
   Sparkles,
   Archive,
@@ -24,170 +21,181 @@ import {
   AlertCircle,
   Award,
   ChevronDown,
-  ChevronRight,
+  ChevronLeft,
   ShieldAlert,
   History,
   Plane,
-  User,
   Gift,
   FileBarChart,
   BarChart3,
+  Settings,
+  HelpCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 import Logo from '@/components/Logo';
 
-const navItems = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Applicants', href: '/dashboard/applicants', icon: UserPlus },
-  { label: 'Trainees', href: '/dashboard/trainees', icon: GraduationCap },
-  { label: 'Employees', href: '/dashboard/employees', icon: Users },
-  { label: 'Former Employees', href: '/dashboard/former-employees', icon: Archive },
-  { label: 'Attendance', href: '/dashboard/attendance', icon: Clock },
-  { label: 'Payroll', href: '/dashboard/payroll', icon: DollarSign },
-  { label: 'Bonus Runs', href: '/dashboard/bonus', icon: Gift },
-  { label: 'Exit Clearance', href: '/dashboard/exit-clearance', icon: ClipboardCheck },
-];
+interface NavItem {
+  label: string;
+  href: string;
+  icon: any;
+  badge?: string;
+}
 
-const twoOhOneItems = [
-  { label: 'Loans', href: '/dashboard/loans', icon: CreditCard },
-  { label: 'Disciplinary', href: '/dashboard/disciplinary', icon: Shield },
-  { label: 'Notice to Explain', href: '/dashboard/nte', icon: FileWarning },
-  { label: 'Incident Reports', href: '/dashboard/incident-reports', icon: AlertTriangle },
-  { label: 'Work Certificates', href: '/dashboard/work-certificates', icon: Award },
-  { label: 'Documents', href: '/dashboard/documents', icon: FileText },
-];
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
 
-const bottomItems = [
-  { label: 'Leave Management', href: '/dashboard/leave', icon: Plane },
-  { label: 'Training', href: '/dashboard/training', icon: GraduationCap },
-  { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
-  { label: 'Gov Reports', href: '/dashboard/gov-reports', icon: FileBarChart },
-  { label: 'Compliance', href: '/dashboard/compliance', icon: ShieldAlert },
-  { label: 'Audit Log', href: '/dashboard/audit', icon: History },
-  { label: 'AI Hub', href: '/dashboard/ai', icon: Sparkles },
+// Grouped nav structure — modern HRMS pattern
+const navSections: NavSection[] = [
+  {
+    label: 'Workspace',
+    items: [
+      { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
+      { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+    ],
+  },
+  {
+    label: 'Recruitment',
+    items: [
+      { label: 'Applicants', href: '/dashboard/applicants', icon: UserPlus },
+      { label: 'Trainees', href: '/dashboard/trainees', icon: GraduationCap },
+    ],
+  },
+  {
+    label: 'People',
+    items: [
+      { label: 'Employees', href: '/dashboard/employees', icon: Users },
+      { label: 'Former Employees', href: '/dashboard/former-employees', icon: Archive },
+      { label: 'Training', href: '/dashboard/training', icon: GraduationCap },
+    ],
+  },
+  {
+    label: 'Operations',
+    items: [
+      { label: 'Attendance', href: '/dashboard/attendance', icon: Clock },
+      { label: 'Payroll', href: '/dashboard/payroll', icon: DollarSign },
+      { label: 'Bonus Runs', href: '/dashboard/bonus', icon: Gift },
+      { label: 'Leave Management', href: '/dashboard/leave', icon: Plane },
+      { label: 'Exit Clearance', href: '/dashboard/exit-clearance', icon: ClipboardCheck },
+    ],
+  },
+  {
+    label: '201 File',
+    items: [
+      { label: 'Loans', href: '/dashboard/loans', icon: CreditCard },
+      { label: 'Disciplinary', href: '/dashboard/disciplinary', icon: AlertTriangle },
+      { label: 'NTE', href: '/dashboard/nte', icon: FileWarning },
+      { label: 'Incident Reports', href: '/dashboard/incident-reports', icon: AlertCircle },
+      { label: 'Work Certificates', href: '/dashboard/work-certificates', icon: Award },
+    ],
+  },
+  {
+    label: 'Insights',
+    items: [
+      { label: 'Compliance', href: '/dashboard/compliance', icon: ShieldAlert },
+      { label: 'Gov Reports', href: '/dashboard/gov-reports', icon: FileBarChart },
+      { label: 'Audit Log', href: '/dashboard/audit', icon: History },
+      { label: 'AI Hub', href: '/dashboard/ai', icon: Sparkles },
+    ],
+  },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
-  const [twoOhOneOpen, setTwoOhOneOpen] = useState(
-    twoOhOneItems.some(item => pathname.startsWith(item.href))
-  );
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
-  const isActive = (href: string) => href === '/dashboard' ? pathname === href : pathname.startsWith(href);
+  const isActive = (href: string) =>
+    href === '/dashboard' ? pathname === href : pathname.startsWith(href);
 
-  const NavLink = ({ item }: { item: typeof navItems[0] }) => (
-    <Link
-      key={item.href}
-      href={item.href}
-      className={`
-        flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
-        transition-colors duration-150
-        ${isActive(item.href)
-          ? 'bg-brand-50 text-brand-700'
-          : 'text-gray-600 hover:bg-surface-100 hover:text-gray-900'}
-      `}
-      title={collapsed ? item.label : undefined}
-    >
-      <item.icon className={`w-5 h-5 flex-shrink-0 ${isActive(item.href) ? 'text-brand-600' : ''}`} />
-      {!collapsed && <span>{item.label}</span>}
-    </Link>
-  );
+  function toggleSection(label: string) {
+    setCollapsed(prev => ({ ...prev, [label]: !prev[label] }));
+  }
 
   return (
-    <>
-      {/* Mobile header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white border-b border-surface-200 flex items-center px-4 z-50">
-        <button onClick={() => setCollapsed(!collapsed)} className="text-gray-600">
-          <Menu className="w-6 h-6" />
-        </button>
-        <div className="ml-3">
-          <Logo size={28} textClassName="text-base text-gray-900" taglineClassName="hidden" />
-        </div>
+    <aside className="hidden lg:flex flex-col fixed top-0 left-0 h-screen w-64 bg-white border-r border-surface-200 z-40">
+      {/* Logo */}
+      <div className="h-16 flex items-center px-5 border-b border-surface-100">
+        <Logo
+          size={32}
+          textClassName="text-base font-bold text-surface-900"
+          taglineClassName="text-2xs text-surface-400 -mt-0.5"
+        />
       </div>
 
-      {/* Sidebar */}
-      <aside
-        className={`
-          fixed top-0 left-0 h-full bg-white border-r border-surface-200 z-40
-          transition-all duration-200 flex flex-col
-          ${collapsed ? 'w-[72px]' : 'w-64'}
-          max-lg:${collapsed ? '-translate-x-full' : 'translate-x-0'}
-          lg:translate-x-0
-        `}
-      >
-        {/* Logo */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-surface-200">
-          {!collapsed ? (
-            <Logo size={36} textClassName="text-base text-gray-900" taglineClassName="text-[10px] text-gray-500" />
-          ) : (
-            <Logo size={36} showText={false} />
-          )}
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="hidden lg:flex w-8 h-8 items-center justify-center rounded-lg hover:bg-surface-100 text-gray-400"
-          >
-            {collapsed ? <Menu className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-          </button>
-        </div>
-
-        {/* Nav items */}
-        <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
-          {navItems.map((item) => <NavLink key={item.href} item={item} />)}
-
-          {/* 201 File Section */}
-          <div className="pt-2">
-            {!collapsed && (
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+        {navSections.map((section) => {
+          const isCollapsed = collapsed[section.label];
+          const hasActive = section.items.some((it) => isActive(it.href));
+          return (
+            <div key={section.label}>
               <button
-                onClick={() => setTwoOhOneOpen(!twoOhOneOpen)}
-                className="flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider hover:text-gray-700"
+                onClick={() => toggleSection(section.label)}
+                className="w-full flex items-center justify-between px-3 mb-1.5 group"
               >
-                <span>201 File</span>
-                {twoOhOneOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                <span className="text-2xs font-semibold uppercase tracking-wider text-surface-400 group-hover:text-surface-600 transition-colors">
+                  {section.label}
+                </span>
+                <ChevronDown
+                  className={`w-3 h-3 text-surface-400 transition-transform ${
+                    isCollapsed ? '-rotate-90' : ''
+                  }`}
+                />
               </button>
-            )}
-            {(twoOhOneOpen || collapsed) && (
-              <div className="space-y-1 mt-1">
-                {twoOhOneItems.map((item) => <NavLink key={item.href} item={item} />)}
-              </div>
-            )}
-          </div>
-
-          {/* Bottom items */}
-          <div className="pt-2 border-t border-gray-100">
-            {bottomItems.map((item) => <NavLink key={item.href} item={item} />)}
-          </div>
-        </nav>
-
-        {/* User section */}
-        <div className="border-t border-surface-200 p-3">
-          {!collapsed && user && (
-            <div className="px-3 py-2 mb-2">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {user.firstName} {user.lastName}
-              </p>
-              <p className="text-xs text-gray-500 truncate">{user.role.replace('_', ' ')}</p>
+              {!isCollapsed && (
+                <div className="space-y-0.5">
+                  {section.items.map((item) => {
+                    const active = isActive(item.href);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`nav-item ${active ? 'nav-item-active' : ''}`}
+                      >
+                        <item.icon
+                          className={`w-4 h-4 flex-shrink-0 ${
+                            active ? 'text-primary-600' : 'text-surface-500'
+                          }`}
+                        />
+                        <span className="truncate">{item.label}</span>
+                        {item.badge && (
+                          <span className="ml-auto badge-info">{item.badge}</span>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          )}
+          );
+        })}
+      </nav>
+
+      {/* User card */}
+      <div className="border-t border-surface-100 p-3">
+        <div className="flex items-center gap-3 px-2 py-2">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-400 to-violet-500 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+            {(user?.firstName?.[0] ?? 'U').toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-semibold text-surface-900 truncate">
+              {user?.firstName} {user?.lastName}
+            </div>
+            <div className="text-2xs text-surface-500 capitalize truncate">
+              {user?.role?.replace('_', ' ') ?? 'User'}
+            </div>
+          </div>
           <button
             onClick={logout}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 w-full transition-colors"
-            title={collapsed ? 'Logout' : undefined}
+            className="text-surface-400 hover:text-rose-600 transition-colors p-1.5 rounded-md hover:bg-surface-100"
+            title="Sign out"
           >
-            <LogOut className="w-5 h-5 flex-shrink-0" />
-            {!collapsed && <span>Logout</span>}
+            <LogOut className="w-4 h-4" />
           </button>
         </div>
-      </aside>
-
-      {/* Mobile overlay */}
-      {!collapsed && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/20 z-30"
-          onClick={() => setCollapsed(true)}
-        />
-      )}
-    </>
+      </div>
+    </aside>
   );
 }

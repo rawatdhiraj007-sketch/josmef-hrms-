@@ -1,14 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/lib/api';
 import {
-  Users, UserPlus, GraduationCap, Clock, DollarSign, AlertCircle,
-  TrendingUp, TrendingDown, CheckCircle, XCircle, ArrowRight,
-  Calendar, Briefcase, AlertTriangle, ShieldAlert,
+  Users, UserPlus, GraduationCap, DollarSign,
+  ArrowRight, ArrowUpRight,
+  Plane, ShieldAlert, Gift, FileBarChart, Sparkles,
+  Plus, Activity, CalendarCheck, BarChart3,
 } from 'lucide-react';
+import {
+  Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid,
+} from 'recharts';
 
 interface Stats {
   totalEmployees: number;
@@ -19,280 +23,403 @@ interface Stats {
   presentToday: number;
   absentToday: number;
   lateToday: number;
-  pendingClearance: number;
-  pendingPayroll: number;
 }
 
-interface ChartData { label: string; value: string | number }
-interface RecentHire { id: string; firstName: string; lastName: string; position: string; department: string; dateHired: string }
-interface UpcomingEvent { type: string; title: string; date: string }
+interface Trend { month: string; headcount: number }
 
-const COLORS = ['#3478ff', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+interface RecentHire {
+  id: string;
+  firstName: string;
+  lastName: string;
+  position?: string;
+  department?: string;
+  dateHired?: string;
+}
+
+interface ComplianceSummary {
+  total: number;
+  critical: number;
+  high: number;
+}
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
-  const [empByDept, setEmpByDept] = useState<ChartData[]>([]);
-  const [empByStatus, setEmpByStatus] = useState<ChartData[]>([]);
-  const [appByStatus, setAppByStatus] = useState<ChartData[]>([]);
+  const [trend, setTrend] = useState<Trend[]>([]);
   const [recentHires, setRecentHires] = useState<RecentHire[]>([]);
-  const [events, setEvents] = useState<UpcomingEvent[]>([]);
-  const [complianceSummary, setComplianceSummary] = useState<{ total: number; critical: number; high: number } | null>(null);
+  const [compliance, setCompliance] = useState<ComplianceSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      api.get('/dashboard/stats').catch(() => ({ data: null })),
-      api.get('/dashboard/charts/employees-by-department').catch(() => ({ data: [] })),
-      api.get('/dashboard/charts/employees-by-status').catch(() => ({ data: [] })),
-      api.get('/dashboard/charts/applicants-by-status').catch(() => ({ data: [] })),
-      api.get('/dashboard/recent-hires').catch(() => ({ data: [] })),
-      api.get('/dashboard/upcoming-events').catch(() => ({ data: [] })),
-      api.get('/compliance/alerts').catch(() => ({ data: { summary: null } })),
-    ]).then(([s, d, st, ap, rh, ev, comp]) => {
-      setStats(s.data);
-      setEmpByDept(d.data);
-      setEmpByStatus(st.data);
-      setAppByStatus(ap.data);
-      setRecentHires(rh.data);
-      setEvents(ev.data);
-      if (comp.data?.summary) setComplianceSummary(comp.data.summary);
-    }).finally(() => setLoading(false));
+    (async () => {
+      try {
+        const [s, t, h, c] = await Promise.all([
+          api.get('/dashboard/stats').catch(() => ({ data: {} })),
+          api.get('/analytics/headcount-trend').catch(() => ({ data: [] })),
+          api.get('/employees', { params: { limit: 5 } }).catch(() => ({ data: { rows: [] } })),
+          api.get('/compliance/alerts').catch(() => ({ data: { summary: null } })),
+        ]);
+        setStats(s.data);
+        setTrend(t.data);
+        setRecentHires(h.data?.rows ?? []);
+        setCompliance(c.data?.summary);
+      } finally { setLoading(false); }
+    })();
   }, []);
 
-  const greeting = () => {
+  const greeting = (() => {
     const h = new Date().getHours();
-    return h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
-  };
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+  })();
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-3 border-brand-200 border-t-brand-600 rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  const s = stats || {} as Stats;
+  const today = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+  });
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Good {greeting()}, {user?.firstName}</h1>
-        <p className="text-gray-500 mt-1">Here&apos;s your workforce overview</p>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-        <KPI icon={Users} label="Active Employees" value={s.activeEmployees} color="bg-blue-500" onClick={() => router.push('/dashboard/employees')} />
-        <KPI icon={UserPlus} label="New Applicants" value={s.newApplicants} color="bg-emerald-500" onClick={() => router.push('/dashboard/applicants')} />
-        <KPI icon={GraduationCap} label="Trainees" value={s.totalTrainees} color="bg-violet-500" onClick={() => router.push('/dashboard/trainees')} />
-        <KPI icon={Clock} label="Present Today" value={s.presentToday} sub={`${s.lateToday} late • ${s.absentToday} absent`} color="bg-amber-500" onClick={() => router.push('/dashboard/attendance')} />
-        <KPI icon={DollarSign} label="Pending Payroll" value={s.pendingPayroll} color="bg-rose-500" onClick={() => router.push('/dashboard/payroll')} />
-      </div>
-
-      {/* Compliance Alert Banner */}
-      {complianceSummary && complianceSummary.total > 0 && (
-        <div
-          className={`mb-6 rounded-xl border p-4 flex items-center justify-between cursor-pointer hover:opacity-90 transition-opacity ${
-            complianceSummary.critical > 0
-              ? 'bg-red-50 border-red-200'
-              : complianceSummary.high > 0
-              ? 'bg-orange-50 border-orange-200'
-              : 'bg-yellow-50 border-yellow-200'
-          }`}
-          onClick={() => router.push('/dashboard/compliance')}
-        >
-          <div className="flex items-center gap-3">
-            <ShieldAlert className={`w-6 h-6 flex-shrink-0 ${
-              complianceSummary.critical > 0 ? 'text-red-500' : complianceSummary.high > 0 ? 'text-orange-500' : 'text-yellow-500'
-            }`} />
-            <div>
-              <p className="font-semibold text-gray-900">
-                {complianceSummary.critical > 0
-                  ? `${complianceSummary.critical} Critical Compliance Issue${complianceSummary.critical !== 1 ? 's' : ''}`
-                  : `${complianceSummary.total} Compliance Alert${complianceSummary.total !== 1 ? 's' : ''}`}
-              </p>
-              <p className="text-sm text-gray-500">
-                {complianceSummary.critical} critical · {complianceSummary.high} high · {complianceSummary.total} total — click to review
-              </p>
-            </div>
-          </div>
-          <ArrowRight className="w-5 h-5 text-gray-400" />
+    <div className="space-y-6 animate-fade-in">
+      {/* ── Hero / greeting ────────────────────────────── */}
+      <div className="flex items-end justify-between flex-wrap gap-4">
+        <div>
+          <p className="text-sm text-surface-500">{today}</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-surface-900 mt-0.5 tracking-tight">
+            {greeting}, {user?.firstName} 👋
+          </h1>
+          <p className="text-sm text-surface-500 mt-1">
+            Here's what's happening at JOSMEF today.
+          </p>
         </div>
+        <div className="flex gap-2">
+          <Link href="/dashboard/employees/new" className="btn-secondary">
+            <Plus className="w-4 h-4" /> Add Employee
+          </Link>
+          <Link href="/dashboard/payroll" className="btn-primary">
+            <DollarSign className="w-4 h-4" /> Run Payroll
+          </Link>
+        </div>
+      </div>
+
+      {/* ── Compliance alert banner (only if critical) ── */}
+      {compliance && compliance.critical > 0 && (
+        <Link
+          href="/dashboard/compliance"
+          className="block bg-gradient-to-r from-rose-50 to-amber-50 border border-rose-200 rounded-xl p-4 hover:shadow-card transition-all group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-rose-100 flex items-center justify-center flex-shrink-0">
+              <ShieldAlert className="w-5 h-5 text-rose-600" />
+            </div>
+            <div className="flex-1">
+              <div className="font-semibold text-surface-900">
+                {compliance.critical} critical compliance issue{compliance.critical !== 1 && 's'} need your attention
+              </div>
+              <div className="text-sm text-surface-600">
+                {compliance.total} total open · {compliance.high} high priority
+              </div>
+            </div>
+            <ArrowRight className="w-5 h-5 text-rose-600 group-hover:translate-x-1 transition-transform" />
+          </div>
+        </Link>
       )}
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Employees by Department */}
-        <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Employees by Department</h2>
-          {empByDept.length === 0 ? (
-            <p className="text-gray-400 text-sm py-8 text-center">No data yet</p>
-          ) : (
-            <div className="space-y-3">
-              {empByDept.map((item, i) => {
-                const max = Math.max(...empByDept.map((d) => Number(d.value)));
-                const pct = max > 0 ? (Number(item.value) / max) * 100 : 0;
-                return (
-                  <div key={item.label}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-gray-700">{item.label || 'Unassigned'}</span>
-                      <span className="text-sm font-semibold text-gray-900">{item.value}</span>
-                    </div>
-                    <div className="h-2.5 bg-surface-200 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: COLORS[i % COLORS.length] }} />
-                    </div>
-                  </div>
-                );
-              })}
+      {/* ── KPI cards ───────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard
+          label="Total Employees"
+          value={stats?.totalEmployees ?? 0}
+          delta={stats ? `${stats.activeEmployees} active` : ''}
+          icon={Users}
+          accent="primary"
+          loading={loading}
+          href="/dashboard/employees"
+        />
+        <KpiCard
+          label="New Applicants"
+          value={stats?.newApplicants ?? 0}
+          delta={`${stats?.totalApplicants ?? 0} total pipeline`}
+          icon={UserPlus}
+          accent="violet"
+          loading={loading}
+          href="/dashboard/applicants"
+        />
+        <KpiCard
+          label="Present Today"
+          value={stats?.presentToday ?? 0}
+          delta={`${stats?.lateToday ?? 0} late · ${stats?.absentToday ?? 0} absent`}
+          icon={CalendarCheck}
+          accent="emerald"
+          loading={loading}
+          href="/dashboard/attendance"
+        />
+        <KpiCard
+          label="Trainees"
+          value={stats?.totalTrainees ?? 0}
+          delta="In training"
+          icon={GraduationCap}
+          accent="amber"
+          loading={loading}
+          href="/dashboard/trainees"
+        />
+      </div>
+
+      {/* ── Main content grid ──────────────────────────── */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Headcount trend chart */}
+        <div className="lg:col-span-2 card p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-semibold text-surface-900 flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-primary-600" />
+                Headcount Trend
+              </h3>
+              <p className="text-xs text-surface-500 mt-0.5">Active employees over the last 12 months</p>
             </div>
+            <Link href="/dashboard/analytics" className="btn-ghost text-xs">
+              View analytics <ArrowUpRight className="w-3 h-3" />
+            </Link>
+          </div>
+          {loading ? (
+            <div className="h-56 bg-surface-50 rounded-lg animate-pulse" />
+          ) : trend.length === 0 ? (
+            <div className="h-56 flex items-center justify-center text-surface-400 text-sm">
+              No data yet — add employees to see trends
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={224}>
+              <LineChart data={trend}>
+                <defs>
+                  <linearGradient id="headcountGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#e11d48" stopOpacity={0.2} />
+                    <stop offset="100%" stopColor="#e11d48" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#a1a1aa' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#a1a1aa' }} axisLine={false} tickLine={false} />
+                <Tooltip
+                  contentStyle={{
+                    fontSize: 12,
+                    borderRadius: 8,
+                    border: '1px solid #e4e4e7',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="headcount"
+                  stroke="#e11d48"
+                  strokeWidth={2.5}
+                  dot={{ r: 0 }}
+                  activeDot={{ r: 5, fill: '#e11d48' }}
+                  fill="url(#headcountGrad)"
+                />
+              </LineChart>
+            </ResponsiveContainer>
           )}
         </div>
 
-        {/* Applicants by Status */}
+        {/* Quick actions */}
         <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Applicant Pipeline</h2>
-          {appByStatus.length === 0 ? (
-            <p className="text-gray-400 text-sm py-8 text-center">No data yet</p>
-          ) : (
-            <div className="space-y-3">
-              {appByStatus.map((item, i) => {
-                const max = Math.max(...appByStatus.map((d) => Number(d.value)));
-                const pct = max > 0 ? (Number(item.value) / max) * 100 : 0;
-                return (
-                  <div key={item.label}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-gray-700">{(item.label || '').replace(/_/g, ' ')}</span>
-                      <span className="text-sm font-semibold text-gray-900">{item.value}</span>
-                    </div>
-                    <div className="h-2.5 bg-surface-200 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: COLORS[i % COLORS.length] }} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          <h3 className="font-semibold text-surface-900 mb-4 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-primary-600" />
+            Quick Actions
+          </h3>
+          <div className="space-y-2">
+            <QuickAction href="/dashboard/applicants/new" icon={UserPlus} label="New Applicant" />
+            <QuickAction href="/dashboard/leave" icon={Plane} label="Review Leave Requests" />
+            <QuickAction href="/dashboard/bonus/new" icon={Gift} label="Create Bonus Run" />
+            <QuickAction href="/dashboard/gov-reports" icon={FileBarChart} label="Generate Gov Report" />
+            <QuickAction href="/dashboard/training/new" icon={GraduationCap} label="Add Training Course" />
+          </div>
         </div>
       </div>
 
-      {/* Bottom Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Employee Status Breakdown */}
+      {/* ── Recent hires + today snapshot ─────────────── */}
+      <div className="grid lg:grid-cols-2 gap-6">
         <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Employee Status</h2>
-          {empByStatus.length === 0 ? (
-            <p className="text-gray-400 text-sm py-8 text-center">No data yet</p>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-surface-900 flex items-center gap-2">
+              <Users className="w-4 h-4 text-primary-600" />
+              Recent Hires
+            </h3>
+            <Link href="/dashboard/employees" className="btn-ghost text-xs">
+              View all <ArrowUpRight className="w-3 h-3" />
+            </Link>
+          </div>
+          {loading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => <div key={i} className="h-12 bg-surface-50 rounded-lg animate-pulse" />)}
+            </div>
+          ) : recentHires.length === 0 ? (
+            <div className="text-sm text-surface-400 py-6 text-center">No employees yet</div>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
-              {empByStatus.map((item, i) => (
-                <div key={item.label} className="flex items-center gap-3 p-3 rounded-lg bg-surface-50">
-                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                  <div>
-                    <p className="text-xs text-gray-500">{(item.label || '').replace(/_/g, ' ')}</p>
-                    <p className="font-semibold text-gray-900">{item.value}</p>
+            <div className="space-y-1">
+              {recentHires.map(emp => (
+                <Link
+                  key={emp.id}
+                  href={`/dashboard/employees/${emp.id}`}
+                  className="flex items-center gap-3 p-2 -mx-2 rounded-lg hover:bg-surface-50 transition-colors group"
+                >
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-400 to-violet-500 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                    {emp.firstName?.[0]?.toUpperCase()}
                   </div>
-                </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-surface-900 truncate">
+                      {emp.firstName} {emp.lastName}
+                    </div>
+                    <div className="text-xs text-surface-500 truncate">
+                      {emp.position || emp.department || 'Employee'}
+                    </div>
+                  </div>
+                  {emp.dateHired && (
+                    <div className="text-xs text-surface-400">
+                      {new Date(emp.dateHired).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </div>
+                  )}
+                  <ArrowRight className="w-3.5 h-3.5 text-surface-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Link>
               ))}
             </div>
           )}
         </div>
 
-        {/* Recent Hires + Events */}
-        <div className="space-y-6">
-          <div className="card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Recent Hires</h2>
-              <button onClick={() => router.push('/dashboard/employees')} className="text-sm text-brand-600 hover:underline flex items-center gap-1">
-                View all <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-            {recentHires.length === 0 ? (
-              <p className="text-gray-400 text-sm">No recent hires</p>
-            ) : (
-              <div className="space-y-3">
-                {recentHires.slice(0, 5).map((h) => (
-                  <div key={h.id} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 font-semibold text-sm">
-                        {h.firstName[0]}{h.lastName[0]}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{h.firstName} {h.lastName}</p>
-                        <p className="text-xs text-gray-400">{h.position}</p>
-                      </div>
-                    </div>
-                    <span className="text-xs text-gray-400">{h.dateHired?.split('T')[0]}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+        <div className="card p-6">
+          <h3 className="font-semibold text-surface-900 mb-4 flex items-center gap-2">
+            <Activity className="w-4 h-4 text-primary-600" />
+            Today at a Glance
+          </h3>
+          <div className="space-y-4">
+            <ActivityRow
+              label="Attendance Rate"
+              value={
+                stats && (stats.presentToday + stats.absentToday + stats.lateToday) > 0
+                  ? `${Math.round(stats.presentToday / (stats.presentToday + stats.absentToday + stats.lateToday) * 100)}%`
+                  : '—'
+              }
+              icon={CalendarCheck}
+              color="emerald"
+            />
+            <ActivityRow
+              label="Open Compliance Issues"
+              value={compliance?.total ?? 0}
+              icon={ShieldAlert}
+              color={compliance && compliance.critical > 0 ? 'rose' : 'surface'}
+            />
+            <ActivityRow
+              label="Active Applicants"
+              value={stats?.newApplicants ?? 0}
+              icon={UserPlus}
+              color="violet"
+            />
+            <ActivityRow
+              label="Training Programs"
+              value="—"
+              icon={GraduationCap}
+              color="amber"
+              hint="From Training module"
+            />
           </div>
-
-          <div className="card p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Events</h2>
-            {events.length === 0 ? (
-              <p className="text-gray-400 text-sm">No upcoming events</p>
-            ) : (
-              <div className="space-y-3">
-                {events.slice(0, 5).map((ev, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${ev.type === 'contract_expiry' ? 'bg-amber-100' : 'bg-red-100'}`}>
-                      {ev.type === 'contract_expiry' ? <Calendar className="w-4 h-4 text-amber-600" /> : <Briefcase className="w-4 h-4 text-red-600" />}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-900">{ev.title}</p>
-                      <p className="text-xs text-gray-400">{ev.date?.split('T')[0]}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="card p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
-          {[
-            { label: 'Add Applicant', icon: UserPlus, href: '/dashboard/applicants/new' },
-            { label: 'Add Employee', icon: Users, href: '/dashboard/employees/new' },
-            { label: 'Add Trainee', icon: GraduationCap, href: '/dashboard/trainees/new' },
-            { label: 'Attendance', icon: Clock, href: '/dashboard/attendance' },
-            { label: 'Run Payroll', icon: DollarSign, href: '/dashboard/payroll' },
-            { label: 'Exit Clearance', icon: AlertCircle, href: '/dashboard/exit-clearance/new' },
-          ].map((a) => (
-            <button key={a.label} onClick={() => router.push(a.href)}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl border border-surface-200 hover:border-brand-300 hover:bg-brand-50 transition-colors text-sm font-medium text-gray-700">
-              <a.icon className="w-5 h-5 text-brand-600" />
-              {a.label}
-            </button>
-          ))}
         </div>
       </div>
     </div>
   );
 }
 
-function KPI({ icon: Icon, label, value, sub, color, onClick }: {
-  icon: any; label: string; value: number; sub?: string; color: string; onClick?: () => void;
+// ─────────────────────────────────────────────────────────
+// Components
+// ─────────────────────────────────────────────────────────
+
+function KpiCard({
+  label, value, delta, icon: Icon, accent, loading, href,
+}: {
+  label: string;
+  value: number | string;
+  delta?: string;
+  icon: any;
+  accent: 'primary' | 'violet' | 'emerald' | 'amber';
+  loading?: boolean;
+  href?: string;
 }) {
-  return (
-    <div onClick={onClick} className="card p-4 cursor-pointer hover:shadow-md transition-shadow">
-      <div className="flex items-center gap-3">
-        <div className={`${color} w-10 h-10 rounded-xl flex items-center justify-center`}>
-          <Icon className="w-5 h-5 text-white" />
+  const colors = {
+    primary: 'from-primary-100 to-primary-50 text-primary-600',
+    violet: 'from-violet-100 to-violet-50 text-violet-600',
+    emerald: 'from-emerald-100 to-emerald-50 text-emerald-600',
+    amber: 'from-amber-100 to-amber-50 text-amber-600',
+  };
+  const Card = (
+    <div className="kpi-card group">
+      <div className="flex items-start justify-between mb-3">
+        <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${colors[accent]} flex items-center justify-center`}>
+          <Icon className="w-5 h-5" />
         </div>
-        <div>
-          <p className="text-2xl font-bold text-gray-900">{value ?? 0}</p>
-          <p className="text-xs text-gray-500">{label}</p>
-          {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
-        </div>
+        {href && (
+          <ArrowUpRight className="w-4 h-4 text-surface-300 group-hover:text-surface-600 transition-colors" />
+        )}
       </div>
+      {loading ? (
+        <div className="space-y-2">
+          <div className="h-7 w-16 bg-surface-100 rounded animate-pulse" />
+          <div className="h-3 w-24 bg-surface-100 rounded animate-pulse" />
+        </div>
+      ) : (
+        <>
+          <div className="text-2xl font-bold text-surface-900 tracking-tight tabular-nums">
+            {typeof value === 'number' ? value.toLocaleString() : value}
+          </div>
+          <div className="text-xs text-surface-500 mt-1">{delta}</div>
+          <div className="text-2xs uppercase tracking-wider text-surface-400 font-semibold mt-2">
+            {label}
+          </div>
+        </>
+      )}
+    </div>
+  );
+  return href ? <Link href={href}>{Card}</Link> : Card;
+}
+
+function QuickAction({ href, icon: Icon, label }: { href: string; icon: any; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-3 px-3 py-2.5 -mx-1 rounded-lg hover:bg-surface-50 transition-colors group"
+    >
+      <div className="w-8 h-8 rounded-lg bg-surface-100 group-hover:bg-primary-100 group-hover:text-primary-600 flex items-center justify-center text-surface-600 transition-colors">
+        <Icon className="w-4 h-4" />
+      </div>
+      <span className="text-sm text-surface-700 font-medium flex-1">{label}</span>
+      <ArrowRight className="w-3.5 h-3.5 text-surface-300 group-hover:text-surface-600 group-hover:translate-x-0.5 transition-all" />
+    </Link>
+  );
+}
+
+function ActivityRow({
+  label, value, icon: Icon, color, hint,
+}: {
+  label: string;
+  value: string | number;
+  icon: any;
+  color: 'emerald' | 'rose' | 'violet' | 'amber' | 'surface';
+  hint?: string;
+}) {
+  const colors = {
+    emerald: 'bg-emerald-50 text-emerald-600',
+    rose: 'bg-rose-50 text-rose-600',
+    violet: 'bg-violet-50 text-violet-600',
+    amber: 'bg-amber-50 text-amber-600',
+    surface: 'bg-surface-100 text-surface-500',
+  };
+  return (
+    <div className="flex items-center gap-3">
+      <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${colors[color]}`}>
+        <Icon className="w-4 h-4" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium text-surface-900">{label}</div>
+        {hint && <div className="text-xs text-surface-400 mt-0.5">{hint}</div>}
+      </div>
+      <div className="text-lg font-bold text-surface-900 tabular-nums">{value}</div>
     </div>
   );
 }
