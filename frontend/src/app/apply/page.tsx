@@ -144,7 +144,7 @@ export default function ApplyPage() {
   // ─── Success page ────────────────────────────────────
   if (result?.success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-violet-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-b from-surface-50 via-white to-surface-50 flex items-center justify-center p-4">
         <div className="card max-w-md w-full p-8 text-center animate-slide-up">
           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 mx-auto flex items-center justify-center mb-4">
             <CheckCircle className="w-8 h-8 text-white" />
@@ -178,29 +178,41 @@ export default function ApplyPage() {
 
   // ─── Form ────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-violet-50 py-8 px-4">
-      {/* Hero */}
-      <div className="max-w-3xl mx-auto mb-8 text-center">
-        <div className="flex justify-center mb-4">
-          <Logo size={48} textClassName="text-xl text-surface-900" taglineClassName="text-2xs text-surface-500" />
+    <div className="min-h-screen bg-gradient-to-b from-surface-50 via-white to-surface-50">
+      {/* Top nav */}
+      <nav className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-surface-100">
+        <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
+          <Logo size={32} textClassName="text-base text-surface-900" taglineClassName="hidden" />
+          <div className="text-xs text-surface-500">
+            Step {step} of 2
+          </div>
         </div>
-        <h1 className="text-3xl md:text-4xl font-bold text-surface-900 tracking-tight">
-          Join our team
-        </h1>
-        <p className="text-surface-600 mt-2 max-w-lg mx-auto">
-          {step === 1
-            ? "Pick a position you're interested in, or apply for general consideration."
-            : selectedJob
-              ? `You're applying for ${selectedJob.title}. Fill out the form below.`
-              : 'Tell us about yourself and we\'ll be in touch.'}
-        </p>
+      </nav>
 
-        {/* Progress dots */}
-        <div className="flex items-center justify-center gap-2 mt-6">
-          <div className={`h-1.5 rounded-full transition-all ${step === 1 ? 'w-8 bg-primary-600' : 'w-1.5 bg-primary-200'}`} />
-          <div className={`h-1.5 rounded-full transition-all ${step === 2 ? 'w-8 bg-primary-600' : 'w-1.5 bg-surface-300'}`} />
+      <div className="py-12 px-4">
+        {/* Hero */}
+        <div className="max-w-3xl mx-auto mb-10 text-center">
+          <div className="inline-flex items-center gap-2 bg-primary-50 text-primary-700 rounded-full px-3 py-1 text-xs font-medium mb-4">
+            <Briefcase className="w-3 h-3" />
+            We're hiring
+          </div>
+          <h1 className="text-3xl md:text-5xl font-bold text-surface-900 tracking-tight">
+            Join our team
+          </h1>
+          <p className="text-surface-600 mt-3 max-w-lg mx-auto text-sm md:text-base">
+            {step === 1
+              ? "Pick a position you're interested in, or apply for general consideration."
+              : selectedJob
+                ? `You're applying for ${selectedJob.title}.`
+                : "Tell us about yourself and we'll be in touch."}
+          </p>
+
+          {/* Progress dots */}
+          <div className="flex items-center justify-center gap-2 mt-8">
+            <div className={`h-1.5 rounded-full transition-all ${step === 1 ? 'w-10 bg-primary-600' : 'w-1.5 bg-primary-200'}`} />
+            <div className={`h-1.5 rounded-full transition-all ${step === 2 ? 'w-10 bg-primary-600' : 'w-1.5 bg-surface-300'}`} />
+          </div>
         </div>
-      </div>
 
       <div className="max-w-3xl mx-auto">
         {/* Submit error */}
@@ -304,7 +316,7 @@ export default function ApplyPage() {
 
             {/* Selected job summary */}
             {selectedJob && (
-              <div className="card p-4 bg-gradient-to-r from-primary-50 to-pink-50 border-primary-200">
+              <div className="card p-4 bg-gradient-to-r from-primary-50 to-accent-500/5 border-primary-200">
                 <div className="text-2xs font-semibold uppercase tracking-wider text-primary-600 mb-1">
                   Applying for
                 </div>
@@ -554,6 +566,7 @@ export default function ApplyPage() {
             </p>
           </form>
         )}
+        </div>
       </div>
     </div>
   );

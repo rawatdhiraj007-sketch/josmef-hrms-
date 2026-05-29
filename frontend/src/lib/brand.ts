@@ -1,40 +1,28 @@
 /**
  * ╔════════════════════════════════════════════════════════════════╗
- * ║  BRAND CONFIG — single source of truth for product name & look ║
+ * ║  BRAND CONFIG — single source of truth                         ║
  * ║                                                                ║
- * ║  To rename the entire product:                                 ║
- * ║    1. Change `name` below                                      ║
- * ║    2. Save the file                                            ║
- * ║    3. That's it. Sidebar, login, layout title, apply page,     ║
- * ║       portal, favicon alt-text — everything updates.           ║
+ * ║  Generic SaaS branding for now. When ready to launch for a     ║
+ * ║  specific client, change `name` + `tagline` here and set       ║
+ * ║  useHealthcareLogo:true if you want the heart logo back.       ║
  * ╚════════════════════════════════════════════════════════════════╝
  */
 
 export const BRAND = {
-  /** Product name. */
-  name: 'JOSMEF',
-
-  /** Tagline shown under the wordmark in some contexts. Leave '' to hide. */
-  tagline: 'God cures, we care',
-
-  /** Short blurb for the login left-panel hero. */
+  name: 'Workforce',
+  tagline: '',
   hero: {
-    headline: 'Caring for those\nwho care for\nothers.',
+    headline: 'Modern HR\nbuilt for\nteams.',
     body:
-      'Recruitment, attendance, payroll, compliance, and the full ' +
-      'employee lifecycle — built for healthcare teams.',
+      'Recruitment, attendance, payroll, leave, compliance, and the full ' +
+      'employee lifecycle on one platform.',
   },
-
-  /** Meta description for SEO + browser tab. */
-  metaTitle: 'JOSMEF HRMS — God Cures, We Care',
-  metaDescription:
-    'Enterprise HR Management System for healthcare teams. ' +
-    'PRC license tracking, shift scheduling, payroll, compliance.',
+  metaTitle: 'Workforce — Modern HR',
+  metaDescription: 'Modern HR platform for growing companies.',
 
   /** Use the healthcare heart logo (true) or generic gradient square (false). */
-  useHealthcareLogo: true,
+  useHealthcareLogo: false,
 
-  /** Gradient colors for the square-with-letter logo (only used if useHealthcareLogo: false). */
   logo: {
     fromColor: 'from-primary-500',
     viaColor: 'via-pink-500',

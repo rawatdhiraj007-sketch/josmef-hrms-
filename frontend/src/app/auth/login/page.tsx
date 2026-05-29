@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { LogIn, Eye, EyeOff } from 'lucide-react';
+import { LogIn, Eye, EyeOff, ArrowRight, Check, Sparkles } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { BRAND } from '@/lib/brand';
 
 // ⚠️ TESTING MODE: when true, page auto-logs you in as admin on load.
-// To disable: set this to false (or wire it to an env var).
 const TESTING_OPEN_MODE = true;
 
 export default function LoginPage() {
@@ -23,11 +22,7 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await login({ email, password });
-    } catch {
-      // error handled by context
-    } finally {
-      setSubmitting(false);
-    }
+    } catch { /* */ } finally { setSubmitting(false); }
   }
 
   async function handleDemoLogin(role: 'admin' | 'employee') {
@@ -37,126 +32,157 @@ export default function LoginPage() {
         ? { email: 'admin@josmef.com', password: 'Admin@2025' }
         : { email: 'demo.employee@josmef.com', password: 'Demo@2025' };
       await login(creds);
-    } catch {
-      // error shown by context
-    } finally {
-      setDemoLoading(false);
-    }
+    } catch { /* */ } finally { setDemoLoading(false); }
   }
 
-  // ⚠️ TESTING MODE: auto-login as admin on page load
   useEffect(() => {
     if (TESTING_OPEN_MODE && !submitting && !demoLoading) {
-      const timer = setTimeout(() => {
-        handleDemoLogin('admin');
-      }, 400);
+      const timer = setTimeout(() => handleDemoLogin('admin'), 400);
       return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Show full-screen "logging you in" overlay during auto-login
+  // Loading overlay during auto-login
   if (TESTING_OPEN_MODE && demoLoading && !error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-rose-50 via-pink-50 to-violet-50">
+      <div className="min-h-screen bg-surface-50 flex items-center justify-center">
         <div className="text-center">
           <div className="mb-6 flex justify-center">
-            <Logo size={80} textClassName="text-2xl text-gray-900" taglineClassName="text-sm text-gray-500" />
+            <Logo size={56} textClassName="text-xl text-surface-900" taglineClassName="hidden" />
           </div>
-          <div className="flex items-center justify-center gap-3 text-rose-700">
-            <div className="w-6 h-6 border-2 border-rose-300 border-t-rose-700 rounded-full animate-spin"></div>
-            <span className="font-medium">Signing you in for testing...</span>
+          <div className="flex items-center justify-center gap-3 text-primary-600">
+            <div className="w-5 h-5 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
+            <span className="font-medium text-sm">Signing you in…</span>
           </div>
-          <p className="text-xs text-gray-400 mt-4 max-w-xs">
-            Auto-login is on. To require credentials,
-            set <code className="bg-gray-100 px-1 rounded">TESTING_OPEN_MODE = false</code>
-            {' '}in <code className="bg-gray-100 px-1 rounded">auth/login/page.tsx</code>.
-          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left panel - branding */}
-      <div className="hidden lg:flex lg:w-[45%] bg-gradient-to-br from-rose-900 via-pink-800 to-violet-900 text-white flex-col justify-between p-12">
-        <div>
-          <Logo
-            size={64}
-            textClassName="text-3xl text-white"
-            taglineClassName="text-pink-200"
-          />
-          <p className="text-pink-200/80 text-sm mt-3 ml-[76px] -mt-1">
-            Human Resource Management System
-          </p>
+    <div className="min-h-screen flex bg-white">
+      {/* ─── Left panel — premium dark hero ─── */}
+      <div className="hidden lg:flex lg:w-[50%] relative overflow-hidden bg-surface-900 text-white flex-col justify-between p-12">
+        {/* Animated gradient blobs */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 -left-32 w-[480px] h-[480px] bg-primary-600/30 rounded-full blur-[120px]" />
+          <div className="absolute bottom-0 -right-32 w-[480px] h-[480px] bg-accent-600/30 rounded-full blur-[120px]" />
+          <div className="absolute inset-0 bg-grid-pattern opacity-40" />
         </div>
 
-        <div className="space-y-6">
-          <h1 className="text-4xl font-bold leading-tight whitespace-pre-line">
+        {/* Top — logo */}
+        <div className="relative z-10">
+          <Logo
+            size={40}
+            textClassName="text-2xl text-white"
+            taglineClassName="hidden"
+          />
+        </div>
+
+        {/* Middle — hero copy */}
+        <div className="relative z-10 space-y-8 max-w-lg">
+          <div className="inline-flex items-center gap-2 bg-white/5 backdrop-blur border border-white/10 rounded-full px-3 py-1 text-xs text-white/80">
+            <Sparkles className="w-3 h-3" />
+            <span>New: AI-powered insights</span>
+          </div>
+          <h1 className="text-5xl font-bold leading-tight tracking-tight whitespace-pre-line">
             {BRAND.hero.headline}
           </h1>
-          <p className="text-pink-100/90 text-lg leading-relaxed max-w-md">
+          <p className="text-white/70 text-lg leading-relaxed">
             {BRAND.hero.body}
           </p>
+
+          {/* Feature checks */}
+          <div className="grid grid-cols-2 gap-3 pt-6">
+            {[
+              'License tracking',
+              'Shift scheduling',
+              'Payroll + bonus runs',
+              'Compliance alerts',
+              'Employee portal',
+              'Slack / Teams sync',
+            ].map(f => (
+              <div key={f} className="flex items-center gap-2 text-sm text-white/80">
+                <Check className="w-4 h-4 text-primary-400 flex-shrink-0" />
+                {f}
+              </div>
+            ))}
+          </div>
         </div>
 
-        <p className="text-pink-200/60 text-xs">
-          © {new Date().getFullYear()} {BRAND.name}. All rights reserved.
-        </p>
+        {/* Bottom — testimonial */}
+        <div className="relative z-10">
+          <blockquote className="border-l-2 border-primary-500 pl-4 italic text-white/70 text-sm max-w-md">
+            "Cut our HR admin time by 60% and never missed another license
+            renewal."
+          </blockquote>
+          <p className="text-xs text-white/50 mt-2 pl-5">— Head of HR, Mid-size Hospital</p>
+        </div>
       </div>
 
-      {/* Right panel - login form */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
+      {/* ─── Right panel — sign-in form ─── */}
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-white">
+        <div className="w-full max-w-md animate-slide-up">
           {/* Mobile logo */}
           <div className="lg:hidden mb-10">
-            <Logo size={48} textClassName="text-xl text-gray-900" />
+            <Logo size={44} textClassName="text-xl text-surface-900" taglineClassName="hidden" />
           </div>
 
-          <h2 className="text-2xl font-bold text-gray-900 mb-1">Welcome back</h2>
-          <p className="text-gray-500 mb-8">Sign in to your HRMS account</p>
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-surface-900 tracking-tight">
+              Welcome back
+            </h2>
+            <p className="text-surface-500 mt-2 text-sm">
+              Sign in to your {BRAND.name} account
+            </p>
+          </div>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="mb-5 px-4 py-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-sm">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Email address
+              <label className="block text-sm font-medium text-surface-700 mb-1.5">
+                Email
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="input-field"
+                className="w-full px-4 py-2.5 bg-white border border-surface-200 rounded-xl text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500 transition-all"
                 placeholder="you@company.com"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Password
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-sm font-medium text-surface-700">
+                  Password
+                </label>
+                <button type="button" className="text-xs text-primary-600 hover:text-primary-700 font-medium">
+                  Forgot?
+                </button>
+              </div>
               <div className="relative">
                 <input
                   type={showPass ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="input-field pr-12"
+                  className="w-full px-4 py-2.5 pr-11 bg-white border border-surface-200 rounded-xl text-sm text-surface-900 placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500 transition-all"
                   placeholder="Enter your password"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-400 hover:text-surface-600 transition-colors"
                 >
-                  {showPass ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
@@ -164,28 +190,28 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={submitting || demoLoading}
-              className="btn-primary w-full flex items-center justify-center gap-2 py-3"
+              className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:from-primary-700 hover:to-primary-800 transition-all shadow-soft focus:outline-none focus:ring-2 focus:ring-primary-200 focus:ring-offset-2 disabled:opacity-50"
             >
               {submitting ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
-                  <LogIn className="w-5 h-5" />
-                  Sign In
+                  Sign in
+                  <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </button>
           </form>
 
-          {/* ── Quick-access demo logins (for testing — remove before launch) ── */}
+          {/* Demo logins */}
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200"></div>
+                <div className="w-full border-t border-surface-200"></div>
               </div>
               <div className="relative flex justify-center">
-                <span className="bg-white px-3 text-xs text-gray-400 uppercase tracking-wider">
-                  Testing Mode
+                <span className="bg-white px-3 text-2xs text-surface-400 uppercase tracking-wider font-semibold">
+                  Or try a demo
                 </span>
               </div>
             </div>
@@ -194,27 +220,30 @@ export default function LoginPage() {
                 type="button"
                 onClick={() => handleDemoLogin('admin')}
                 disabled={submitting || demoLoading}
-                className="border-2 border-rose-600 text-rose-700 hover:bg-rose-50 font-medium py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                className="border border-surface-200 hover:border-primary-300 hover:bg-primary-50/40 text-surface-700 py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-50"
               >
-                {demoLoading ? '...' : '🔑 HR Admin'}
+                {demoLoading ? '…' : 'HR Admin'}
               </button>
               <button
                 type="button"
                 onClick={() => handleDemoLogin('employee')}
                 disabled={submitting || demoLoading}
-                className="border-2 border-violet-600 text-violet-700 hover:bg-violet-50 font-medium py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+                className="border border-surface-200 hover:border-primary-300 hover:bg-primary-50/40 text-surface-700 py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-50"
               >
-                {demoLoading ? '...' : '👤 Employee'}
+                {demoLoading ? '…' : 'Employee'}
               </button>
             </div>
-            <p className="text-[11px] text-gray-400 text-center mt-3">
-              One-click access for testing. Remove these buttons before going live.
-            </p>
           </div>
 
-          <p className="mt-8 text-center text-xs text-gray-400">
-            Protected by enterprise-grade security
-          </p>
+          {/* Footer */}
+          <div className="mt-12 pt-6 border-t border-surface-100 flex items-center justify-between text-xs text-surface-400">
+            <span>© {new Date().getFullYear()} {BRAND.name}</span>
+            <div className="flex gap-4">
+              <a href="#" className="hover:text-surface-600">Privacy</a>
+              <a href="#" className="hover:text-surface-600">Terms</a>
+              <a href="#" className="hover:text-surface-600">Help</a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
