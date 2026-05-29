@@ -55,7 +55,7 @@ export default function AiHubPage() {
 /* ─── HR Chat Assistant ─── */
 function HrChat() {
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([
-    { role: 'assistant', content: 'Hi! I\'m the JOSMEF HR Assistant. Ask me about Philippine labor law, HR policies, employee benefits, or any HR-related questions.' },
+    { role: 'assistant', content: 'Hi! I\'m your HR Assistant. Ask me about Philippine labor law, HR policies, employee benefits, or any HR-related questions.' },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);

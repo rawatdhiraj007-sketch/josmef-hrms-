@@ -139,7 +139,7 @@ export default function DashboardPage() {
             {greeting}, {user?.firstName} 👋
           </h1>
           <p className="text-sm text-surface-500 mt-1">
-            Here's what's happening at JOSMEF today.
+            Here's what's happening today.
           </p>
         </div>
         <div className="flex gap-2">

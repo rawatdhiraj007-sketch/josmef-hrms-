@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import api from '@/lib/api';
-import { GraduationCap, Plus, ExternalLink, Users, Award } from 'lucide-react';
+import { GraduationCap, Plus, ExternalLink, Users, Award, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface Course {
   id: string;
@@ -34,16 +34,19 @@ export default function TrainingPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [summary, setSummary] = useState({ totalCourses: 0, totalEnrollments: 0, completed: 0, inProgress: 0 });
   const [loading, setLoading] = useState(true);
+  const [graphyStatus, setGraphyStatus] = useState<{ configured: boolean; baseUrl: string; webhookSecretSet: boolean } | null>(null);
 
   async function load() {
     setLoading(true);
     try {
-      const [c, s] = await Promise.all([
+      const [c, s, g] = await Promise.all([
         api.get('/training/courses'),
         api.get('/training/summary'),
+        api.get('/training/graphy/status').catch(() => null),
       ]);
       setCourses(c.data);
       setSummary(s.data);
+      if (g) setGraphyStatus(g.data);
     } finally { setLoading(false); }
   }
 
@@ -62,6 +65,30 @@ export default function TrainingPage() {
           <Plus className="w-4 h-4" /> Add Course
         </Link>
       </div>
+
+      {/* Graphy connection status */}
+      {graphyStatus && (
+        graphyStatus.configured ? (
+          <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm">
+            <CheckCircle className="w-5 h-5 text-green-600 shrink-0" />
+            <div>
+              <span className="font-medium text-green-800">Graphy connected</span>
+              <span className="text-green-700 ml-2">{graphyStatus.baseUrl}</span>
+              {!graphyStatus.webhookSecretSet && (
+                <span className="ml-3 text-amber-600">· Webhook secret not set</span>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm">
+            <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+            <div>
+              <span className="font-medium text-amber-800">Graphy not connected</span>
+              <span className="text-amber-700 ml-2">Add <code className="bg-amber-100 px-1 rounded">GRAPHY_API_KEY</code> to your backend <code className="bg-amber-100 px-1 rounded">.env</code> to enable sync & SSO</span>
+            </div>
+          </div>
+        )
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

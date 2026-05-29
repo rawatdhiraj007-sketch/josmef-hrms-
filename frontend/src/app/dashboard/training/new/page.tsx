@@ -55,7 +55,7 @@ export default function NewCoursePage() {
           <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <div>
             <strong>Graphy integration:</strong> Paste the course URL from your Graphy school
-            (e.g. <code className="bg-purple-100 px-1 rounded text-xs">https://josmef.graphy.com/courses/xyz</code>).
+            (e.g. <code className="bg-purple-100 px-1 rounded text-xs">https://yourschool.graphy.com/courses/xyz</code>).
             Employees launch the course in a new tab. Set the Graphy course ID below to enable progress sync (coming soon).
           </div>
         </div>
@@ -105,7 +105,7 @@ export default function NewCoursePage() {
           <label className="block text-sm font-medium mb-1">Course URL</label>
           <input type="url" value={form.url} onChange={e => setForm({ ...form, url: e.target.value })}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-            placeholder="https://josmef.graphy.com/courses/abc-123"
+            placeholder="https://yourschool.graphy.com/courses/abc-123"
           />
         </div>
 

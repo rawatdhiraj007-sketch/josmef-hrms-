@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { LogIn, Eye, EyeOff } from 'lucide-react';
 import Logo from '@/components/Logo';
+import { BRAND } from '@/lib/brand';
 
 // ⚠️ TESTING MODE: when true, page auto-logs you in as admin on load.
 // To disable: set this to false (or wire it to an env var).
@@ -92,21 +93,16 @@ export default function LoginPage() {
         </div>
 
         <div className="space-y-6">
-          <h1 className="text-4xl font-bold leading-tight">
-            Caring for those<br />
-            who care for<br />
-            <span className="bg-gradient-to-r from-amber-300 to-pink-300 bg-clip-text text-transparent">
-              others.
-            </span>
+          <h1 className="text-4xl font-bold leading-tight whitespace-pre-line">
+            {BRAND.hero.headline}
           </h1>
           <p className="text-pink-100/90 text-lg leading-relaxed max-w-md">
-            Recruitment, attendance, payroll, compliance, and the full
-            employee lifecycle — built for healthcare teams.
+            {BRAND.hero.body}
           </p>
         </div>
 
         <p className="text-pink-200/60 text-xs">
-          © {new Date().getFullYear()} JOSMEF. All rights reserved.
+          © {new Date().getFullYear()} {BRAND.name}. All rights reserved.
         </p>
       </div>
 
@@ -137,7 +133,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="input-field"
-                placeholder="you@josmef.com"
+                placeholder="you@company.com"
                 required
               />
             </div>

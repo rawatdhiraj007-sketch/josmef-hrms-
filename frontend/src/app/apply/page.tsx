@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import Logo from '@/components/Logo';
+import { BRAND } from '@/lib/brand';
 
 const API = process.env.NEXT_PUBLIC_API_URL;
 
@@ -102,7 +103,7 @@ export default function ApplyPage() {
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Application Submitted!</h2>
           <p className="text-gray-600 mb-4">
-            Thank you for your interest in JOSMEF. Your application has been received.
+            Thank you for your interest in {BRAND.name}. Your application has been received.
           </p>
           {result.number && (
             <div className="bg-brand-50 border border-brand-200 rounded-xl p-4 mb-6">
@@ -192,7 +193,7 @@ export default function ApplyPage() {
                   value={form.notes}
                   onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                   rows={4}
-                  placeholder="Tell us about yourself, your experience, and why you want to join JOSMEF..."
+                  placeholder="Tell us about yourself, your experience, and why you want to join us..."
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                 />
               </div>
@@ -213,7 +214,7 @@ export default function ApplyPage() {
           </button>
 
           <p className="text-center text-xs text-gray-500">
-            By submitting this form, you consent to JOSMEF collecting and processing your personal information for recruitment purposes.
+            By submitting this form, you consent to {BRAND.name} collecting and processing your personal information for recruitment purposes.
           </p>
         </form>
       </div>
