@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { BRAND } from '@/lib/brand';
 import Logo from '@/components/Logo';
 import {
-  Stethoscope, Award, ShieldCheck, FileBarChart, Plane, CalendarCheck,
-  ArrowRight, Check,
+  Sparkles, Users, Clock, ShieldCheck, BarChart3, Award,
+  ArrowRight, Check, Zap, Briefcase, Globe2, Database,
+  FileBarChart, Plane, CalendarCheck, GraduationCap,
 } from 'lucide-react';
 
 export default function MarketingHome() {
@@ -16,49 +17,64 @@ export default function MarketingHome() {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Logo size={32} textClassName="text-lg text-surface-900" taglineClassName="hidden" />
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-surface-600">
-            <a href="#features" className="hover:text-surface-900">Features</a>
-            <a href="#healthcare" className="hover:text-surface-900">For Healthcare</a>
-            <a href="#pricing" className="hover:text-surface-900">Pricing</a>
-            <a href="#contact" className="hover:text-surface-900">Contact</a>
+            <a href="#features" className="hover:text-surface-900 transition-colors">Features</a>
+            <a href="#integrations" className="hover:text-surface-900 transition-colors">Integrations</a>
+            <a href="#pricing" className="hover:text-surface-900 transition-colors">Pricing</a>
+            <a href="#contact" className="hover:text-surface-900 transition-colors">Contact</a>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/auth/login" className="btn-ghost text-sm">Sign in</Link>
-            <a href="#contact" className="btn-primary text-sm">Book a demo</a>
+            <Link href="/auth/login" className="text-sm text-surface-600 hover:text-surface-900 px-3 py-2">
+              Sign in
+            </Link>
+            <a
+              href="#contact"
+              className="bg-surface-900 hover:bg-surface-800 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5"
+            >
+              Book a demo <ArrowRight className="w-3.5 h-3.5" />
+            </a>
           </div>
         </div>
       </nav>
 
       {/* ───────── Hero ───────── */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-rose-50 via-pink-50 to-violet-50" />
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-rose-200 rounded-full blur-3xl opacity-40" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-violet-200 rounded-full blur-3xl opacity-40" />
+      <section className="relative overflow-hidden bg-white">
+        {/* Premium gradient blobs */}
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] bg-gradient-to-br from-primary-100/40 via-accent-500/10 to-transparent rounded-full blur-3xl" />
+          <div className="absolute -top-32 -right-32 w-96 h-96 bg-primary-200/40 rounded-full blur-3xl" />
+          <div className="absolute -top-32 -left-32 w-96 h-96 bg-accent-500/20 rounded-full blur-3xl" />
+        </div>
 
-        <div className="relative max-w-7xl mx-auto px-6 pt-20 pb-24 text-center">
-          <div className="inline-flex items-center gap-2 bg-white/80 border border-rose-200 rounded-full px-4 py-1.5 text-xs font-medium text-rose-700 mb-8">
-            <Stethoscope className="w-3.5 h-3.5" />
-            Built for healthcare teams
-            <span className="bg-rose-600 text-white text-2xs px-1.5 py-0.5 rounded">NEW</span>
+        <div className="relative max-w-7xl mx-auto px-6 pt-24 pb-32 text-center">
+          <div className="inline-flex items-center gap-2 bg-white border border-surface-200 shadow-soft rounded-full px-4 py-1.5 text-xs font-medium text-surface-700 mb-8 animate-fade-in">
+            <Sparkles className="w-3.5 h-3.5 text-primary-600" />
+            New: AI-powered insights + workflow automation
+            <span className="bg-primary-600 text-white text-2xs px-1.5 py-0.5 rounded font-semibold">LIVE</span>
           </div>
 
-          <h1 className="text-5xl md:text-6xl font-bold text-surface-900 tracking-tight max-w-4xl mx-auto leading-tight">
-            Modern HR for <br className="md:hidden" />
-            <span className="bg-gradient-to-r from-rose-600 via-pink-600 to-violet-600 bg-clip-text text-transparent">
-              healthcare teams
+          <h1 className="text-5xl md:text-7xl font-bold text-surface-900 tracking-tight max-w-5xl mx-auto leading-[1.05]">
+            HR infrastructure for{' '}
+            <span className="bg-gradient-to-br from-primary-600 via-primary-500 to-accent-600 bg-clip-text text-transparent">
+              modern teams
             </span>
           </h1>
 
-          <p className="text-lg text-surface-600 mt-6 max-w-2xl mx-auto leading-relaxed">
-            Track PRC licenses with auto-expiry alerts. Manage 24/7 shifts.
-            Run payroll, leave, and compliance — all on one platform built for
-            clinics, hospitals, and home-care agencies.
+          <p className="text-lg md:text-xl text-surface-600 mt-7 max-w-2xl mx-auto leading-relaxed">
+            Run recruitment, attendance, payroll, leave, compliance, and
+            shift scheduling — all on one platform built for growing companies.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3 mt-10">
-            <a href="#contact" className="btn-primary text-base px-6 py-3">
-              Book a 20-min demo <ArrowRight className="w-4 h-4" />
+            <a
+              href="#contact"
+              className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white text-sm font-semibold px-6 py-3 rounded-xl shadow-soft hover:shadow-glow transition-all inline-flex items-center gap-2"
+            >
+              Start free trial <ArrowRight className="w-4 h-4" />
             </a>
-            <Link href="/auth/login" className="btn-secondary text-base px-6 py-3">
+            <Link
+              href="/auth/login"
+              className="bg-white border border-surface-200 hover:border-surface-300 text-surface-900 text-sm font-semibold px-6 py-3 rounded-xl shadow-soft transition-all inline-flex items-center gap-2"
+            >
               Try interactive demo
             </Link>
           </div>
@@ -71,111 +87,145 @@ export default function MarketingHome() {
 
           {/* Stats bar */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20 max-w-4xl mx-auto">
-            <Stat number="25+" label="HR Modules" />
+            <Stat number="27" label="HR Modules" />
             <Stat number="30+" label="License Types" />
-            <Stat number="100%" label="PH Labor Compliant" />
+            <Stat number="6" label="Integrations" />
             <Stat number="<200ms" label="API Response" />
           </div>
         </div>
       </section>
 
-      {/* ───────── Why Healthcare ───────── */}
-      <section id="healthcare" className="py-24 bg-white">
+      {/* ───────── Feature highlights ───────── */}
+      <section id="features" className="py-24 bg-surface-50/50">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <div className="text-2xs uppercase tracking-widest font-semibold text-rose-600 mb-3">
-              Healthcare-specific
+            <div className="text-2xs uppercase tracking-widest font-semibold text-primary-600 mb-3">
+              Everything you need
             </div>
-            <h2 className="text-4xl font-bold text-surface-900 tracking-tight">
-              Built for the work you actually do
+            <h2 className="text-4xl md:text-5xl font-bold text-surface-900 tracking-tight">
+              One platform, every HR workflow
             </h2>
             <p className="text-lg text-surface-600 mt-4 max-w-2xl mx-auto">
-              Generic HR systems don't understand PRC renewals, shift differentials,
-              or CPD tracking. We do.
+              From the moment someone applies to the day they retire — every
+              touchpoint covered, every record audited.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <FeatureCard
-              icon={Stethoscope}
-              title="PRC License Tracking"
-              accent="rose"
-              body="Track 30+ credentials: PRC RN/MD/PT, UK NMC/GMC, BLS/ACLS, NBI clearance. Auto-alerts 90/30/7 days before expiry."
+              icon={Users}
+              title="People & Records"
+              accent="primary"
+              body="40+ field employee records, 201 file, license tracking with auto-expiry alerts, former employee archive."
             />
             <FeatureCard
               icon={CalendarCheck}
-              title="24/7 Shift Scheduling"
+              title="Shifts & Attendance"
               accent="violet"
-              body="Rotating shifts, on-call, skill-based assignment. Block scheduling when staff is fatigued or under-credentialed."
-              badge="Coming soon"
+              body="24/7 rotating shifts with skill-based assignment, fatigue rules, swap requests, GPS clock-in ready."
             />
             <FeatureCard
               icon={Award}
-              title="CPD Units Tracking"
-              accent="amber"
-              body="Auto-fill required units per license type. Progress bars per employee. Alert when CPD is behind for renewal."
-            />
-            <FeatureCard
-              icon={ShieldCheck}
-              title="Compliance Engine"
+              title="Payroll & Bonus"
               accent="emerald"
-              body="Real-time alerts for expired licenses, overdue NTEs, expiring contracts, unresolved disciplinary cases."
-            />
-            <FeatureCard
-              icon={FileBarChart}
-              title="Gov Reports (PH)"
-              accent="blue"
-              body="One-click SSS R-3, PhilHealth RF-1, Pag-IBIG MCRF, BIR 2316, BIR Alphalist. Excel/CSV export ready."
+              body="Run payroll with PH statutory deductions, 13th-month auto-compute, bonus runs, gov reports (SSS, PhilHealth, BIR)."
             />
             <FeatureCard
               icon={Plane}
               title="Leave Management"
+              accent="indigo"
+              body="8 PH leave types pre-configured, multi-level approval workflow, balance tracking, calendar view."
+            />
+            <FeatureCard
+              icon={ShieldCheck}
+              title="Compliance Engine"
+              accent="amber"
+              body="Real-time alerts for expired licenses, overdue NTEs, expiring contracts, stale disciplinary cases."
+            />
+            <FeatureCard
+              icon={Zap}
+              title="Automations"
               accent="pink"
-              body="8 PH leave types pre-configured (VL/SL/ML/PL/BL/Solo Parent/VAWC/Unpaid). Balance tracking + approval workflow."
+              body="Slack/Teams/Discord notifications, workflow rules, custom webhooks, event-driven actions."
             />
           </div>
         </div>
       </section>
 
-      {/* ───────── Features grid ───────── */}
-      <section id="features" className="py-24 bg-surface-50">
+      {/* ───────── Integrations ───────── */}
+      <section id="integrations" className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <div className="text-2xs uppercase tracking-widest font-semibold text-rose-600 mb-3">
-              Full HR platform
+          <div className="text-center mb-12">
+            <div className="text-2xs uppercase tracking-widest font-semibold text-primary-600 mb-3">
+              Integrations
             </div>
             <h2 className="text-4xl font-bold text-surface-900 tracking-tight">
-              Everything from hire to retire
+              Works with the tools you use
             </h2>
-            <p className="text-lg text-surface-600 mt-4 max-w-2xl mx-auto">
-              25 integrated modules — no more juggling 5 different tools.
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-3 max-w-3xl mx-auto">
+            {[
+              'Slack', 'Microsoft Teams', 'Discord',
+              'Webhooks', 'Email (SMTP)', 'Graphy LMS',
+            ].map(name => (
+              <div
+                key={name}
+                className="px-5 py-2.5 bg-surface-50 border border-surface-200 rounded-xl text-sm font-medium text-surface-700 hover:border-primary-300 hover:bg-white hover:shadow-soft transition-all"
+              >
+                {name}
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-sm text-surface-500 mt-6">
+            Plus signed outbound webhooks for custom integrations.
+          </p>
+        </div>
+      </section>
+
+      {/* ───────── All modules grid ───────── */}
+      <section className="py-24 bg-surface-50/50">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <div className="text-2xs uppercase tracking-widest font-semibold text-primary-600 mb-3">
+              Full platform
+            </div>
+            <h2 className="text-4xl font-bold text-surface-900 tracking-tight">
+              27 integrated modules
+            </h2>
+            <p className="text-lg text-surface-600 mt-4">
+              No more juggling five different tools.
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-3">
             {[
               ['Applicants', 'ATS pipeline'],
-              ['Trainees', 'Onboarding + evaluation'],
+              ['Trainees', 'Onboarding + eval'],
               ['Employees', '40+ fields, 201 file'],
               ['Licenses', '30+ credentials'],
-              ['Attendance', 'Daily time tracking'],
+              ['Shifts', '24/7 scheduling'],
+              ['Attendance', 'Daily tracking'],
               ['Payroll', 'PH statutory deductions'],
-              ['13th-Month', 'Auto-compute per PD 851'],
+              ['13th-Month', 'Auto-compute PD 851'],
               ['Bonus Runs', 'Performance, commission'],
               ['Leave', '8 PH leave types'],
-              ['Loans', 'Salary, emergency, advance'],
-              ['Disciplinary', 'NTE, suspension, termination'],
-              ['Incident Reports', 'Safety event logging'],
+              ['Loans', 'Salary, cash advance'],
+              ['Disciplinary', 'NTE, suspension'],
+              ['Incident Reports', 'Safety logging'],
               ['Work Certificates', 'COE generation'],
               ['Exit Clearance', 'Multi-dept + e-sign'],
               ['Training', 'Graphy integration'],
-              ['Gov Reports', 'SSS/PhilHealth/Pag-IBIG/BIR'],
+              ['Gov Reports', 'SSS/PhilHealth/BIR'],
               ['Compliance', 'Auto-alert engine'],
               ['Audit Log', 'Every change tracked'],
               ['Analytics', '6 chart visualizations'],
               ['Employee Portal', 'Self-service'],
+              ['Integrations', 'Slack / Teams / Discord'],
+              ['Automations', 'Workflow rules'],
+              ['Jobs', 'Public openings + apply'],
             ].map(([title, sub]) => (
-              <div key={title} className="card p-4">
+              <div key={title} className="card p-4 hover:border-primary-300 hover:shadow-soft transition-all">
                 <div className="font-semibold text-sm text-surface-900">{title}</div>
                 <div className="text-xs text-surface-500 mt-0.5">{sub}</div>
               </div>
@@ -188,10 +238,10 @@ export default function MarketingHome() {
       <section id="pricing" className="py-24 bg-white">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
-            <div className="text-2xs uppercase tracking-widest font-semibold text-rose-600 mb-3">
+            <div className="text-2xs uppercase tracking-widest font-semibold text-primary-600 mb-3">
               Pricing
             </div>
-            <h2 className="text-4xl font-bold text-surface-900 tracking-tight">
+            <h2 className="text-4xl md:text-5xl font-bold text-surface-900 tracking-tight">
               Simple, transparent pricing
             </h2>
             <p className="text-lg text-surface-600 mt-4">
@@ -204,12 +254,12 @@ export default function MarketingHome() {
               name="Starter"
               price="₱200"
               priceUnit="/employee/month"
-              forWho="Small clinics, dental, 10-50 staff"
+              forWho="Small teams, 10–50 staff"
               features={[
                 'Core HR + 201 File',
                 'Attendance + Payroll',
                 'Leave Management',
-                'PRC License Tracking',
+                'License Tracking',
                 'Gov Reports (PH)',
                 'Email support',
               ]}
@@ -218,12 +268,13 @@ export default function MarketingHome() {
               name="Pro"
               price="₱500"
               priceUnit="/employee/month"
-              forWho="Hospitals, multi-location clinics, 50-500 staff"
+              forWho="Growing companies, 50–500 staff"
               features={[
                 'Everything in Starter',
                 'Shift Scheduling',
                 'Compliance Engine',
-                'Audit Log',
+                'Slack / Teams integrations',
+                'Workflow Automations',
                 'Bonus Runs + 13th-Month',
                 'Analytics + Custom Reports',
                 'Priority support',
@@ -234,13 +285,13 @@ export default function MarketingHome() {
               name="Enterprise"
               price="Custom"
               priceUnit=""
-              forWho="Hospital systems, 500+ staff"
+              forWho="Large orgs, 500+ staff"
               features={[
                 'Everything in Pro',
                 'SSO (SAML/OAuth)',
                 '2FA enforcement',
                 'Custom branding',
-                'Dedicated support',
+                'Dedicated CSM',
                 'SLA + uptime guarantee',
                 'API access',
               ]}
@@ -254,7 +305,7 @@ export default function MarketingHome() {
       </section>
 
       {/* ───────── Trust / regions ───────── */}
-      <section className="py-20 bg-gradient-to-br from-surface-50 to-white">
+      <section className="py-20 bg-surface-50/50">
         <div className="max-w-7xl mx-auto px-6 text-center">
           <h3 className="text-sm font-semibold uppercase tracking-widest text-surface-500 mb-8">
             Built for Philippines, ready for Asia & EU
@@ -269,42 +320,47 @@ export default function MarketingHome() {
       </section>
 
       {/* ───────── CTA / contact ───────── */}
-      <section id="contact" className="py-24 bg-gradient-to-br from-rose-900 via-pink-900 to-violet-900 text-white">
-        <div className="max-w-4xl mx-auto px-6 text-center">
+      <section id="contact" className="py-24 bg-gradient-to-br from-surface-900 via-primary-950 to-surface-900 text-white relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-0 -left-32 w-[480px] h-[480px] bg-primary-600/30 rounded-full blur-[120px]" />
+          <div className="absolute bottom-0 -right-32 w-[480px] h-[480px] bg-accent-600/30 rounded-full blur-[120px]" />
+        </div>
+
+        <div className="relative max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
-            Ready to modernize your healthcare HR?
+            Ready to modernize your HR?
           </h2>
-          <p className="text-pink-100/90 text-lg mt-4 max-w-2xl mx-auto">
-            Book a 20-minute demo. We'll show you the platform, answer your questions,
-            and set up a free 14-day trial.
+          <p className="text-white/70 text-lg mt-4 max-w-2xl mx-auto">
+            Book a 20-minute demo. We'll show you the platform, answer your
+            questions, and set up a free 14-day trial.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3 mt-10">
             <a
               href="mailto:hello@example.com?subject=Demo%20request"
-              className="bg-white text-rose-700 px-6 py-3 rounded-lg font-semibold hover:bg-pink-50 transition-colors inline-flex items-center gap-2"
+              className="bg-white text-surface-900 hover:bg-surface-100 px-6 py-3 rounded-xl font-semibold transition-colors inline-flex items-center gap-2"
             >
               Email us <ArrowRight className="w-4 h-4" />
             </a>
             <Link
               href="/auth/login"
-              className="border-2 border-white/30 text-white px-6 py-3 rounded-lg font-semibold hover:bg-white/10 transition-colors inline-flex items-center gap-2"
+              className="border-2 border-white/20 hover:bg-white/5 text-white px-6 py-3 rounded-xl font-semibold transition-colors inline-flex items-center gap-2"
             >
-              Try the demo first
+              Try the demo
             </Link>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 max-w-3xl mx-auto text-left">
             <div>
-              <div className="text-2xs font-semibold uppercase tracking-widest text-pink-200">Email</div>
+              <div className="text-2xs font-semibold uppercase tracking-widest text-white/50">Email</div>
               <div className="font-medium mt-1">hello@example.com</div>
             </div>
             <div>
-              <div className="text-2xs font-semibold uppercase tracking-widest text-pink-200">Phone</div>
-              <div className="font-medium mt-1">+63 (placeholder)</div>
+              <div className="text-2xs font-semibold uppercase tracking-widest text-white/50">Phone</div>
+              <div className="font-medium mt-1">+63 …</div>
             </div>
             <div>
-              <div className="text-2xs font-semibold uppercase tracking-widest text-pink-200">Office</div>
+              <div className="text-2xs font-semibold uppercase tracking-widest text-white/50">Office</div>
               <div className="font-medium mt-1">Manila, Philippines</div>
             </div>
           </div>
@@ -315,7 +371,7 @@ export default function MarketingHome() {
       <footer className="bg-surface-900 text-surface-400 py-12">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <Logo size={32} textClassName="text-base text-white" taglineClassName="text-2xs text-surface-500 -mt-0.5" />
+            <Logo size={32} textClassName="text-base text-white" taglineClassName="hidden" />
             <p className="text-xs">© {new Date().getFullYear()} {BRAND.name}. All rights reserved.</p>
           </div>
         </div>
@@ -331,36 +387,32 @@ export default function MarketingHome() {
 function Stat({ number, label }: { number: string; label: string }) {
   return (
     <div>
-      <div className="text-3xl font-bold text-surface-900 tracking-tight">{number}</div>
+      <div className="text-4xl font-bold text-surface-900 tracking-tight">{number}</div>
       <div className="text-2xs font-semibold uppercase tracking-wider text-surface-500 mt-1">{label}</div>
     </div>
   );
 }
 
 function FeatureCard({
-  icon: Icon, title, body, accent, badge,
+  icon: Icon, title, body, accent,
 }: {
   icon: any;
   title: string;
   body: string;
-  accent: 'rose' | 'violet' | 'amber' | 'emerald' | 'blue' | 'pink';
-  badge?: string;
+  accent: 'primary' | 'violet' | 'amber' | 'emerald' | 'indigo' | 'pink';
 }) {
   const colors = {
-    rose: 'from-rose-100 to-rose-50 text-rose-600',
-    violet: 'from-violet-100 to-violet-50 text-violet-600',
-    amber: 'from-amber-100 to-amber-50 text-amber-600',
+    primary: 'from-primary-100 to-primary-50 text-primary-600',
+    violet:  'from-violet-100 to-violet-50 text-violet-600',
+    amber:   'from-amber-100 to-amber-50 text-amber-600',
     emerald: 'from-emerald-100 to-emerald-50 text-emerald-600',
-    blue: 'from-blue-100 to-blue-50 text-blue-600',
-    pink: 'from-pink-100 to-pink-50 text-pink-600',
+    indigo:  'from-indigo-100 to-indigo-50 text-indigo-600',
+    pink:    'from-pink-100 to-pink-50 text-pink-600',
   };
   return (
     <div className="card p-6 hover:shadow-card-hover transition-all hover:-translate-y-0.5">
-      <div className="flex items-start justify-between mb-4">
-        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${colors[accent]} flex items-center justify-center`}>
-          <Icon className="w-6 h-6" />
-        </div>
-        {badge && <span className="badge-warning">{badge}</span>}
+      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${colors[accent]} flex items-center justify-center mb-4`}>
+        <Icon className="w-6 h-6" />
       </div>
       <h3 className="font-semibold text-surface-900 text-lg mb-2">{title}</h3>
       <p className="text-sm text-surface-600 leading-relaxed">{body}</p>
@@ -379,7 +431,7 @@ function PricingTier({
   highlighted?: boolean;
 }) {
   return (
-    <div className={`card p-8 relative ${highlighted ? 'ring-2 ring-primary-500 shadow-card-hover' : ''}`}>
+    <div className={`card p-8 relative ${highlighted ? 'ring-2 ring-primary-500 shadow-card-hover scale-[1.02]' : ''}`}>
       {highlighted && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-600 text-white text-2xs uppercase tracking-wider font-bold px-3 py-1 rounded-full">
           Most popular
@@ -394,12 +446,19 @@ function PricingTier({
       <ul className="mt-6 space-y-3">
         {features.map(f => (
           <li key={f} className="flex items-start gap-2 text-sm text-surface-700">
-            <Check className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+            <Check className="w-4 h-4 text-primary-500 flex-shrink-0 mt-0.5" />
             {f}
           </li>
         ))}
       </ul>
-      <a href="#contact" className={`block text-center mt-8 ${highlighted ? 'btn-primary' : 'btn-secondary'} w-full`}>
+      <a
+        href="#contact"
+        className={`block text-center mt-8 w-full text-sm font-semibold px-4 py-2.5 rounded-xl transition-all ${
+          highlighted
+            ? 'bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white shadow-soft'
+            : 'bg-white border border-surface-200 hover:border-surface-300 text-surface-900'
+        }`}
+      >
         Get started
       </a>
     </div>
