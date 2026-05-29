@@ -1,0 +1,22 @@
+{
+  "// VS Code will prompt to install these when you open the project": "",
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "bradlc.vscode-tailwindcss",
+    "yoavbls.pretty-ts-errors",
+    "eamodio.gitlens",
+    "mhutchie.git-graph",
+    "github.vscode-pull-request-github",
+    "ms-azuretools.vscode-docker",
+    "rangav.vscode-thunder-client",
+    "ms-vscode.vscode-typescript-next",
+    "dsznajder.es7-react-js-snippets",
+    "formulahendry.auto-rename-tag",
+    "naumovs.color-highlight",
+    "wayou.vscode-todo-highlight",
+    "streetsidesoftware.code-spell-checker",
+    "anthropic.claude-code"
+  ],
+  "unwantedRecommendations": []
+}

@@ -1,0 +1,80 @@
+{
+  "// JOSMEF HRMS workspace settings": "Optimized for monorepo viewing",
+
+  // ─── File explorer ──────────────────────────────────────
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    "*.ts": "${capture}.test.ts, ${capture}.spec.ts, ${capture}.d.ts",
+    "*.tsx": "${capture}.test.tsx, ${capture}.module.css",
+    "package.json": "package-lock.json, yarn.lock, .npmrc, tsconfig*.json",
+    "next.config.js": "tailwind.config.js, postcss.config.js, next-env.d.ts",
+    ".env": ".env.*",
+    "Dockerfile": ".dockerignore, docker-compose*.yml"
+  },
+  "explorer.compactFolders": false,
+  "explorer.confirmDragAndDrop": false,
+  "explorer.sortOrder": "type",
+
+  // ─── Editor ─────────────────────────────────────────────
+  "editor.fontSize": 14,
+  "editor.lineHeight": 1.6,
+  "editor.tabSize": 2,
+  "editor.formatOnSave": false,
+  "editor.minimap.enabled": false,
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": "active",
+  "editor.stickyScroll.enabled": true,
+  "editor.smoothScrolling": true,
+  "editor.cursorBlinking": "smooth",
+  "editor.cursorSmoothCaretAnimation": "on",
+  "editor.wordWrap": "off",
+
+  // ─── Workbench ──────────────────────────────────────────
+  "workbench.colorTheme": "Dark Modern",
+  "workbench.iconTheme": "vs-seti",
+  "workbench.editor.enablePreview": false,
+  "workbench.editor.highlightModifiedTabs": true,
+  "workbench.editor.tabSizing": "shrink",
+  "workbench.list.smoothScrolling": true,
+  "workbench.tree.indent": 16,
+
+  // ─── Git source control panel ──────────────────────────
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  "git.autofetch": true,
+  "git.openRepositoryInParentFolders": "never",
+  "scm.diffDecorations": "all",
+  "scm.diffDecorationsGutterVisibility": "always",
+
+  // ─── TypeScript ────────────────────────────────────────
+  "typescript.tsdk": "frontend/node_modules/typescript/lib",
+  "typescript.preferences.importModuleSpecifier": "shortest",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.suggest.autoImports": true,
+
+  // ─── Hide noise in explorer ────────────────────────────
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/dist": true,
+    "**/.turbo": true,
+    "**/.vercel": true,
+    "**/*.tsbuildinfo": true
+  },
+
+  // ─── Don't search inside these ─────────────────────────
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/dist": true,
+    "**/package-lock.json": true,
+    "**/yarn.lock": true
+  },
+
+  // ─── Terminal ──────────────────────────────────────────
+  "terminal.integrated.fontSize": 13,
+  "terminal.integrated.cursorBlinking": true
+}
