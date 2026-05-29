@@ -27,6 +27,7 @@ import { PortalModule } from './modules/portal/portal.module';
 import { GovReportsModule } from './modules/gov-reports/gov-reports.module';
 import { TrainingModule } from './modules/training/training.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { LicensesModule } from './modules/licenses/licenses.module';
 import { NumberingModule } from './common/modules/numbering.module';
 import { NotificationModule } from './common/modules/notification.module';
 import { User } from './modules/users/entities/user.entity';
@@ -102,6 +103,7 @@ import { SeedService } from './seeds/seed.service';
     GovReportsModule,
     TrainingModule,
     AnalyticsModule,
+    LicensesModule,
   ],
   providers: [SeedService],
 })

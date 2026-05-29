@@ -30,6 +30,7 @@ import {
   BarChart3,
   Settings,
   HelpCircle,
+  Stethoscope,
 } from 'lucide-react';
 import { useState } from 'react';
 import Logo from '@/components/Logo';
@@ -66,6 +67,7 @@ const navSections: NavSection[] = [
     label: 'People',
     items: [
       { label: 'Employees', href: '/dashboard/employees', icon: Users },
+      { label: 'Licenses', href: '/dashboard/licenses', icon: Stethoscope },
       { label: 'Former Employees', href: '/dashboard/former-employees', icon: Archive },
       { label: 'Training', href: '/dashboard/training', icon: GraduationCap },
     ],

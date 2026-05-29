@@ -5,11 +5,12 @@ import { Loan, LoanStatus } from '../loans/entities/loan.entity';
 import { NteRecord, NteStatus } from '../nte/entities/nte.entity';
 import { ExitClearance, ClearanceStatus } from '../exit-clearance/entities/exit-clearance.entity';
 import { DisciplinaryAction, DisciplinaryStatus } from '../disciplinary/entities/disciplinary.entity';
+import { License } from '../licenses/entities/license.entity';
 import { EmploymentStatus } from '@common/enums';
 
 export interface ComplianceAlert {
   id: string;
-  type: 'loan_separation' | 'nte_overdue' | 'clearance_overdue' | 'contract_expiring' | 'disciplinary_stale';
+  type: 'loan_separation' | 'nte_overdue' | 'clearance_overdue' | 'contract_expiring' | 'disciplinary_stale' | 'license_expiring' | 'license_expired';
   severity: 'critical' | 'high' | 'medium' | 'low';
   title: string;
   description: string;
@@ -37,6 +38,7 @@ export class ComplianceService {
     const nteRepo = this.dataSource.getRepository(NteRecord);
     const clearanceRepo = this.dataSource.getRepository(ExitClearance);
     const discRepo = this.dataSource.getRepository(DisciplinaryAction);
+    const licRepo = this.dataSource.getRepository(License);
 
     // 1. Active loans for separated employees
     const separatedStatuses = [
@@ -181,6 +183,41 @@ export class ComplianceService {
       });
     }
 
+    // 6. Professional licenses — expired or expiring within 90 days
+    const in90 = new Date(today);
+    in90.setDate(in90.getDate() + 90);
+    const atRiskLicenses = await licRepo
+      .createQueryBuilder('l')
+      .leftJoinAndSelect('l.employee', 'e')
+      .where('l."expiryDate" <= :in90', { in90 })
+      .getMany()
+      .catch(() => []);
+    for (const lic of atRiskLicenses) {
+      const expiryDate = new Date(lic.expiryDate);
+      const daysLeft = Math.floor((expiryDate.getTime() - today.getTime()) / 86400000);
+      const isExpired = daysLeft < 0;
+      const typeLabel = lic.licenseType.replace(/_/g, ' ').toUpperCase();
+      alerts.push({
+        id: `license-${lic.id}`,
+        type: isExpired ? 'license_expired' : 'license_expiring',
+        severity: isExpired ? 'critical' : daysLeft <= 30 ? 'high' : 'medium',
+        title: isExpired ? `${typeLabel} License EXPIRED` : `${typeLabel} License Expiring`,
+        description: isExpired
+          ? `${lic.employee?.firstName} ${lic.employee?.lastName}'s ${typeLabel} license (${lic.licenseNumber}) expired ${Math.abs(daysLeft)} days ago.`
+          : `${lic.employee?.firstName} ${lic.employee?.lastName}'s ${typeLabel} license (${lic.licenseNumber}) expires in ${daysLeft} days.`,
+        employeeId: lic.employee?.id,
+        employeeName: lic.employee
+          ? `${lic.employee.firstName} ${lic.employee.middleName ? lic.employee.middleName + ' ' : ''}${lic.employee.lastName}`
+          : undefined,
+        employeeNumber: lic.employee?.employeeId,
+        referenceId: lic.id,
+        referenceNumber: lic.licenseNumber,
+        dueDate: expiryDate.toISOString().split('T')[0],
+        daysOverdue: isExpired ? Math.abs(daysLeft) : undefined,
+        link: `/dashboard/licenses/${lic.id}`,
+      });
+    }
+
     // Sort: critical first
     const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
     alerts.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
@@ -195,6 +232,8 @@ export class ComplianceService {
       clearance_overdue: alerts.filter((a) => a.type === 'clearance_overdue').length,
       contract_expiring: alerts.filter((a) => a.type === 'contract_expiring').length,
       disciplinary_stale: alerts.filter((a) => a.type === 'disciplinary_stale').length,
+      license_expiring: alerts.filter((a) => a.type === 'license_expiring').length,
+      license_expired: alerts.filter((a) => a.type === 'license_expired').length,
     };
 
     return { alerts, summary };
