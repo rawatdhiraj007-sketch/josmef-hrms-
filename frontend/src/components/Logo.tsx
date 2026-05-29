@@ -1,8 +1,5 @@
 'use client';
 
-import Image from 'next/image';
-import { useState } from 'react';
-
 interface LogoProps {
   size?: number;
   showText?: boolean;
@@ -10,78 +7,52 @@ interface LogoProps {
   taglineClassName?: string;
 }
 
+/**
+ * Simple, modern JOSMEF logo:
+ *   • Soft rose-to-violet gradient circle
+ *   • Clean white heart in the center
+ *   • Optional wordmark + tagline beside it
+ */
 export default function Logo({
-  size = 48,
+  size = 32,
   showText = true,
   textClassName = '',
   taglineClassName = '',
 }: LogoProps) {
-  const [imgFailed, setImgFailed] = useState(false);
-
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-2.5">
       <div
         className="relative shrink-0"
         style={{ width: size, height: size }}
       >
-        {!imgFailed ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src="/logo.png"
-            alt="JOSMEF Logo"
-            width={size}
-            height={size}
-            className="object-contain"
-            onError={() => setImgFailed(true)}
+        <svg viewBox="0 0 40 40" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="josmefHeartGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#fb7185" />
+              <stop offset="50%" stopColor="#e11d48" />
+              <stop offset="100%" stopColor="#a855f7" />
+            </linearGradient>
+          </defs>
+          {/* Circle background */}
+          <circle cx="20" cy="20" r="20" fill="url(#josmefHeartGrad)" />
+          {/* Heart icon (centered) */}
+          <path
+            d="M20 28.5c-.4 0-.8-.15-1.1-.45L11.6 21c-2.3-2.3-2.3-6.1 0-8.4 2.2-2.2 5.8-2.3 8.1-.2.1.1.2.2.3.3.1-.1.2-.2.3-.3 2.3-2.1 5.9-2 8.1.2 2.3 2.3 2.3 6.1 0 8.4l-7.3 7.05c-.3.3-.7.45-1.1.45z"
+            fill="white"
+            opacity="0.98"
           />
-        ) : (
-          // Inline SVG fallback — gradient ring + heart silhouette + JOSMEF mark
-          <svg viewBox="0 0 100 100" className="w-full h-full">
-            <defs>
-              <linearGradient id="josmefGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#fbbf24" />
-                <stop offset="50%" stopColor="#ec4899" />
-                <stop offset="100%" stopColor="#8b5cf6" />
-              </linearGradient>
-            </defs>
-            <circle
-              cx="50"
-              cy="50"
-              r="44"
-              fill="none"
-              stroke="url(#josmefGrad)"
-              strokeWidth="6"
-              strokeLinecap="round"
-              strokeDasharray="240 40"
-              transform="rotate(-90 50 50)"
-            />
-            <path
-              d="M50 72 C 30 58, 22 42, 32 32 C 40 25, 48 30, 50 36 C 52 30, 60 25, 68 32 C 78 42, 70 58, 50 72 Z"
-              fill="#dc2626"
-            />
-            <rect x="32" y="46" width="36" height="10" rx="2" fill="#fbbf24" />
-            <text
-              x="50"
-              y="54"
-              textAnchor="middle"
-              fontSize="7"
-              fontWeight="800"
-              fill="#fff"
-              fontFamily="system-ui, -apple-system, sans-serif"
-            >
-              JOSMEF
-            </text>
-          </svg>
-        )}
+        </svg>
       </div>
       {showText && (
         <div className="leading-tight">
-          <div className={`font-bold tracking-tight ${textClassName || 'text-xl'}`}>
+          <div className={`font-bold tracking-tight ${textClassName || 'text-base text-surface-900'}`}>
             JOSMEF
           </div>
-          <div className={`text-xs italic ${taglineClassName || 'text-gray-500'}`}>
-            God cures, we care
-          </div>
+          {taglineClassName !== 'hidden' && (
+            <div className={`text-2xs ${taglineClassName || 'text-surface-400 -mt-0.5'}`}>
+              God cures, we care
+            </div>
+          )}
         </div>
       )}
     </div>
