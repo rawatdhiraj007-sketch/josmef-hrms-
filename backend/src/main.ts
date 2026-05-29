@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { createServer, IncomingMessage, ServerResponse, request as httpRequest } from 'http';
+import * as bodyParser from 'body-parser';
 import { AppModule } from './app.module';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 
@@ -107,6 +108,10 @@ async function bootstrap() {
       const app = await NestFactory.create(AppModule, { logger: ['error', 'warn', 'log'], abortOnError: false, rawBody: true });
 
       app.setGlobalPrefix('api/v1');
+
+      // Allow larger payloads (base64-encoded resumes can be ~7MB for 5MB PDFs)
+      app.use(bodyParser.json({ limit: '15mb' }));
+      app.use(bodyParser.urlencoded({ limit: '15mb', extended: true }));
 
       const allowedOrigins =
         process.env.APP_ENV === 'production'

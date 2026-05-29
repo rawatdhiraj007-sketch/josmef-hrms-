@@ -32,6 +32,7 @@ import {
   HelpCircle,
   Stethoscope,
   Zap,
+  Briefcase,
 } from 'lucide-react';
 import { useState } from 'react';
 import Logo from '@/components/Logo';
@@ -60,6 +61,7 @@ const navSections: NavSection[] = [
   {
     label: 'Recruitment',
     items: [
+      { label: 'Jobs', href: '/dashboard/jobs', icon: Briefcase },
       { label: 'Applicants', href: '/dashboard/applicants', icon: UserPlus },
       { label: 'Trainees', href: '/dashboard/trainees', icon: GraduationCap },
     ],

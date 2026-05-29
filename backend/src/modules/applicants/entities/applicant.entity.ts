@@ -64,6 +64,23 @@ export class Applicant extends BaseEntity {
   @Column({ length: 255, nullable: true })
   resumeUrl: string;
 
+  // Resume uploaded inline as base64 (PDF up to ~5MB)
+  @Column({ type: 'text', nullable: true })
+  resumeBase64: string;
+
+  @Column({ length: 200, nullable: true })
+  resumeFileName: string;
+
+  @Column({ length: 100, nullable: true })
+  resumeMimeType: string;
+
+  @Column({ type: 'int', nullable: true })
+  resumeSizeBytes: number;
+
+  // Optional linkage to the JobOpening they applied for
+  @Column({ length: 100, nullable: true })
+  jobOpeningId: string;
+
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   expectedSalary: number;
 

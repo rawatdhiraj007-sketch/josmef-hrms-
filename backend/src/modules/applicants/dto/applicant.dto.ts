@@ -63,6 +63,21 @@ export class CreateApplicantDto {
   resumeUrl?: string;
 
   @IsOptional()
+  resumeBase64?: string;
+
+  @IsOptional()
+  resumeFileName?: string;
+
+  @IsOptional()
+  resumeMimeType?: string;
+
+  @IsOptional()
+  resumeSizeBytes?: number;
+
+  @IsOptional()
+  jobOpeningId?: string;
+
+  @IsOptional()
   expectedSalary?: number;
 
   @IsOptional()
