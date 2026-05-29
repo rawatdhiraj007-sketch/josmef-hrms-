@@ -4,19 +4,18 @@ import { useState, useEffect, useCallback } from 'react';
 import api from '@/lib/api';
 import { AttendanceRecord, ListResponse } from '@/types/attendance';
 import {
-  Search, ChevronLeft, ChevronRight, Clock, CheckCircle, XCircle,
-  Calendar, Filter,
+  ChevronLeft, ChevronRight, Clock, Calendar, Filter,
 } from 'lucide-react';
 
-const statusColors: Record<string, string> = {
-  present: 'bg-green-100 text-green-700',
-  absent: 'bg-red-100 text-red-700',
-  late: 'bg-amber-100 text-amber-700',
-  half_day: 'bg-orange-100 text-orange-700',
-  leave: 'bg-blue-100 text-blue-700',
-  holiday: 'bg-purple-100 text-purple-700',
-  rest_day: 'bg-gray-100 text-gray-500',
-  overtime: 'bg-indigo-100 text-indigo-700',
+const STATUS_BADGE: Record<string, string> = {
+  present: 'badge-success',
+  absent: 'badge-danger',
+  late: 'badge-warning',
+  half_day: 'badge-warning',
+  leave: 'badge-info',
+  holiday: 'badge-info',
+  rest_day: 'badge-neutral',
+  overtime: 'badge-info',
 };
 
 export default function AttendancePage() {
@@ -42,86 +41,117 @@ export default function AttendancePage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Attendance</h1>
-          <p className="text-gray-500 text-sm mt-1">{meta.total} records</p>
+          <h1 className="text-2xl font-bold text-surface-900 flex items-center gap-2 tracking-tight">
+            <Clock className="w-6 h-6 text-primary-600" /> Attendance
+          </h1>
+          <p className="text-sm text-surface-500 mt-1">
+            {meta.total.toLocaleString()} records · {dateFrom === dateTo ? `today (${dateFrom})` : `${dateFrom} → ${dateTo}`}
+          </p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="card p-4 mb-6">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-gray-400" />
-            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="input-field w-auto" />
-            <span className="text-gray-400">to</span>
-            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="input-field w-auto" />
-          </div>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="input-field sm:w-44">
-            <option value="">All Status</option>
-            <option value="present">Present</option>
-            <option value="absent">Absent</option>
-            <option value="late">Late</option>
-            <option value="half_day">Half Day</option>
-            <option value="leave">Leave</option>
-            <option value="overtime">Overtime</option>
-          </select>
+      <div className="card p-4 flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-surface-400" />
+          <input
+            type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
+            className="text-sm border border-surface-200 rounded-lg px-3 py-1.5 bg-white"
+          />
+          <span className="text-surface-400 text-sm">to</span>
+          <input
+            type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
+            className="text-sm border border-surface-200 rounded-lg px-3 py-1.5 bg-white"
+          />
         </div>
+        <Filter className="w-4 h-4 text-surface-400" />
+        <select
+          value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
+          className="text-sm border border-surface-200 rounded-lg px-3 py-1.5 bg-white"
+        >
+          <option value="">All statuses</option>
+          <option value="present">Present</option>
+          <option value="absent">Absent</option>
+          <option value="late">Late</option>
+          <option value="half_day">Half Day</option>
+          <option value="leave">Leave</option>
+          <option value="overtime">Overtime</option>
+        </select>
       </div>
 
       {/* Table */}
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="table-modern">
             <thead>
-              <tr className="bg-surface-50 border-b border-surface-200">
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Employee</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Date</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Time In</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Time Out</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">Hours</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">OT</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden lg:table-cell">Late</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Status</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden lg:table-cell">Source</th>
+              <tr>
+                <th>Employee</th>
+                <th>Date</th>
+                <th>Time In</th>
+                <th>Time Out</th>
+                <th className="hidden md:table-cell">Hours</th>
+                <th className="hidden md:table-cell">OT</th>
+                <th className="hidden lg:table-cell">Late</th>
+                <th>Status</th>
+                <th className="hidden lg:table-cell">Source</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={9} className="text-center py-12 text-gray-400">Loading...</td></tr>
+                <tr><td colSpan={9} className="text-center py-16 text-surface-400">Loading attendance...</td></tr>
               ) : data.length === 0 ? (
-                <tr><td colSpan={9} className="text-center py-12 text-gray-400">No attendance records found</td></tr>
-              ) : data.map((r) => (
-                <tr key={r.id} className="border-b border-surface-100 hover:bg-surface-50 transition-colors">
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-gray-900">{r.employee?.lastName}, {r.employee?.firstName}</p>
-                    <p className="text-xs text-gray-400 hidden sm:block">{r.employee?.department}</p>
+                <tr>
+                  <td colSpan={9} className="text-center py-16">
+                    <Clock className="w-10 h-10 text-surface-200 mx-auto mb-2" />
+                    <p className="text-sm text-surface-500">No attendance records for this period</p>
                   </td>
-                  <td className="px-4 py-3 text-gray-700">{r.date?.split('T')[0]}</td>
-                  <td className="px-4 py-3 text-gray-700 font-mono text-xs">{r.timeIn || '-'}</td>
-                  <td className="px-4 py-3 text-gray-700 font-mono text-xs">{r.timeOut || '-'}</td>
-                  <td className="px-4 py-3 text-gray-700 hidden md:table-cell">{Number(r.hoursWorked).toFixed(1)}h</td>
-                  <td className="px-4 py-3 text-gray-700 hidden md:table-cell">{Number(r.overtimeHours) > 0 ? `${Number(r.overtimeHours).toFixed(1)}h` : '-'}</td>
-                  <td className="px-4 py-3 text-gray-700 hidden lg:table-cell">{Number(r.lateMinutes) > 0 ? `${Number(r.lateMinutes).toFixed(0)}m` : '-'}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${statusColors[r.status] || 'bg-gray-100 text-gray-600'}`}>
+                </tr>
+              ) : data.map((r) => (
+                <tr key={r.id}>
+                  <td>
+                    <div className="font-medium text-surface-900">{r.employee?.lastName}, {r.employee?.firstName}</div>
+                    <div className="text-xs text-surface-500 hidden sm:block">{r.employee?.department}</div>
+                  </td>
+                  <td>{r.date?.split('T')[0]}</td>
+                  <td className="font-mono text-xs">{r.timeIn || '—'}</td>
+                  <td className="font-mono text-xs">{r.timeOut || '—'}</td>
+                  <td className="hidden md:table-cell tabular-nums">{Number(r.hoursWorked).toFixed(1)}h</td>
+                  <td className="hidden md:table-cell tabular-nums">{Number(r.overtimeHours) > 0 ? `${Number(r.overtimeHours).toFixed(1)}h` : '—'}</td>
+                  <td className="hidden lg:table-cell tabular-nums">
+                    {Number(r.lateMinutes) > 0
+                      ? <span className="text-amber-600">{Number(r.lateMinutes).toFixed(0)}m</span>
+                      : '—'}
+                  </td>
+                  <td>
+                    <span className={`${STATUS_BADGE[r.status] || 'badge-neutral'} capitalize`}>
                       {r.status.replace(/_/g, ' ')}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-400 text-xs hidden lg:table-cell">{r.source}</td>
+                  <td className="hidden lg:table-cell text-2xs uppercase tracking-wider text-surface-400">{r.source}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
         {meta.totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-surface-200">
-            <p className="text-sm text-gray-500">Page {meta.page} of {meta.totalPages}</p>
-            <div className="flex gap-2">
-              <button onClick={() => fetchData(meta.page - 1)} disabled={meta.page <= 1} className="p-2 rounded-lg border border-surface-200 hover:bg-surface-100 disabled:opacity-40"><ChevronLeft className="w-4 h-4" /></button>
-              <button onClick={() => fetchData(meta.page + 1)} disabled={meta.page >= meta.totalPages} className="p-2 rounded-lg border border-surface-200 hover:bg-surface-100 disabled:opacity-40"><ChevronRight className="w-4 h-4" /></button>
+          <div className="flex items-center justify-between px-4 py-3 border-t border-surface-100 bg-surface-50/50">
+            <p className="text-xs text-surface-500">
+              Page <span className="font-semibold text-surface-700">{meta.page}</span> of {meta.totalPages}
+              <span className="mx-2 text-surface-300">·</span>
+              {meta.total} total
+            </p>
+            <div className="flex gap-1">
+              <button onClick={() => fetchData(meta.page - 1)} disabled={meta.page <= 1}
+                className="p-1.5 rounded-md border border-surface-200 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed">
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button onClick={() => fetchData(meta.page + 1)} disabled={meta.page >= meta.totalPages}
+                className="p-1.5 rounded-md border border-surface-200 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed">
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
         )}

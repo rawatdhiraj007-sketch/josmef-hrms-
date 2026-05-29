@@ -4,17 +4,17 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { Employee, EmploymentStatus, EmployeeListResponse } from '@/types/employee';
-import { Search, Plus, ChevronLeft, ChevronRight, Eye, Pencil, Trash2 } from 'lucide-react';
+import { Search, Plus, ChevronLeft, ChevronRight, Eye, Pencil, Trash2, Users, Filter } from 'lucide-react';
 
-const statusColors: Record<string, string> = {
-  probationary: 'bg-amber-100 text-amber-700',
-  regular: 'bg-green-100 text-green-700',
-  resigned: 'bg-gray-100 text-gray-500',
-  terminated: 'bg-red-100 text-red-700',
-  end_of_contract: 'bg-orange-100 text-orange-700',
-  awol: 'bg-red-100 text-red-600',
-  trainee: 'bg-blue-100 text-blue-700',
-  applicant: 'bg-purple-100 text-purple-700',
+const STATUS_BADGE: Record<string, string> = {
+  probationary: 'badge-warning',
+  regular: 'badge-success',
+  resigned: 'badge-neutral',
+  terminated: 'badge-danger',
+  end_of_contract: 'badge-warning',
+  awol: 'badge-danger',
+  trainee: 'badge-info',
+  applicant: 'badge-info',
 };
 
 export default function EmployeesPage() {
@@ -45,69 +45,119 @@ export default function EmployeesPage() {
   }
 
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Employees</h1>
-          <p className="text-gray-500 text-sm mt-1">{meta.total} total employees</p>
+          <h1 className="text-2xl font-bold text-surface-900 flex items-center gap-2 tracking-tight">
+            <Users className="w-6 h-6 text-primary-600" /> Employees
+          </h1>
+          <p className="text-sm text-surface-500 mt-1">
+            {meta.total.toLocaleString()} total · all employment statuses
+          </p>
         </div>
-        <button onClick={() => router.push('/dashboard/employees/new')} className="btn-primary flex items-center gap-2 w-fit">
-          <Plus className="w-5 h-5" /> Add Employee
+        <button onClick={() => router.push('/dashboard/employees/new')} className="btn-primary w-fit">
+          <Plus className="w-4 h-4" /> Add Employee
         </button>
       </div>
 
-      <div className="card p-4 mb-6">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input type="text" placeholder="Search by name, ID, email, position..." value={search} onChange={(e) => setSearch(e.target.value)} className="input-field pl-10" />
-          </div>
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="input-field sm:w-48">
-            <option value="">All Status</option>
-            {Object.values(EmploymentStatus).map((s) => (
-              <option key={s} value={s}>{s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</option>
-            ))}
-          </select>
+      {/* Filters */}
+      <div className="card p-4 flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2 bg-surface-50 border border-surface-200 rounded-lg px-3 py-1.5 flex-1 min-w-64">
+          <Search className="w-4 h-4 text-surface-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name, ID, email, position..."
+            className="bg-transparent text-sm flex-1 outline-none placeholder:text-surface-400"
+          />
         </div>
+        <Filter className="w-4 h-4 text-surface-400" />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="text-sm border border-surface-200 rounded-lg px-3 py-1.5 bg-white"
+        >
+          <option value="">All statuses</option>
+          {Object.values(EmploymentStatus).map((s) => (
+            <option key={s} value={s}>
+              {s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+            </option>
+          ))}
+        </select>
+        {(search || statusFilter) && (
+          <button
+            onClick={() => { setSearch(''); setStatusFilter(''); }}
+            className="text-xs text-surface-500 hover:text-surface-700"
+          >
+            Clear
+          </button>
+        )}
       </div>
 
+      {/* Table */}
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="table-modern">
             <thead>
-              <tr className="bg-surface-50 border-b border-surface-200">
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Emp ID</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Name</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">Position</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden lg:table-cell">Department</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Status</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600">Actions</th>
+              <tr>
+                <th>Emp ID</th>
+                <th>Name</th>
+                <th className="hidden md:table-cell">Position</th>
+                <th className="hidden lg:table-cell">Department</th>
+                <th>Status</th>
+                <th className="text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} className="text-center py-12 text-gray-400">Loading...</td></tr>
+                <tr><td colSpan={6} className="text-center py-16 text-surface-400">Loading employees...</td></tr>
               ) : data.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-12 text-gray-400">No employees found</td></tr>
-              ) : data.map((e) => (
-                <tr key={e.id} className="border-b border-surface-100 hover:bg-surface-50 transition-colors">
-                  <td className="px-4 py-3 text-gray-500 font-mono text-xs">{e.employeeId}</td>
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-gray-900">{e.lastName}, {e.firstName}</p>
-                    <p className="text-xs text-gray-400 md:hidden">{e.position}</p>
+                <tr>
+                  <td colSpan={6} className="text-center py-16">
+                    <Users className="w-10 h-10 text-surface-200 mx-auto mb-2" />
+                    <p className="text-sm text-surface-500">No employees match your filters</p>
                   </td>
-                  <td className="px-4 py-3 text-gray-700 hidden md:table-cell">{e.position}</td>
-                  <td className="px-4 py-3 text-gray-600 hidden lg:table-cell">{e.department}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${statusColors[e.employmentStatus] || 'bg-gray-100 text-gray-600'}`}>
+                </tr>
+              ) : data.map((e) => (
+                <tr key={e.id} className="group">
+                  <td className="font-mono text-xs text-surface-500">{e.employeeId}</td>
+                  <td>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-violet-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                        {e.firstName?.[0]?.toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="font-medium text-surface-900">{e.lastName}, {e.firstName}</div>
+                        <div className="text-xs text-surface-500 md:hidden">{e.position}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="hidden md:table-cell">{e.position}</td>
+                  <td className="hidden lg:table-cell">{e.department}</td>
+                  <td>
+                    <span className={`${STATUS_BADGE[e.employmentStatus] || 'badge-neutral'} capitalize`}>
                       {e.employmentStatus.replace(/_/g, ' ')}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-1">
-                      <button onClick={() => router.push(`/dashboard/employees/${e.id}`)} className="p-2 rounded-lg hover:bg-surface-100 text-gray-500 hover:text-brand-600"><Eye className="w-4 h-4" /></button>
-                      <button onClick={() => router.push(`/dashboard/employees/${e.id}/edit`)} className="p-2 rounded-lg hover:bg-surface-100 text-gray-500 hover:text-brand-600"><Pencil className="w-4 h-4" /></button>
-                      <button onClick={() => handleDelete(e.id)} className="p-2 rounded-lg hover:bg-red-50 text-gray-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
+                  <td>
+                    <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => router.push(`/dashboard/employees/${e.id}`)}
+                        className="p-2 rounded-md hover:bg-surface-100 text-surface-500 hover:text-primary-600 transition-colors"
+                        title="View"
+                      ><Eye className="w-4 h-4" /></button>
+                      <button
+                        onClick={() => router.push(`/dashboard/employees/${e.id}/edit`)}
+                        className="p-2 rounded-md hover:bg-surface-100 text-surface-500 hover:text-primary-600 transition-colors"
+                        title="Edit"
+                      ><Pencil className="w-4 h-4" /></button>
+                      <button
+                        onClick={() => handleDelete(e.id)}
+                        className="p-2 rounded-md hover:bg-rose-50 text-surface-500 hover:text-rose-600 transition-colors"
+                        title="Delete"
+                      ><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </td>
                 </tr>
@@ -116,11 +166,23 @@ export default function EmployeesPage() {
           </table>
         </div>
         {meta.totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-surface-200">
-            <p className="text-sm text-gray-500">Page {meta.page} of {meta.totalPages}</p>
-            <div className="flex gap-2">
-              <button onClick={() => fetchData(meta.page - 1)} disabled={meta.page <= 1} className="p-2 rounded-lg border border-surface-200 hover:bg-surface-100 disabled:opacity-40"><ChevronLeft className="w-4 h-4" /></button>
-              <button onClick={() => fetchData(meta.page + 1)} disabled={meta.page >= meta.totalPages} className="p-2 rounded-lg border border-surface-200 hover:bg-surface-100 disabled:opacity-40"><ChevronRight className="w-4 h-4" /></button>
+          <div className="flex items-center justify-between px-4 py-3 border-t border-surface-100 bg-surface-50/50">
+            <p className="text-xs text-surface-500">
+              Page <span className="font-semibold text-surface-700">{meta.page}</span> of {meta.totalPages}
+              <span className="mx-2 text-surface-300">·</span>
+              {meta.total} total
+            </p>
+            <div className="flex gap-1">
+              <button
+                onClick={() => fetchData(meta.page - 1)}
+                disabled={meta.page <= 1}
+                className="p-1.5 rounded-md border border-surface-200 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+              ><ChevronLeft className="w-4 h-4" /></button>
+              <button
+                onClick={() => fetchData(meta.page + 1)}
+                disabled={meta.page >= meta.totalPages}
+                className="p-1.5 rounded-md border border-surface-200 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+              ><ChevronRight className="w-4 h-4" /></button>
             </div>
           </div>
         )}
