@@ -75,6 +75,7 @@ const navSections: NavSection[] = [
   {
     label: 'Operations',
     items: [
+      { label: 'Shifts', href: '/dashboard/shifts', icon: Clock },
       { label: 'Attendance', href: '/dashboard/attendance', icon: Clock },
       { label: 'Payroll', href: '/dashboard/payroll', icon: DollarSign },
       { label: 'Bonus Runs', href: '/dashboard/bonus', icon: Gift },
