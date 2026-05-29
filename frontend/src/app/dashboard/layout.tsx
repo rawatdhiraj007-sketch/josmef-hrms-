@@ -5,32 +5,22 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import Topbar from '@/components/layout/Topbar';
+import SplashLoader from '@/components/SplashLoader';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/auth/login');
-    }
+    if (!loading && !user) router.push('/auth/login');
   }, [loading, user, router]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-surface-50">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
-          <p className="text-sm text-surface-500">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
+  if (loading) return <SplashLoader message="Loading workspace…" variant="dark" />;
   if (!user) return null;
 
+  // Light "CRM panel" — force light styling regardless of root dark theme
   return (
-    <div className="min-h-screen bg-surface-50">
+    <div className="min-h-screen bg-surface-50 light-mode-page text-surface-900">
       <Sidebar />
       <div className="lg:ml-64">
         <Topbar />

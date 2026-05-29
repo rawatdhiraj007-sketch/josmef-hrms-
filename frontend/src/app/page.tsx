@@ -11,86 +11,86 @@ import {
 
 export default function MarketingHome() {
   return (
-    <div className="min-h-screen bg-white">
-      {/* ───────── Navbar ───────── */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-surface-100">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Logo size={32} textClassName="text-lg text-surface-900" taglineClassName="hidden" />
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-surface-600">
-            <a href="#features" className="hover:text-surface-900 transition-colors">Features</a>
-            <a href="#integrations" className="hover:text-surface-900 transition-colors">Integrations</a>
-            <a href="#pricing" className="hover:text-surface-900 transition-colors">Pricing</a>
-            <a href="#contact" className="hover:text-surface-900 transition-colors">Contact</a>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/auth/login" className="text-sm text-surface-600 hover:text-surface-900 px-3 py-2">
-              Sign in
-            </Link>
-            <a
-              href="#contact"
-              className="bg-surface-900 hover:bg-surface-800 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5"
-            >
-              Book a demo <ArrowRight className="w-3.5 h-3.5" />
-            </a>
-          </div>
-        </div>
-      </nav>
-
-      {/* ───────── Hero ───────── */}
-      <section className="relative overflow-hidden bg-white">
-        {/* Premium gradient blobs */}
+    <div className="min-h-screen bg-white light-mode-page">
+      {/* ───────── DARK HERO (Linear/Vercel style) ───────── */}
+      <section className="relative overflow-hidden bg-nova-900 text-white">
+        {/* Aurora mesh background */}
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] bg-gradient-to-br from-primary-100/40 via-accent-500/10 to-transparent rounded-full blur-3xl" />
-          <div className="absolute -top-32 -right-32 w-96 h-96 bg-primary-200/40 rounded-full blur-3xl" />
-          <div className="absolute -top-32 -left-32 w-96 h-96 bg-accent-500/20 rounded-full blur-3xl" />
+          <div className="absolute inset-0 bg-nova-mesh opacity-80 animate-aurora bg-[length:200%_200%]" />
+          <div className="absolute inset-0 bg-grid-pattern opacity-40" />
         </div>
+
+        {/* Dark navbar */}
+        <nav className="relative z-20 border-b border-white/[0.06]">
+          <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <Logo size={32} variant="light" glow textClassName="text-lg text-white" />
+            <div className="hidden md:flex items-center gap-8 text-sm font-medium text-white/70">
+              <a href="#features"     className="hover:text-white transition-colors">Features</a>
+              <a href="#integrations" className="hover:text-white transition-colors">Integrations</a>
+              <a href="#pricing"      className="hover:text-white transition-colors">Pricing</a>
+              <a href="#contact"      className="hover:text-white transition-colors">Contact</a>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link href="/auth/login" className="text-sm text-white/70 hover:text-white px-3 py-2 transition-colors">
+                Sign in
+              </Link>
+              <a
+                href="#contact"
+                className="bg-white text-surface-900 hover:bg-white/90 text-sm font-semibold px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5"
+              >
+                Book a demo <ArrowRight className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          </div>
+        </nav>
 
         <div className="relative max-w-7xl mx-auto px-6 pt-24 pb-32 text-center">
-          <div className="inline-flex items-center gap-2 bg-white border border-surface-200 shadow-soft rounded-full px-4 py-1.5 text-xs font-medium text-surface-700 mb-8 animate-fade-in">
-            <Sparkles className="w-3.5 h-3.5 text-primary-600" />
+          <div className="inline-flex items-center gap-2 bg-white/[0.04] backdrop-blur border border-white/[0.08] rounded-full px-4 py-1.5 text-xs font-medium text-white/80 mb-8 animate-fade-in">
+            <Sparkles className="w-3.5 h-3.5 text-primary-300" />
             New: AI-powered insights + workflow automation
-            <span className="bg-primary-600 text-white text-2xs px-1.5 py-0.5 rounded font-semibold">LIVE</span>
+            <span className="bg-primary-500 text-white text-2xs px-1.5 py-0.5 rounded font-semibold">LIVE</span>
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-bold text-surface-900 tracking-tight max-w-5xl mx-auto leading-[1.05]">
-            HR infrastructure for{' '}
-            <span className="bg-gradient-to-br from-primary-600 via-primary-500 to-accent-600 bg-clip-text text-transparent">
-              modern teams
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight max-w-5xl mx-auto leading-[1.05]">
+            The next era of{' '}
+            <span className="nova-gradient-text">
+              workforce intelligence
             </span>
           </h1>
 
-          <p className="text-lg md:text-xl text-surface-600 mt-7 max-w-2xl mx-auto leading-relaxed">
-            Run recruitment, attendance, payroll, leave, compliance, and
-            shift scheduling — all on one platform built for growing companies.
+          <p className="text-lg md:text-xl text-white/60 mt-7 max-w-2xl mx-auto leading-relaxed">
+            {BRAND.name} is the AI-native HR platform powering modern teams.
+            Run recruitment, payroll, compliance, and shifts on one unified
+            system — built for scale.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3 mt-10">
             <a
               href="#contact"
-              className="bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white text-sm font-semibold px-6 py-3 rounded-xl shadow-soft hover:shadow-glow transition-all inline-flex items-center gap-2"
+              className="bg-gradient-to-r from-primary-500 via-primary-600 to-accent-600 hover:shadow-glow text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all inline-flex items-center gap-2"
             >
               Start free trial <ArrowRight className="w-4 h-4" />
             </a>
             <Link
               href="/auth/login"
-              className="bg-white border border-surface-200 hover:border-surface-300 text-surface-900 text-sm font-semibold px-6 py-3 rounded-xl shadow-soft transition-all inline-flex items-center gap-2"
+              className="bg-white/[0.04] backdrop-blur border border-white/[0.10] hover:bg-white/[0.08] text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all inline-flex items-center gap-2"
             >
               Try interactive demo
             </Link>
           </div>
 
-          <div className="flex items-center justify-center gap-6 mt-10 text-xs text-surface-500 flex-wrap">
-            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-500" /> 14-day free trial</span>
-            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-500" /> No credit card</span>
-            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-emerald-500" /> Set up in 1 day</span>
+          <div className="flex items-center justify-center gap-6 mt-10 text-xs text-white/50 flex-wrap">
+            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-primary-400" /> 14-day free trial</span>
+            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-primary-400" /> No credit card</span>
+            <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-primary-400" /> Set up in 1 day</span>
           </div>
 
           {/* Stats bar */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20 max-w-4xl mx-auto">
-            <Stat number="27" label="HR Modules" />
-            <Stat number="30+" label="License Types" />
-            <Stat number="6" label="Integrations" />
-            <Stat number="<200ms" label="API Response" />
+            <DarkStat number="27" label="HR Modules" />
+            <DarkStat number="30+" label="License Types" />
+            <DarkStat number="6" label="Integrations" />
+            <DarkStat number="<200ms" label="API Response" />
           </div>
         </div>
       </section>
@@ -389,6 +389,15 @@ function Stat({ number, label }: { number: string; label: string }) {
     <div>
       <div className="text-4xl font-bold text-surface-900 tracking-tight">{number}</div>
       <div className="text-2xs font-semibold uppercase tracking-wider text-surface-500 mt-1">{label}</div>
+    </div>
+  );
+}
+
+function DarkStat({ number, label }: { number: string; label: string }) {
+  return (
+    <div>
+      <div className="text-4xl font-bold tracking-tight nova-gradient-text">{number}</div>
+      <div className="text-2xs font-semibold uppercase tracking-wider text-white/40 mt-1">{label}</div>
     </div>
   );
 }

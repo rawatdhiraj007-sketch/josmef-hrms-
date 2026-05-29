@@ -4,41 +4,56 @@
 
 :root {
   --font-primary: 'Inter', system-ui, sans-serif;
+  --nova-bg: #0b0f1f;
+  --nova-surface: #161b2c;
+  --nova-border: #1e2438;
+  --nova-text: #dee3f5;
+}
+
+html {
+  background: var(--nova-bg);
 }
 
 body {
   font-family: var(--font-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01';
   letter-spacing: -0.011em;
-  background-color: #fafafa;
-  color: #18181b;
+  color: var(--nova-text);
 }
 
-/* Smooth scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* Light pages (admin dashboard / portal / forms) use their own bg. */
+.light-mode-page,
+html:has(.force-light) {
+  background-color: #fafafa;
 }
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+
+/* Modern thin scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: #e4e4e7;
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 4px;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #d4d4d8;
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.18); }
+
+/* Selection */
+::selection {
+  background: rgba(99, 102, 241, 0.35);
+  color: white;
 }
 
 @layer components {
   /* ─── Buttons ──────────────────────────────────────── */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 bg-primary-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold
-           hover:bg-primary-700 active:bg-primary-800
-           transition-all duration-150 shadow-soft
-           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold
+           text-white
+           bg-gradient-to-r from-primary-600 to-accent-600
+           hover:from-primary-500 hover:to-accent-500
+           shadow-soft hover:shadow-glow
+           transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-primary-400/40 focus:ring-offset-2 focus:ring-offset-nova-900
            disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none;
   }
 
@@ -70,13 +85,20 @@ body {
     @apply block text-sm font-medium text-surface-700 mb-1.5;
   }
 
-  /* ─── Cards ──────────────────────────────────────── */
+  /* ─── Cards (light theme — admin dashboard) ───────── */
   .card {
     @apply bg-white rounded-xl border border-surface-200 shadow-card;
   }
-
   .card-hover {
     @apply card transition-all duration-200 hover:shadow-card-hover hover:border-surface-300;
+  }
+
+  /* ─── Dark cards (for nova dark UI) ────────────────── */
+  .dark-card {
+    @apply rounded-xl bg-nova-800/80 backdrop-blur border border-white/[0.06] shadow-dark-card;
+  }
+  .dark-card-hover {
+    @apply dark-card transition-all duration-200 hover:bg-nova-800 hover:border-white/[0.12] hover:shadow-dark-hover;
   }
 
   /* ─── Tables ──────────────────────────────────────── */
@@ -92,14 +114,10 @@ body {
   .table-modern tbody tr {
     @apply border-b border-surface-100 transition-colors hover:bg-surface-50/60;
   }
-  .table-modern tbody tr:last-child {
-    @apply border-0;
-  }
-  .table-modern td {
-    @apply px-4 py-3.5 text-surface-700;
-  }
+  .table-modern tbody tr:last-child { @apply border-0; }
+  .table-modern td { @apply px-4 py-3.5 text-surface-700; }
 
-  /* ─── Badges / pills ──────────────────────────────── */
+  /* ─── Badges ──────────────────────────────────────── */
   .badge {
     @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-semibold;
   }
@@ -123,7 +141,7 @@ body {
     @apply absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-primary-600 rounded-r-full;
   }
 
-  /* ─── Section headings ────────────────────────────── */
+  /* ─── Section labels ──────────────────────────────── */
   .section-label {
     @apply text-2xs font-semibold uppercase tracking-wider text-surface-400 px-3 mb-1.5;
   }
@@ -132,7 +150,12 @@ body {
   .kpi-card {
     @apply bg-white rounded-xl border border-surface-200 p-5 shadow-card transition-all hover:shadow-card-hover;
   }
+
+  /* ─── NextNova gradient text ──────────────────────── */
+  .nova-gradient-text {
+    @apply bg-gradient-to-br from-blue-400 via-indigo-400 to-violet-400 bg-clip-text text-transparent;
+  }
 }
 
 /* Inter font import (CDN) */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
