@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Workforce — Modern HR for Healthcare Teams</title>
+<style>
+  @page { size: A4; margin: 1.4cm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #18181b;
+    line-height: 1.5;
+    font-size: 11pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body { max-width: 21cm; margin: 0 auto; padding: 1.2cm; }
+  @media print { body { padding: 0; } }
+
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 14pt; border-bottom: 1.5pt solid #e4e4e7; margin-bottom: 18pt;
+  }
+  .logo-wrap { display: flex; align-items: center; gap: 9pt; }
+  .logo-square {
+    width: 36pt; height: 36pt; border-radius: 7pt;
+    background: linear-gradient(135deg, #f43f5e, #ec4899, #a855f7);
+    color: white; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 18pt;
+  }
+  .logo-name { font-size: 14pt; font-weight: 700; letter-spacing: -0.3pt; }
+  .logo-tagline { font-size: 7pt; color: #71717a; margin-top: 1pt; text-transform: uppercase; letter-spacing: 0.5pt; }
+
+  .meta { text-align: right; font-size: 8pt; color: #71717a; }
+
+  h1 {
+    font-size: 22pt; font-weight: 800; letter-spacing: -0.5pt; line-height: 1.15;
+    background: linear-gradient(90deg, #be123c, #ec4899, #8b5cf6);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; color: transparent;
+    margin-bottom: 6pt;
+  }
+  .sub { font-size: 11pt; color: #52525b; margin-bottom: 18pt; }
+
+  h2 {
+    font-size: 7.5pt; font-weight: 700; letter-spacing: 0.8pt; text-transform: uppercase;
+    color: #be123c; margin: 18pt 0 8pt;
+  }
+
+  .grid { display: grid; gap: 9pt; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  .feature {
+    border: 0.7pt solid #e4e4e7; border-radius: 6pt; padding: 9pt 11pt;
+  }
+  .feature-title { font-weight: 600; font-size: 10pt; margin-bottom: 3pt; }
+  .feature-body  { font-size: 8.5pt; color: #52525b; line-height: 1.4; }
+  .feature-icon  {
+    display: inline-block; width: 14pt; height: 14pt; border-radius: 4pt;
+    background: #fff1f2; color: #be123c; text-align: center;
+    font-weight: 700; font-size: 9pt; line-height: 14pt; margin-right: 4pt;
+  }
+
+  .pricing {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 9pt; margin-top: 7pt;
+  }
+  .tier {
+    border: 0.7pt solid #e4e4e7; border-radius: 6pt; padding: 11pt;
+    position: relative;
+  }
+  .tier.featured { border-color: #f43f5e; border-width: 1.5pt; background: #fff7f8; }
+  .tier .name { font-weight: 700; font-size: 10pt; margin-bottom: 3pt; }
+  .tier .price { font-size: 18pt; font-weight: 800; letter-spacing: -0.5pt; margin: 4pt 0 2pt; color: #18181b; }
+  .tier .price-unit { font-size: 8pt; color: #71717a; font-weight: 500; }
+  .tier .for { font-size: 8pt; color: #71717a; margin-bottom: 8pt; }
+  .tier ul { list-style: none; }
+  .tier li {
+    font-size: 8.5pt; color: #3f3f46; padding: 2.5pt 0 2.5pt 11pt; position: relative;
+  }
+  .tier li:before {
+    content: '✓'; position: absolute; left: 0; color: #10b981; font-weight: bold;
+  }
+  .badge {
+    position: absolute; top: -6pt; right: 8pt;
+    background: #be123c; color: white; font-size: 6.5pt; font-weight: 700;
+    padding: 2pt 5pt; border-radius: 3pt; letter-spacing: 0.4pt; text-transform: uppercase;
+  }
+
+  .roi {
+    background: linear-gradient(135deg, #fdf2f8, #fae8ff);
+    border: 0.7pt solid #fbcfe8; border-radius: 7pt;
+    padding: 11pt 13pt; margin: 8pt 0;
+  }
+  .roi-title { font-weight: 700; font-size: 9pt; color: #9d174d; margin-bottom: 5pt; }
+  .roi-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8pt; }
+  .roi-stat { text-align: center; }
+  .roi-number { font-size: 16pt; font-weight: 800; color: #be123c; letter-spacing: -0.4pt; }
+  .roi-label  { font-size: 7pt; color: #71717a; text-transform: uppercase; letter-spacing: 0.4pt; margin-top: 1pt; }
+
+  .cta {
+    background: linear-gradient(135deg, #4c0519, #831843, #4c1d95);
+    color: white; border-radius: 8pt; padding: 14pt 16pt;
+    margin-top: 16pt; display: flex; align-items: center; justify-content: space-between; gap: 14pt;
+  }
+  .cta-text h3 { font-size: 13pt; font-weight: 700; margin-bottom: 3pt; }
+  .cta-text p  { font-size: 8.5pt; opacity: 0.85; }
+  .cta-button {
+    background: white; color: #831843; padding: 7pt 14pt; border-radius: 5pt;
+    font-weight: 700; font-size: 9.5pt; white-space: nowrap;
+  }
+
+  footer {
+    margin-top: 12pt; padding-top: 10pt; border-top: 0.5pt solid #e4e4e7;
+    display: flex; justify-content: space-between; font-size: 7.5pt; color: #71717a;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo-wrap">
+    <div class="logo-square">W</div>
+    <div>
+      <div class="logo-name">Workforce</div>
+      <div class="logo-tagline">Modern HR for healthcare teams</div>
+    </div>
+  </div>
+  <div class="meta">
+    For: Mid-size hospitals, clinics, home-care<br/>
+    Built in PH · Ready for SEA & EU
+  </div>
+</div>
+
+<h1>The HR platform built for<br/>healthcare teams.</h1>
+<div class="sub">
+  Track PRC, NMC, GMC, BLS/ACLS licenses with auto-expiry alerts.
+  Manage 24/7 shifts, payroll, compliance, and the full employee
+  lifecycle — on one platform that actually understands healthcare.
+</div>
+
+<h2>Why Workforce vs. generic HRMS</h2>
+<div class="grid grid-2">
+  <div class="feature">
+    <div class="feature-title"><span class="feature-icon">⚕</span>30+ License Types Tracked</div>
+    <div class="feature-body">PRC RN/MD/PT/MT/Pharma, UK NMC/GMC/HCPC, BLS/ACLS/PALS, NBI, DBS. Alerts at 90/30/7 days + expiry.</div>
+  </div>
+  <div class="feature">
+    <div class="feature-title"><span class="feature-icon">🇵🇭</span>PH Statutory From Day One</div>
+    <div class="feature-body">SSS R-3, PhilHealth RF-1, Pag-IBIG MCRF, BIR 2316, Alphalist generation. 13th-month auto-compute per PD 851.</div>
+  </div>
+  <div class="feature">
+    <div class="feature-title"><span class="feature-icon">📋</span>8 PH Leave Types Pre-Configured</div>
+    <div class="feature-body">VL, SL, ML, PL, Bereavement, Solo Parent (RA 8972), VAWC (RA 9262), Unpaid. Balance tracking & approval flow.</div>
+  </div>
+  <div class="feature">
+    <div class="feature-title"><span class="feature-icon">🛡</span>Real-Time Compliance Engine</div>
+    <div class="feature-body">Auto-alert for expired licenses, overdue NTEs, expiring contracts, separated staff with active loans, stale disciplinary cases.</div>
+  </div>
+  <div class="feature">
+    <div class="feature-title"><span class="feature-icon">📱</span>Employee Self-Service Portal</div>
+    <div class="feature-body">Staff log in to see payslips, leave balance, attendance, file requests, view their own licenses. Mobile-responsive.</div>
+  </div>
+  <div class="feature">
+    <div class="feature-title"><span class="feature-icon">📊</span>Built-In Analytics</div>
+    <div class="feature-body">Headcount trends, payroll cost, leave usage, attendance breakdown, department distribution, applicant funnel.</div>
+  </div>
+</div>
+
+<h2>ROI for a 100-staff hospital</h2>
+<div class="roi">
+  <div class="roi-title">Replace your Excel + 3 separate systems with one platform</div>
+  <div class="roi-grid">
+    <div class="roi-stat">
+      <div class="roi-number">₱180K</div>
+      <div class="roi-label">Annual savings</div>
+    </div>
+    <div class="roi-stat">
+      <div class="roi-number">60 hrs</div>
+      <div class="roi-label">HR hours saved / month</div>
+    </div>
+    <div class="roi-stat">
+      <div class="roi-number">3-mo</div>
+      <div class="roi-label">Payback period</div>
+    </div>
+  </div>
+</div>
+
+<h2>Pricing</h2>
+<div class="pricing">
+  <div class="tier">
+    <div class="name">Starter</div>
+    <div class="price">₱200<span class="price-unit"> / emp / month</span></div>
+    <div class="for">Clinics, dental, 10–50 staff</div>
+    <ul>
+      <li>Core HR + 201 file</li>
+      <li>Attendance + Payroll</li>
+      <li>Leave Management</li>
+      <li>PRC License Tracking</li>
+      <li>PH Gov Reports</li>
+    </ul>
+  </div>
+  <div class="tier featured">
+    <div class="badge">Most popular</div>
+    <div class="name">Pro</div>
+    <div class="price">₱500<span class="price-unit"> / emp / month</span></div>
+    <div class="for">Hospitals, multi-location, 50–500</div>
+    <ul>
+      <li>Everything in Starter</li>
+      <li>Shift Scheduling</li>
+      <li>Compliance Engine</li>
+      <li>Audit Log</li>
+      <li>Bonus Runs + Analytics</li>
+      <li>Priority support</li>
+    </ul>
+  </div>
+  <div class="tier">
+    <div class="name">Enterprise</div>
+    <div class="price" style="font-size:14pt; margin-top:8pt;">Custom</div>
+    <div class="for" style="margin-top:6pt;">Hospital systems, 500+ staff</div>
+    <ul>
+      <li>Everything in Pro</li>
+      <li>SSO (SAML/OAuth)</li>
+      <li>2FA enforcement</li>
+      <li>Custom branding</li>
+      <li>Dedicated CSM</li>
+      <li>SLA + uptime</li>
+    </ul>
+  </div>
+</div>
+
+<div class="cta">
+  <div class="cta-text">
+    <h3>Book a 20-minute demo</h3>
+    <p>We'll show you the platform, answer your questions, set up a free 14-day trial.</p>
+  </div>
+  <div class="cta-button">hello@example.com</div>
+</div>
+
+<footer>
+  <span>Workforce HR Platform · Manila, Philippines</span>
+  <span>workforce.app · hello@example.com · +63 …</span>
+</footer>
+
+</body>
+</html>
