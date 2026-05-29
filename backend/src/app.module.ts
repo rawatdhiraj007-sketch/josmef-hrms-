@@ -29,6 +29,7 @@ import { TrainingModule } from './modules/training/training.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { LicensesModule } from './modules/licenses/licenses.module';
 import { ShiftsModule } from './modules/shifts/shifts.module';
+import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { NumberingModule } from './common/modules/numbering.module';
 import { NotificationModule } from './common/modules/notification.module';
 import { User } from './modules/users/entities/user.entity';
@@ -106,6 +107,7 @@ import { SeedService } from './seeds/seed.service';
     AnalyticsModule,
     LicensesModule,
     ShiftsModule,
+    IntegrationsModule,
   ],
   providers: [SeedService],
 })

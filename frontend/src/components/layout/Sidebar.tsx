@@ -31,6 +31,7 @@ import {
   Settings,
   HelpCircle,
   Stethoscope,
+  Zap,
 } from 'lucide-react';
 import { useState } from 'react';
 import Logo from '@/components/Logo';
@@ -100,6 +101,13 @@ const navSections: NavSection[] = [
       { label: 'Gov Reports', href: '/dashboard/gov-reports', icon: FileBarChart },
       { label: 'Audit Log', href: '/dashboard/audit', icon: History },
       { label: 'AI Hub', href: '/dashboard/ai', icon: Sparkles },
+    ],
+  },
+  {
+    label: 'Connect',
+    items: [
+      { label: 'Integrations', href: '/dashboard/integrations', icon: Zap },
+      { label: 'Automations', href: '/dashboard/automations', icon: Sparkles },
     ],
   },
 ];
