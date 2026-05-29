@@ -9,6 +9,7 @@ import {
   ArrowRight, ArrowUpRight,
   Plane, ShieldAlert, Gift, FileBarChart, Sparkles,
   Plus, Activity, CalendarCheck, BarChart3,
+  Cake, Calendar, AlertTriangle, Briefcase,
 } from 'lucide-react';
 import {
   Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid,
@@ -42,27 +43,77 @@ interface ComplianceSummary {
   high: number;
 }
 
+interface Birthday {
+  id: string;
+  firstName: string;
+  lastName: string;
+  department?: string;
+  position?: string;
+  day: number;
+  dateOfBirth: string;
+}
+
+interface OnLeave {
+  id: string;
+  employeeId: string;
+  firstName: string;
+  lastName: string;
+  empNumber: string;
+  department?: string;
+  leaveCode: string;
+  leaveName: string;
+  startDate: string;
+  endDate: string;
+  totalDays: number;
+}
+
+interface ExpiringContract {
+  id: string;
+  firstName: string;
+  lastName: string;
+  department?: string;
+  position?: string;
+  contractEndDate: string;
+  daysLeft: number;
+}
+
+interface Holiday {
+  date: string;
+  name: string;
+  type: 'regular' | 'special';
+}
+
+interface Widgets {
+  birthdays: Birthday[];
+  onLeave: OnLeave[];
+  expiringContracts: ExpiringContract[];
+  holidays: Holiday[];
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [trend, setTrend] = useState<Trend[]>([]);
   const [recentHires, setRecentHires] = useState<RecentHire[]>([]);
   const [compliance, setCompliance] = useState<ComplianceSummary | null>(null);
+  const [widgets, setWidgets] = useState<Widgets | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       try {
-        const [s, t, h, c] = await Promise.all([
+        const [s, t, h, c, w] = await Promise.all([
           api.get('/dashboard/stats').catch(() => ({ data: {} })),
           api.get('/analytics/headcount-trend').catch(() => ({ data: [] })),
           api.get('/employees', { params: { limit: 5 } }).catch(() => ({ data: { rows: [] } })),
           api.get('/compliance/alerts').catch(() => ({ data: { summary: null } })),
+          api.get('/dashboard/widgets').catch(() => ({ data: null })),
         ]);
         setStats(s.data);
         setTrend(t.data);
         setRecentHires(h.data?.rows ?? []);
         setCompliance(c.data?.summary);
+        setWidgets(w.data);
       } finally { setLoading(false); }
     })();
   }, []);
@@ -285,7 +336,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="card p-6">
+        <div className="card p-6" id="today-glance">
           <h3 className="font-semibold text-surface-900 mb-4 flex items-center gap-2">
             <Activity className="w-4 h-4 text-primary-600" />
             Today at a Glance
@@ -321,6 +372,183 @@ export default function DashboardPage() {
               hint="From Training module"
             />
           </div>
+        </div>
+      </div>
+
+      {/* ── Birthdays + Holidays row ──────────────────────────── */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Birthdays this month */}
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-surface-900 flex items-center gap-2">
+              <Cake className="w-4 h-4 text-pink-500" />
+              Birthdays This Month
+            </h3>
+            <span className="text-2xs font-semibold uppercase tracking-wider text-surface-400">
+              {widgets?.birthdays.length ?? 0}
+            </span>
+          </div>
+          {widgets?.birthdays.length === 0 ? (
+            <div className="text-sm text-surface-400 py-6 text-center">
+              No birthdays this month 🎂
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {widgets?.birthdays.slice(0, 6).map(b => (
+                <div key={b.id} className="flex items-center gap-3 px-2 py-2 -mx-2 rounded-lg hover:bg-surface-50 transition-colors">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                    {b.firstName?.[0]?.toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-surface-900 truncate">
+                      {b.firstName} {b.lastName}
+                    </div>
+                    <div className="text-xs text-surface-500 truncate">
+                      {b.department || b.position || 'Employee'}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-semibold text-pink-600">
+                      {new Date(b.dateOfBirth).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {(widgets?.birthdays.length ?? 0) > 6 && (
+                <div className="text-xs text-surface-400 text-center pt-2">
+                  +{(widgets?.birthdays.length ?? 0) - 6} more
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Upcoming PH holidays */}
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-surface-900 flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-violet-500" />
+              Upcoming Holidays
+            </h3>
+            <span className="text-2xs font-semibold uppercase tracking-wider text-surface-400">PH</span>
+          </div>
+          {widgets?.holidays.length === 0 ? (
+            <div className="text-sm text-surface-400 py-6 text-center">
+              No upcoming holidays this year
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {widgets?.holidays.slice(0, 6).map(h => {
+                const d = new Date(h.date);
+                const daysAway = Math.ceil((d.getTime() - Date.now()) / 86400000);
+                return (
+                  <div key={h.date} className="flex items-center gap-3 px-2 py-2 -mx-2 rounded-lg hover:bg-surface-50 transition-colors">
+                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-violet-100 to-violet-50 flex flex-col items-center justify-center flex-shrink-0">
+                      <div className="text-2xs text-violet-600 font-semibold uppercase">
+                        {d.toLocaleDateString('en-US', { month: 'short' })}
+                      </div>
+                      <div className="text-sm font-bold text-violet-700 leading-none">
+                        {d.getDate()}
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-surface-900 truncate">{h.name}</div>
+                      <div className="text-xs text-surface-500">
+                        {h.type === 'regular' ? 'Regular' : 'Special non-working'} ·
+                        {daysAway === 0 ? ' Today' :
+                         daysAway === 1 ? ' Tomorrow' :
+                         ` in ${daysAway} days`}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── On Leave + Expiring Contracts row ─────────────────── */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Who's on leave today */}
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-surface-900 flex items-center gap-2">
+              <Plane className="w-4 h-4 text-blue-500" />
+              On Leave Today
+            </h3>
+            <Link href="/dashboard/leave" className="btn-ghost text-xs">
+              All leaves <ArrowUpRight className="w-3 h-3" />
+            </Link>
+          </div>
+          {widgets?.onLeave.length === 0 ? (
+            <div className="text-sm text-surface-400 py-6 text-center">
+              Everyone's at work today ✨
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {widgets?.onLeave.slice(0, 6).map(l => (
+                <div key={l.id} className="flex items-center gap-3 px-2 py-2 -mx-2 rounded-lg hover:bg-surface-50 transition-colors">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-cyan-500 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                    {l.firstName?.[0]?.toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-surface-900 truncate">
+                      {l.firstName} {l.lastName}
+                    </div>
+                    <div className="text-xs text-surface-500 truncate">
+                      Returns {new Date(l.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </div>
+                  </div>
+                  <span className="badge-info">{l.leaveCode}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Expiring contracts */}
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-surface-900 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-500" />
+              Contracts Expiring Soon
+            </h3>
+            <span className="badge-warning">{widgets?.expiringContracts.length ?? 0} in 30 days</span>
+          </div>
+          {widgets?.expiringContracts.length === 0 ? (
+            <div className="text-sm text-surface-400 py-6 text-center">
+              No contracts expiring soon ✓
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {widgets?.expiringContracts.slice(0, 6).map(c => (
+                <Link
+                  key={c.id}
+                  href={`/dashboard/employees/${c.id}`}
+                  className="flex items-center gap-3 px-2 py-2 -mx-2 rounded-lg hover:bg-surface-50 transition-colors group"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-100 to-amber-50 flex items-center justify-center flex-shrink-0">
+                    <Briefcase className="w-4 h-4 text-amber-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-surface-900 truncate">
+                      {c.firstName} {c.lastName}
+                    </div>
+                    <div className="text-xs text-surface-500 truncate">
+                      {c.department || c.position || 'Employee'} · expires {new Date(c.contractEndDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </div>
+                  </div>
+                  <span className={`badge ${
+                    c.daysLeft <= 7 ? 'badge-danger' :
+                    c.daysLeft <= 14 ? 'badge-warning' : 'badge-neutral'
+                  }`}>
+                    {c.daysLeft}d
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

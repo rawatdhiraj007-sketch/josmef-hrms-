@@ -57,4 +57,11 @@ export class DashboardController {
   getUpcomingEvents() {
     return this.service.getUpcomingEvents();
   }
+
+  // ─── New widgets (combined call) ────────────────────────────
+  @Get('widgets')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.HR_ADMIN, UserRole.HR_STAFF, UserRole.MANAGER)
+  getWidgets() {
+    return this.service.getWidgets();
+  }
 }

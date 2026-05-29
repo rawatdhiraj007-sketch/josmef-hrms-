@@ -173,4 +173,139 @@ export class DashboardService {
 
     return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).slice(0, 10);
   }
+
+  // ─── Widget: Birthdays this month ──────────────────────────────────
+  async getBirthdaysThisMonth() {
+    const month = new Date().getMonth() + 1;
+    const rows = await this.empRepo.createQueryBuilder('e')
+      .where('e.deleted_at IS NULL AND e."dateOfBirth" IS NOT NULL')
+      .andWhere('EXTRACT(MONTH FROM e."dateOfBirth") = :month', { month })
+      .andWhere(`e."employmentStatus" IN ('regular', 'probationary', 'trainee')`)
+      .orderBy('EXTRACT(DAY FROM e."dateOfBirth")', 'ASC')
+      .limit(20)
+      .getMany();
+    return rows.map(e => ({
+      id: e.id,
+      firstName: e.firstName,
+      lastName: e.lastName,
+      department: (e as any).department,
+      position: (e as any).position,
+      day: new Date(e.dateOfBirth).getDate(),
+      dateOfBirth: e.dateOfBirth,
+    }));
+  }
+
+  // ─── Widget: Who's on approved leave today ──────────────────────────
+  async getOnLeaveToday() {
+    return this.empRepo.manager.query(
+      `SELECT
+         lr.id,
+         lr."totalDays",
+         lr."startDate",
+         lr."endDate",
+         lt.code AS "leaveCode",
+         lt.name AS "leaveName",
+         e.id AS "employeeId",
+         e."firstName",
+         e."lastName",
+         e."employeeId" AS "empNumber",
+         e.department AS "department"
+       FROM leave_requests lr
+       JOIN leave_types lt ON lt.id = lr."leaveTypeId"
+       JOIN employees e ON e.id = lr."employeeId"
+       WHERE lr.status = 'approved'
+         AND lr."startDate" <= CURRENT_DATE
+         AND lr."endDate" >= CURRENT_DATE
+       ORDER BY e."lastName"
+       LIMIT 20`,
+    ).catch(() => []);
+  }
+
+  // ─── Widget: Expiring contracts (next 30 days) ──────────────────────
+  async getExpiringContracts() {
+    return this.empRepo.createQueryBuilder('e')
+      .where("e.deleted_at IS NULL AND e.\"contractEndDate\" IS NOT NULL")
+      .andWhere(`e."contractEndDate" BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days'`)
+      .andWhere(`e."employmentStatus" IN ('regular', 'probationary', 'trainee')`)
+      .orderBy('e."contractEndDate"', 'ASC')
+      .limit(10)
+      .getMany();
+  }
+
+  // ─── Widget: Recent payroll runs ────────────────────────────────────
+  async getRecentPayroll() {
+    return this.empRepo.manager.query(
+      `SELECT
+         p.id,
+         p."payDateFrom",
+         p."payDateTo",
+         p."payDay",
+         p.status,
+         SUM(p."grossPay")::float AS "totalGross",
+         SUM(p."netPay")::float AS "totalNet",
+         COUNT(DISTINCT p."employeeId")::int AS "employeeCount"
+       FROM payroll p
+       WHERE p.deleted_at IS NULL
+       GROUP BY p.id, p."payDateFrom", p."payDateTo", p."payDay", p.status
+       ORDER BY p."payDateTo" DESC
+       LIMIT 5`,
+    ).catch(() => []);
+  }
+
+  // ─── Widget: Philippine public holidays (static list) ───────────────
+  getUpcomingHolidays() {
+    const year = new Date().getFullYear();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const PH_HOLIDAYS = [
+      { date: `${year}-01-01`, name: "New Year's Day", type: 'regular' },
+      { date: `${year}-04-09`, name: 'Day of Valor (Araw ng Kagitingan)', type: 'regular' },
+      { date: `${year}-04-17`, name: 'Maundy Thursday', type: 'regular' },
+      { date: `${year}-04-18`, name: 'Good Friday', type: 'regular' },
+      { date: `${year}-05-01`, name: 'Labor Day', type: 'regular' },
+      { date: `${year}-06-12`, name: 'Independence Day', type: 'regular' },
+      { date: `${year}-08-25`, name: 'National Heroes Day', type: 'regular' },
+      { date: `${year}-11-30`, name: 'Bonifacio Day', type: 'regular' },
+      { date: `${year}-12-25`, name: 'Christmas Day', type: 'regular' },
+      { date: `${year}-12-30`, name: 'Rizal Day', type: 'regular' },
+      { date: `${year}-02-25`, name: 'EDSA Revolution Anniversary', type: 'special' },
+      { date: `${year}-08-21`, name: 'Ninoy Aquino Day', type: 'special' },
+      { date: `${year}-11-01`, name: "All Saints' Day", type: 'special' },
+      { date: `${year}-12-08`, name: 'Feast of the Immaculate Conception', type: 'special' },
+      { date: `${year}-12-24`, name: 'Christmas Eve', type: 'special' },
+      { date: `${year}-12-31`, name: "New Year's Eve", type: 'special' },
+    ];
+
+    return PH_HOLIDAYS
+      .filter(h => new Date(h.date) >= today)
+      .slice(0, 8);
+  }
+
+  // ─── Combined widgets endpoint (one round-trip) ─────────────────────
+  async getWidgets() {
+    const [birthdays, onLeave, expiring, recentPayroll] = await Promise.all([
+      this.getBirthdaysThisMonth(),
+      this.getOnLeaveToday(),
+      this.getExpiringContracts(),
+      this.getRecentPayroll(),
+    ]);
+    return {
+      birthdays,
+      onLeave,
+      expiringContracts: expiring.map(e => ({
+        id: e.id,
+        firstName: e.firstName,
+        lastName: e.lastName,
+        department: (e as any).department,
+        position: (e as any).position,
+        contractEndDate: e.contractEndDate,
+        daysLeft: Math.ceil(
+          (new Date(e.contractEndDate).getTime() - Date.now()) / 86400000,
+        ),
+      })),
+      recentPayroll,
+      holidays: this.getUpcomingHolidays(),
+    };
+  }
 }
