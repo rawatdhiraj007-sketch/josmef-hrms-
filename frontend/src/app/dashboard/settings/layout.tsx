@@ -34,8 +34,8 @@ const sections = [
   {
     label: 'Workspace',
     items: [
-      { href: '/dashboard/settings/company',      label: 'Company',      icon: Building2, disabled: true },
-      { href: '/dashboard/settings/integrations', label: 'Integrations', icon: Plug, disabled: true },
+      { href: '/dashboard/settings/workspace',    label: 'Branding & Plan', icon: Building2 },
+      { href: '/dashboard/settings/integrations', label: 'Integrations',    icon: Plug, disabled: true },
     ],
   },
 ];

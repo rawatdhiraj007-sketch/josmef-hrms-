@@ -16,6 +16,7 @@ import {
   DetailHeader, InfoRow, Timeline, StickyActionBar, type TimelineEvent,
 } from '@/components/detail';
 import { FilterSelect } from '@/components/data/DataToolbar';
+import IfRole from '@/components/auth/IfRole';
 
 // ─── Status → Badge variant mapping (theme-aware) ───
 const STATUS_VARIANT: Record<string, 'warning' | 'success' | 'neutral' | 'danger' | 'info'> = {
@@ -210,13 +211,15 @@ export default function ViewEmployeePage() {
             >
               201 File
             </Button>
-            <Button
-              variant="danger" size="sm"
-              leftIcon={<Archive className="w-3.5 h-3.5" />}
-              onClick={() => setShowArchive(true)}
-            >
-              Archive
-            </Button>
+            <IfRole can="employees.archive">
+              <Button
+                variant="danger" size="sm"
+                leftIcon={<Archive className="w-3.5 h-3.5" />}
+                onClick={() => setShowArchive(true)}
+              >
+                Archive
+              </Button>
+            </IfRole>
             <Button
               variant="primary" size="sm"
               leftIcon={<Pencil className="w-3.5 h-3.5" />}

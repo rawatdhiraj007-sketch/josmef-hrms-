@@ -9,6 +9,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
 import Link from 'next/link';
+import { useWorkspace } from '@/hooks/useWorkspace';
+import { AiCreditsWidget } from '@/components/ai';
+import { Building2 } from 'lucide-react';
 
 // Map URL segments to friendly labels
 const SEGMENT_LABELS: Record<string, string> = {
@@ -46,6 +49,7 @@ const SEGMENT_LABELS: Record<string, string> = {
 export default function Topbar() {
   const pathname = usePathname();
   const { user } = useAuth();
+  const { workspace, planDef } = useWorkspace();
   const [alertCount, setAlertCount] = useState(0);
 
   useEffect(() => {
@@ -97,6 +101,33 @@ export default function Topbar() {
 
         {/* ── Spacer ── */}
         <div className="flex-1" />
+
+        {/* ── Workspace badge ── */}
+        <Link
+          href="/dashboard/settings/workspace"
+          className="hidden md:flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-surface-100 transition-colors group"
+          title={`${workspace.companyName} · ${planDef.name} plan`}
+        >
+          <div className="w-6 h-6 rounded-md bg-gradient-to-br from-primary-500 to-accent-600 flex items-center justify-center overflow-hidden flex-shrink-0">
+            {workspace.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={workspace.logoUrl} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <Building2 className="w-3.5 h-3.5 text-white" />
+            )}
+          </div>
+          <div className="hidden lg:block text-left min-w-0">
+            <div className="text-xs font-semibold text-surface-900 truncate leading-tight">
+              {workspace.companyName}
+            </div>
+            <div className="text-[10px] text-surface-500 capitalize leading-tight">{planDef.name}</div>
+          </div>
+        </Link>
+
+        {/* ── AI credits badge ── */}
+        <div className="hidden lg:block">
+          <AiCreditsWidget variant="badge" />
+        </div>
 
         {/* ── Search (Cmd+K style) ── */}
         <button

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAi } from '@/hooks/useAi';
 import { matchIntent, SUGGESTED_QUERIES, type IntentMatch } from '@/lib/ai';
+import { recordAiUse } from '@/lib/aiCredits';
 
 type ChatMessage =
   | { role: 'user'; content: string }
@@ -54,6 +55,8 @@ export default function AiAssistant() {
     setInput('');
     setMessages((m) => [...m, { role: 'user', content: q }]);
     setThinking(true);
+    // Display-only credit counter — see /lib/aiCredits.ts
+    recordAiUse();
     // Simulate a small delay so the "thinking" feels real
     window.setTimeout(() => {
       const intent = matchIntent(q, data);
