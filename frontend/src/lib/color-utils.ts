@@ -53,6 +53,7 @@ export function generateShades(baseHex: string): Record<string, RGB> {
     '700': mix(base, BLACK, 0.22),
     '800': mix(base, BLACK, 0.36),
     '900': mix(base, BLACK, 0.50),
+    '950': mix(base, BLACK, 0.68),
   };
 }
 
@@ -88,7 +89,7 @@ export function applyColorPalette(primaryHex: string, accentHex: string): void {
 export function resetColorPalette(): void {
   if (typeof document === 'undefined') return;
   const root = document.documentElement;
-  for (const shade of ['50','100','200','300','400','500','600','700','800','900']) {
+  for (const shade of ['50','100','200','300','400','500','600','700','800','900','950']) {
     root.style.removeProperty(`--accent-${shade}`);
     root.style.removeProperty(`--primary-${shade}`);
   }
