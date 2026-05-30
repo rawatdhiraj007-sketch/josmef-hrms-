@@ -147,7 +147,7 @@ export default function EmployeesPage() {
                 </tr>
               ) : (
                 data.map((e) => (
-                  <tr key={e.id} onClick={() => router.push(`/dashboard/employees/${e.id}`)} className="cursor-pointer">
+                  <tr key={e.id} onClick={() => router.push(`/dashboard/employees/${e.id}`)} className="cursor-pointer group/row">
                     <td>
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-accent-600 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 shadow-soft">

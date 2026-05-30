@@ -147,7 +147,7 @@ export default function ApplicantsPage() {
                 </tr>
               ) : (
                 data.map((a) => (
-                  <tr key={a.id} onClick={() => router.push(`/dashboard/applicants/${a.id}`)} className="cursor-pointer">
+                  <tr key={a.id} onClick={() => router.push(`/dashboard/applicants/${a.id}`)} className="cursor-pointer group/row">
                     <td>
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 shadow-soft">

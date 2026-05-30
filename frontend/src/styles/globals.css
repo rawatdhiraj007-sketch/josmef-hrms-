@@ -112,12 +112,13 @@ html:has(.force-light) {
     @apply text-left px-4 py-2.5 font-medium text-2xs uppercase tracking-[0.08em] text-surface-500
            border-b border-surface-200/80 first:rounded-tl-xl last:rounded-tr-xl;
   }
+  /* tr/td hover handled via plain "group" — apply group class on <tr> in JSX */
   .table-modern tbody tr {
-    @apply transition-all duration-150 hover:bg-primary-50/30 group/row;
+    @apply transition-all duration-150 hover:bg-primary-50/30;
   }
   .table-modern tbody td {
     @apply px-4 py-3 text-surface-700 border-b border-surface-100/70 align-middle
-           transition-colors duration-150 group-hover/row:border-primary-100/60;
+           transition-colors duration-150;
   }
   .table-modern tbody tr:last-child td { @apply border-b-0; }
   .table-modern tbody tr:last-child td:first-child { @apply rounded-bl-xl; }
