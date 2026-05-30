@@ -81,6 +81,7 @@ const navSections: NavSection[] = [
     items: [
       { label: 'Shifts', href: '/dashboard/shifts', icon: Clock },
       { label: 'Attendance', href: '/dashboard/attendance', icon: Clock },
+      { label: 'Kiosk Mode', href: '/kiosk', icon: Clock },
       { label: 'Payroll', href: '/dashboard/payroll', icon: DollarSign },
       { label: 'Bonus Runs', href: '/dashboard/bonus', icon: Gift },
       { label: 'Leave Management', href: '/dashboard/leave', icon: Plane },
