@@ -1,8 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import api from '@/lib/api';
-import { Plus, Plane, X, CalendarDays, Clock, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import {
+  Plus, Plane, CalendarDays, Clock, CheckCircle2, XCircle, Info,
+  Loader2, ChevronRight, Tag,
+} from 'lucide-react';
+
+import { Button, Badge, Card, Modal, Input, Select, Textarea, Tabs, useToast } from '@/components/ui';
 
 interface LeaveType { id: string; code: string; name: string }
 interface Balance {
@@ -23,26 +28,32 @@ interface LeaveReq {
   approverRemarks?: string;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; icon: any; className: string }> = {
-  approved: { label: 'Approved', icon: CheckCircle2, className: 'bg-green-50 text-green-700 border-green-200' },
-  rejected: { label: 'Rejected', icon: XCircle,      className: 'bg-red-50 text-red-700 border-red-200' },
-  pending:  { label: 'Pending',  icon: Clock,         className: 'bg-amber-50 text-amber-700 border-amber-200' },
+const STATUS_VARIANT: Record<string, 'success' | 'danger' | 'warning' | 'neutral' | 'info'> = {
+  approved:  'success',
+  rejected:  'danger',
+  pending:   'warning',
+  cancelled: 'neutral',
+  taken:     'info',
 };
 
-const BALANCE_COLORS = [
-  'bg-rose-500', 'bg-blue-500', 'bg-violet-500',
-  'bg-emerald-500', 'bg-amber-500', 'bg-pink-500',
-];
+const STATUS_ICON: Record<string, any> = {
+  approved: CheckCircle2,
+  rejected: XCircle,
+  pending:  Clock,
+};
 
 export default function PortalLeavePage() {
+  const toast = useToast();
   const [types, setTypes] = useState<LeaveType[]>([]);
   const [balances, setBalances] = useState<Balance[]>([]);
   const [requests, setRequests] = useState<LeaveReq[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [tab, setTab] = useState('all');
+
+  // Form state
   const [form, setForm] = useState({ leaveTypeId: '', startDate: '', endDate: '', reason: '' });
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
 
   async function load() {
     setLoading(true);
@@ -55,221 +66,308 @@ export default function PortalLeavePage() {
       setTypes(t.data);
       setBalances(b.data);
       setRequests(r.data.rows);
+    } catch {
+      toast.error('Failed to load leaves', 'Please try again.');
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Days requested (live computation for form)
+  const daysRequested = useMemo(() => {
+    if (!form.startDate || !form.endDate) return 0;
+    const s = new Date(form.startDate);
+    const e = new Date(form.endDate);
+    if (e < s) return 0;
+    return Math.floor((e.getTime() - s.getTime()) / 86400000) + 1;
+  }, [form.startDate, form.endDate]);
+
+  const selectedBalance = balances.find((b) => b.leaveType.id === form.leaveTypeId);
+  const exceedsBalance = !!(selectedBalance && daysRequested > selectedBalance.remaining);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setError('');
     setSubmitting(true);
     try {
       await api.post('/portal/leave/requests', form);
       setShowForm(false);
       setForm({ leaveTypeId: '', startDate: '', endDate: '', reason: '' });
+      toast.success('Leave request submitted', 'You will be notified once HR responds.');
       await load();
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Failed to submit request');
+      toast.error('Submission failed', e?.response?.data?.message || 'Please try again.');
     } finally {
       setSubmitting(false);
     }
   }
 
-  const pendingCount  = requests.filter(r => r.status === 'pending').length;
-  const approvedCount = requests.filter(r => r.status === 'approved').length;
+  const pendingCount  = requests.filter((r) => r.status === 'pending').length;
+  const approvedCount = requests.filter((r) => r.status === 'approved').length;
+  const rejectedCount = requests.filter((r) => r.status === 'rejected').length;
 
-  if (loading) return <div className="text-center py-20 text-gray-400">Loading...</div>;
+  const filteredRequests = tab === 'all'
+    ? requests
+    : requests.filter((r) => r.status === tab);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20 text-surface-400 text-sm gap-2">
+        <Loader2 className="w-4 h-4 animate-spin" /> Loading…
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* ── Header ── */}
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Plane className="w-6 h-6 text-rose-600" /> My Leaves
+          <h1 className="text-2xl font-bold text-surface-900 flex items-center gap-2 tracking-tight">
+            <span className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-accent-600 flex items-center justify-center shadow-soft">
+              <Plane className="w-4 h-4 text-white" />
+            </span>
+            My Leaves
           </h1>
-          <p className="text-sm text-gray-500 mt-0.5">{new Date().getFullYear()} leave summary</p>
+          <p className="text-sm text-surface-500 mt-1 ml-11">{new Date().getFullYear()} leave summary</p>
         </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm"
+        <Button
+          variant="primary" size="md"
+          leftIcon={<Plus className="w-3.5 h-3.5" />}
+          onClick={() => setShowForm(true)}
         >
-          {showForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-          {showForm ? 'Cancel' : 'Apply Leave'}
-        </button>
+          File Leave
+        </Button>
       </div>
 
-      {/* Quick stats */}
+      {/* ── Stat cards ── */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white border border-gray-200 rounded-xl p-4 text-center">
-          <div className="text-2xl font-bold text-amber-600">{pendingCount}</div>
-          <div className="text-xs text-gray-500 mt-0.5">Pending</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 text-center">
-          <div className="text-2xl font-bold text-green-600">{approvedCount}</div>
-          <div className="text-xs text-gray-500 mt-0.5">Approved</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4 text-center">
-          <div className="text-2xl font-bold text-gray-900">{requests.length}</div>
-          <div className="text-xs text-gray-500 mt-0.5">Total Filed</div>
-        </div>
+        <StatCard label="Pending"  value={pendingCount}  tone="warning" />
+        <StatCard label="Approved" value={approvedCount} tone="success" />
+        <StatCard label="Rejected" value={rejectedCount} tone="danger" />
       </div>
 
-      {/* Balance cards */}
-      <div>
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Leave Balances</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {balances.map((b, i) => {
-            const usedPct = b.entitled > 0 ? Math.round((b.used / b.entitled) * 100) : 0;
-            const color   = BALANCE_COLORS[i % BALANCE_COLORS.length];
-            return (
-              <div key={b.leaveType.code} className="bg-white border border-gray-200 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{b.leaveType.code}</span>
-                  {b.pending > 0 && (
-                    <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">{b.pending} pending</span>
-                  )}
-                </div>
-                <div className="flex items-end gap-1 mb-1">
-                  <span className="text-3xl font-bold text-gray-900">{b.remaining}</span>
-                  <span className="text-gray-400 text-sm mb-1">/ {b.entitled} days</span>
-                </div>
-                <div className="text-xs text-gray-500 mb-2">{b.leaveType.name}</div>
-                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className={`h-full ${color} rounded-full`} style={{ width: `${usedPct}%` }} />
-                </div>
-                <div className="text-[10px] text-gray-400 mt-1">{b.used} used · {usedPct}%</div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* ── Balance cards ── */}
+      <section>
+        <h2 className="text-2xs font-bold text-surface-500 uppercase tracking-wider mb-3">
+          Leave Balances
+        </h2>
+        {balances.length === 0 ? (
+          <Card>
+            <div className="py-8 text-center text-sm text-surface-500">No leave balances assigned</div>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {balances.map((b) => {
+              const pct = b.entitled > 0
+                ? Math.min(100, Math.round((Number(b.used) / Number(b.entitled)) * 100))
+                : 0;
+              return (
+                <Card key={b.leaveType.code} padding="md" className="relative overflow-hidden">
+                  <div className="flex items-start justify-between mb-3">
+                    <Badge variant="brand" size="sm">{b.leaveType.code}</Badge>
+                    {b.pending > 0 && (
+                      <Badge variant="warning" size="sm">
+                        {b.pending} pending
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-baseline gap-1.5 mb-1">
+                    <span className="text-3xl font-bold text-surface-900 tabular-nums leading-none">{b.remaining}</span>
+                    <span className="text-surface-400 text-xs">/ {b.entitled} days</span>
+                  </div>
+                  <p className="text-xs text-surface-500 mb-3 line-clamp-1">{b.leaveType.name}</p>
+                  <div className="h-1.5 bg-surface-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-primary-500 to-accent-500 rounded-full transition-all duration-500"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between mt-1.5">
+                    <span className="text-2xs text-surface-400 tabular-nums">{b.used} used</span>
+                    <span className="text-2xs font-medium text-surface-500 tabular-nums">{pct}%</span>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
-      {/* Apply leave form */}
-      {showForm && (
-        <div className="bg-white border-2 border-rose-200 rounded-2xl p-6 shadow-sm">
-          <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <CalendarDays className="w-5 h-5 text-rose-600" /> File Leave Request
-          </h3>
-          {error && (
-            <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-lg mb-4">
-              <AlertCircle className="w-4 h-4 shrink-0" /> {error}
-            </div>
-          )}
-          <form onSubmit={submit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Leave Type</label>
-              <select
-                required
-                value={form.leaveTypeId}
-                onChange={e => setForm({ ...form, leaveTypeId: e.target.value })}
-                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-400"
-              >
-                <option value="">Select leave type…</option>
-                {types.map(t => <option key={t.id} value={t.id}>{t.code} — {t.name}</option>)}
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">Start Date</label>
-                <input
-                  required
-                  type="date"
-                  value={form.startDate}
-                  onChange={e => setForm({ ...form, startDate: e.target.value })}
-                  className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-400"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">End Date</label>
-                <input
-                  required
-                  type="date"
-                  value={form.endDate}
-                  min={form.startDate}
-                  onChange={e => setForm({ ...form, endDate: e.target.value })}
-                  className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-400"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5">Reason</label>
-              <textarea
-                required
-                rows={3}
-                placeholder="Briefly explain your reason for leave…"
-                value={form.reason}
-                onChange={e => setForm({ ...form, reason: e.target.value })}
-                className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-400 resize-none"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full bg-rose-600 hover:bg-rose-700 text-white py-2.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
-            >
-              {submitting ? 'Submitting…' : 'Submit Request'}
-            </button>
-          </form>
-        </div>
-      )}
+      {/* ── Request history with tabs ── */}
+      <section>
+        <h2 className="text-2xs font-bold text-surface-500 uppercase tracking-wider mb-3">
+          Request History
+        </h2>
+        <Card padding="none">
+          <div className="px-3 pt-3">
+            <Tabs
+              variant="pill"
+              value={tab}
+              onChange={setTab}
+              tabs={[
+                { value: 'all',      label: 'All',      count: requests.length },
+                { value: 'pending',  label: 'Pending',  count: pendingCount },
+                { value: 'approved', label: 'Approved', count: approvedCount },
+                { value: 'rejected', label: 'Rejected', count: rejectedCount },
+              ]}
+            />
+          </div>
 
-      {/* Request history */}
-      <div>
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Leave History</h2>
-        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-          {requests.length === 0 ? (
-            <div className="py-16 text-center">
-              <Plane className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-              <p className="text-gray-400 text-sm">No leave requests yet</p>
-              <button onClick={() => setShowForm(true)} className="mt-3 text-sm text-rose-600 font-medium hover:underline">
-                File your first request →
-              </button>
+          {filteredRequests.length === 0 ? (
+            <div className="py-12 text-center">
+              <Plane className="w-10 h-10 text-surface-300 mx-auto mb-3" />
+              <p className="text-sm font-medium text-surface-700">
+                {tab === 'all' ? 'No leave requests yet' : `No ${tab} requests`}
+              </p>
+              {tab === 'all' && (
+                <Button
+                  variant="ghost" size="sm" className="mt-3"
+                  leftIcon={<Plus className="w-3.5 h-3.5" />}
+                  onClick={() => setShowForm(true)}
+                >
+                  File your first request
+                </Button>
+              )}
             </div>
           ) : (
-            <div className="divide-y divide-gray-100">
-              {requests.map(r => {
-                const cfg = STATUS_CONFIG[r.status] ?? STATUS_CONFIG.pending;
-                const StatusIcon = cfg.icon;
+            <ul className="divide-y divide-surface-100">
+              {filteredRequests.map((r) => {
+                const Icon = STATUS_ICON[r.status] ?? Clock;
                 return (
-                  <div key={r.id} className="p-4 flex items-start gap-4">
-                    <div className="mt-0.5 shrink-0">
-                      <StatusIcon className={`w-5 h-5 ${
-                        r.status === 'approved' ? 'text-green-500' :
-                        r.status === 'rejected' ? 'text-red-500' : 'text-amber-500'
-                      }`} />
+                  <li key={r.id} className="px-4 sm:px-5 py-3 flex items-start gap-3 hover:bg-surface-50/60 transition-colors">
+                    <div className="mt-0.5 flex-shrink-0">
+                      <Icon className={`
+                        w-5 h-5
+                        ${r.status === 'approved' ? 'text-emerald-500' :
+                          r.status === 'rejected' ? 'text-rose-500' :
+                          r.status === 'pending'  ? 'text-amber-500' : 'text-surface-400'}
+                      `} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-gray-900">{r.leaveType?.name}</span>
-                        <span className="text-xs text-gray-400">{r.leaveType?.code}</span>
+                        <span className="text-sm font-semibold text-surface-900">{r.leaveType?.name}</span>
+                        <Badge variant="brand" size="sm">{r.leaveType?.code}</Badge>
                       </div>
-                      <div className="text-xs text-gray-500 mt-0.5">
-                        {new Date(r.startDate).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        {' → '}
-                        {new Date(r.endDate).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        {' · '}
-                        <span className="font-medium text-gray-700">{Number(r.totalDays)} day{Number(r.totalDays) !== 1 ? 's' : ''}</span>
+                      <div className="text-xs text-surface-500 mt-0.5 tabular-nums flex items-center gap-1.5 flex-wrap">
+                        <CalendarDays className="w-3 h-3" />
+                        <span>
+                          {new Date(r.startDate).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {' → '}
+                          {new Date(r.endDate).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                        <span aria-hidden className="text-surface-300">·</span>
+                        <span className="font-medium text-surface-700">{Number(r.totalDays)} day{Number(r.totalDays) !== 1 ? 's' : ''}</span>
                       </div>
-                      {r.reason && <p className="text-sm text-gray-600 mt-1 line-clamp-1">{r.reason}</p>}
+                      {r.reason && (
+                        <p className="text-xs text-surface-600 mt-1.5 line-clamp-2 flex items-start gap-1.5">
+                          <Tag className="w-3 h-3 mt-0.5 flex-shrink-0 text-surface-400" />
+                          <span>{r.reason}</span>
+                        </p>
+                      )}
                       {r.approverRemarks && (
-                        <p className="text-xs text-gray-500 mt-1 italic">HR note: {r.approverRemarks}</p>
+                        <p className="text-xs text-surface-500 mt-1 italic px-2 py-1 rounded bg-surface-50 border border-surface-100">
+                          HR note: {r.approverRemarks}
+                        </p>
                       )}
                     </div>
-                    <span className={`shrink-0 flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full border ${cfg.className}`}>
-                      {cfg.label}
-                    </span>
-                  </div>
+                    <Badge variant={STATUS_VARIANT[r.status] ?? 'neutral'} dot>
+                      {r.status}
+                    </Badge>
+                  </li>
                 );
               })}
+            </ul>
+          )}
+        </Card>
+      </section>
+
+      {/* ── File Leave Modal ── */}
+      <Modal
+        open={showForm}
+        onClose={() => setShowForm(false)}
+        title="File Leave Request"
+        description="Submit a new request for HR approval."
+        size="md"
+      >
+        <form onSubmit={submit} className="space-y-4">
+          <Select
+            label="Leave Type" required
+            value={form.leaveTypeId}
+            onChange={(e) => setForm((f) => ({ ...f, leaveTypeId: e.target.value }))}
+          >
+            <option value="">Select leave type…</option>
+            {types.map((t) => (
+              <option key={t.id} value={t.id}>{t.code} — {t.name}</option>
+            ))}
+          </Select>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              type="date" label="Start Date" required
+              value={form.startDate}
+              onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
+            />
+            <Input
+              type="date" label="End Date" required
+              min={form.startDate}
+              value={form.endDate}
+              onChange={(e) => setForm((f) => ({ ...f, endDate: e.target.value }))}
+            />
+          </div>
+
+          {daysRequested > 0 && selectedBalance && (
+            <div className={`text-sm p-3 rounded-xl border flex items-start gap-2 ${
+              exceedsBalance
+                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+            }`}>
+              <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <div>
+                Requesting <strong>{daysRequested} day{daysRequested > 1 ? 's' : ''}</strong>
+                {' '}— Remaining: <strong className="tabular-nums">{selectedBalance.remaining}</strong>
+                {exceedsBalance && ' — Exceeds balance.'}
+              </div>
             </div>
           )}
-        </div>
-      </div>
+
+          <Textarea
+            label="Reason" required rows={3}
+            placeholder="Briefly explain your reason for leave…"
+            value={form.reason}
+            onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
+          />
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-surface-100">
+            <Button type="button" variant="ghost" size="sm" onClick={() => setShowForm(false)}>Cancel</Button>
+            <Button type="submit" size="sm" loading={submitting} disabled={exceedsBalance}>
+              {submitting ? 'Submitting…' : 'Submit Request'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  );
+}
+
+// ─── Stat Card ───
+function StatCard({
+  label, value, tone,
+}: {
+  label: string;
+  value: number;
+  tone: 'warning' | 'success' | 'danger';
+}) {
+  const COLOR: Record<typeof tone, string> = {
+    warning: 'text-amber-600',
+    success: 'text-emerald-600',
+    danger:  'text-rose-600',
+  };
+  return (
+    <div className="bg-white border border-surface-200 rounded-2xl p-4 text-center shadow-card">
+      <div className={`text-2xl font-bold tabular-nums ${COLOR[tone]}`}>{value}</div>
+      <div className="text-2xs text-surface-500 mt-1 uppercase tracking-wider font-medium">{label}</div>
     </div>
   );
 }
