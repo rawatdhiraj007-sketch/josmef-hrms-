@@ -33,6 +33,7 @@ import {
   Plug,
   Zap,
   X,
+  Settings,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Logo from '@/components/Logo';
@@ -110,6 +111,12 @@ const navSections: NavSection[] = [
     items: [
       { label: 'Integrations', href: '/dashboard/integrations', icon: Plug },
       { label: 'Automations', href: '/dashboard/automations', icon: Zap },
+    ],
+  },
+  {
+    label: 'Workspace',
+    items: [
+      { label: 'Settings', href: '/dashboard/settings', icon: Settings },
     ],
   },
 ];
@@ -190,10 +197,15 @@ export default function Sidebar() {
           ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0
           transition-all duration-300 ease-out
-          p-3
+          p-3 group/aside
+          [html[data-sidebar-style=flush]_&]:p-0
         `}
       >
-        <div className="relative h-full flex flex-col bg-nova-900/95 backdrop-blur-xl border border-white/[0.06] rounded-2xl shadow-dark-card overflow-hidden">
+        <div className="relative h-full flex flex-col bg-nova-900/95 backdrop-blur-xl border border-white/[0.06] shadow-dark-card overflow-hidden
+                        rounded-2xl
+                        [html[data-sidebar-style=flush]_&]:rounded-none
+                        [html[data-sidebar-style=flush]_&]:border-y-0
+                        [html[data-sidebar-style=flush]_&]:border-l-0">
           {/* Subtle aurora highlight at top */}
           <div className="pointer-events-none absolute -top-32 -left-16 w-64 h-64 bg-primary-500/10 rounded-full blur-3xl" />
           <div className="pointer-events-none absolute -bottom-32 -right-16 w-64 h-64 bg-accent-600/10 rounded-full blur-3xl" />
