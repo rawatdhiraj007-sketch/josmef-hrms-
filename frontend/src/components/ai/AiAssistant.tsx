@@ -72,25 +72,30 @@ export default function AiAssistant() {
 
   return (
     <>
-      {/* ── Floating launcher button ── */}
+      {/* ── Floating launcher button ──
+         z-[80] so it sits ABOVE the mobile sidebar (z-50) and any sticky
+         action bars (z-30). The button is always visible until the drawer
+         is open. */}
       <button
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Open NextNova AI Assistant"
         className={`
-          fixed z-40 bottom-6 right-6
+          fixed z-[80] bottom-5 right-5 sm:bottom-6 sm:right-6
           h-14 w-14 rounded-full
           bg-gradient-to-br from-primary-600 to-accent-600
-          text-white shadow-glow-lg
+          text-white shadow-[0_8px_32px_rgba(99,102,241,0.45)]
           flex items-center justify-center
           hover:scale-105 active:scale-95
+          ring-4 ring-white/40
           transition-transform duration-200
-          focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-300/40
+          focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-300/60
           ${open ? 'opacity-0 pointer-events-none' : ''}
         `}
       >
         <Sparkles className="w-5 h-5" />
-        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 ring-2 ring-white animate-pulse" />
+        <span aria-hidden className="absolute inset-0 rounded-full bg-primary-500/40 animate-pulse-ring pointer-events-none" />
+        <span aria-hidden className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 ring-2 ring-white" />
       </button>
 
       {/* ── Backdrop ── */}
@@ -98,7 +103,7 @@ export default function AiAssistant() {
         <div
           aria-hidden
           onClick={() => setOpen(false)}
-          className="fixed inset-0 z-40 bg-surface-900/30 backdrop-blur-sm animate-fade-in"
+          className="fixed inset-0 z-[85] bg-surface-900/30 backdrop-blur-sm animate-fade-in"
         />
       )}
 
@@ -107,11 +112,11 @@ export default function AiAssistant() {
         role="dialog"
         aria-label="NextNova AI Assistant"
         className={`
-          fixed z-50 right-0 top-0 h-full w-full sm:w-[420px]
+          fixed z-[90] right-0 top-0 h-full w-full sm:w-[420px]
           bg-white border-l border-surface-200 shadow-[0_0_60px_rgba(0,0,0,0.15)]
           flex flex-col
           transition-transform duration-300 ease-out
-          ${open ? 'translate-x-0' : 'translate-x-full'}
+          ${open ? 'translate-x-0' : 'translate-x-full pointer-events-none'}
         `}
       >
         {/* Header */}
