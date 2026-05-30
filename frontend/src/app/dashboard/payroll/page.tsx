@@ -4,23 +4,42 @@ import { useState, useEffect, useCallback } from 'react';
 import api from '@/lib/api';
 import { PayrollRecord, ListResponse } from '@/types/attendance';
 import {
-  DollarSign, Play, ChevronLeft, ChevronRight, Eye, X,
-  Calendar, CheckCircle, Loader2,
+  DollarSign, Play, Eye, RefreshCw, Download, Loader2,
 } from 'lucide-react';
 
-const statusColors: Record<string, string> = {
-  draft: 'bg-gray-100 text-gray-600',
-  processing: 'bg-blue-100 text-blue-700',
-  approved: 'bg-green-100 text-green-700',
-  released: 'bg-emerald-100 text-emerald-700',
-  cancelled: 'bg-red-100 text-red-600',
+import { Button, Badge, Card, Modal, Input, useToast } from '@/components/ui';
+import {
+  DataTable, DataToolbar, DataPagination, FilterSelect, BulkActionBar,
+  PageHeader, Column,
+} from '@/components/data';
+import { downloadCsv } from '@/lib/csv-export';
+
+// ─── Status → Badge variant mapping ──────────────────────────
+const PAYROLL_STATUS_VARIANT: Record<string, 'neutral' | 'info' | 'success' | 'warning' | 'danger' | 'brand'> = {
+  draft:      'neutral',
+  processing: 'info',
+  approved:   'brand',
+  released:   'success',
+  cancelled:  'danger',
 };
 
+const PAGE_SIZE_OPTIONS = [25, 50, 100];
+
 export default function PayrollPage() {
+  const toast = useToast();
+
+  // ── Data + meta ────────────────────────────────────────────
   const [data, setData] = useState<PayrollRecord[]>([]);
   const [meta, setMeta] = useState({ total: 0, page: 1, limit: 50, totalPages: 0 });
-  const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading] = useState(true);
+
+  // ── Filters + search + bulk ────────────────────────────────
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [pageSize, setPageSize] = useState(50);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  // ── Modals ─────────────────────────────────────────────────
   const [showGenerate, setShowGenerate] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [genFrom, setGenFrom] = useState('');
@@ -30,15 +49,31 @@ export default function PayrollPage() {
   const fetchData = useCallback(async (page = 1) => {
     setLoading(true);
     try {
-      const params: any = { page, limit: 50 };
+      const params: any = { page, limit: pageSize };
       if (statusFilter) params.status = statusFilter;
       const res = await api.get<ListResponse<PayrollRecord>>('/payroll', { params });
       setData(res.data.data);
       setMeta(res.data.meta);
-    } catch { /* */ } finally { setLoading(false); }
-  }, [statusFilter]);
+    } catch {
+      toast.error('Failed to load payroll', 'Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [statusFilter, pageSize, toast]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { fetchData(1); }, [fetchData]);
+
+  // Client-side search (within current page, by employee name/dept)
+  const filtered = data.filter((p) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      (p.employee?.firstName || '').toLowerCase().includes(q) ||
+      (p.employee?.lastName  || '').toLowerCase().includes(q) ||
+      (p.employee?.department || '').toLowerCase().includes(q) ||
+      (p.employee?.employeeId || '').toLowerCase().includes(q)
+    );
+  });
 
   async function handleGenerate() {
     if (!genFrom || !genTo) return;
@@ -46,173 +81,323 @@ export default function PayrollPage() {
     try {
       await api.post('/payroll/generate', { payDateFrom: genFrom, payDateTo: genTo });
       setShowGenerate(false);
-      fetchData();
+      setGenFrom(''); setGenTo('');
+      toast.success('Payroll generated', 'Records added to the list.');
+      fetchData(1);
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to generate');
-    } finally { setGenerating(false); }
+      toast.error('Generation failed', err?.response?.data?.message || 'Please try again.');
+    } finally {
+      setGenerating(false);
+    }
   }
 
   const fmt = (n: number) => `₱${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+  const fullName = (p: PayrollRecord) => `${p.employee?.lastName ?? ''}, ${p.employee?.firstName ?? ''}`;
+
+  function handleExport() {
+    const rows = selectedIds.length > 0 ? filtered.filter((p) => selectedIds.includes(p.id)) : filtered;
+    downloadCsv(`payroll-${new Date().toISOString().slice(0, 10)}`, [
+      { header: 'Employee', accessor: (p: PayrollRecord) => fullName(p) },
+      { header: 'Employee ID', accessor: (p) => p.employee?.employeeId ?? '' },
+      { header: 'Department', accessor: (p) => p.employee?.department ?? '' },
+      { header: 'Period From', accessor: (p) => p.payDateFrom?.split('T')[0] ?? '' },
+      { header: 'Period To', accessor: (p) => p.payDateTo?.split('T')[0] ?? '' },
+      { header: 'Gross Pay', accessor: (p) => Number(p.grossPay).toFixed(2) },
+      { header: 'Deductions', accessor: (p) => Number(p.totalDeductions).toFixed(2) },
+      { header: 'Net Pay', accessor: (p) => Number(p.netPay).toFixed(2) },
+      { header: 'Status', accessor: (p) => p.status },
+    ], rows);
+    toast.success('Export ready', `${rows.length} records downloaded.`);
+  }
+
+  // ── Columns ────────────────────────────────────────────────
+  const columns: Column<PayrollRecord>[] = [
+    {
+      key: 'employee',
+      header: 'Employee',
+      sortAccessor: (p) => fullName(p),
+      cell: (p) => (
+        <div>
+          <div className="font-medium text-surface-900">{fullName(p)}</div>
+          <div className="text-xs text-surface-400">{p.employee?.department || '—'}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'period',
+      header: 'Period',
+      hideOnMobile: true,
+      sortAccessor: (p) => p.payDateFrom ?? '',
+      cell: (p) => (
+        <span className="text-xs text-surface-600 tabular-nums">
+          {p.payDateFrom?.split('T')[0]} → {p.payDateTo?.split('T')[0]}
+        </span>
+      ),
+    },
+    {
+      key: 'gross',
+      header: 'Gross',
+      align: 'right',
+      hideOnMobile: true,
+      sortAccessor: (p) => Number(p.grossPay),
+      cell: (p) => <span className="tabular-nums text-surface-700">{fmt(p.grossPay)}</span>,
+    },
+    {
+      key: 'deductions',
+      header: 'Deductions',
+      align: 'right',
+      hideOnTablet: true,
+      sortAccessor: (p) => Number(p.totalDeductions),
+      cell: (p) => <span className="tabular-nums text-rose-600">−{fmt(p.totalDeductions)}</span>,
+    },
+    {
+      key: 'net',
+      header: 'Net Pay',
+      align: 'right',
+      sortAccessor: (p) => Number(p.netPay),
+      cell: (p) => <span className="tabular-nums font-semibold text-surface-900">{fmt(p.netPay)}</span>,
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      sortAccessor: (p) => p.status,
+      cell: (p) => (
+        <Badge variant={PAYROLL_STATUS_VARIANT[p.status] ?? 'neutral'} dot>
+          {p.status}
+        </Badge>
+      ),
+    },
+  ];
+
+  const activeFilterCount = (statusFilter ? 1 : 0);
 
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Payroll</h1>
-          <p className="text-gray-500 text-sm mt-1">{meta.total} records</p>
-        </div>
-        <button onClick={() => setShowGenerate(true)} className="btn-primary flex items-center gap-2 w-fit">
-          <Play className="w-5 h-5" /> Generate Payroll
-        </button>
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        icon={DollarSign}
+        title="Payroll"
+        subtitle={<span><span className="font-semibold text-surface-700 tabular-nums">{meta.total}</span> {meta.total === 1 ? 'record' : 'records'}</span>}
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              size="sm"
+              leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+              onClick={() => fetchData(meta.page)}
+              loading={loading}
+            >
+              Refresh
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              leftIcon={<Download className="w-3.5 h-3.5" />}
+              onClick={handleExport}
+              disabled={filtered.length === 0}
+            >
+              Export
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<Play className="w-3.5 h-3.5" />}
+              onClick={() => setShowGenerate(true)}
+            >
+              Generate Payroll
+            </Button>
+          </>
+        }
+      />
 
-      {/* Generate Modal */}
-      {showGenerate && (
-        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4">
-          <div className="card p-6 w-full max-w-md">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Generate Payroll</h2>
-              <button onClick={() => setShowGenerate(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Pay Period From</label>
-                <input type="date" value={genFrom} onChange={(e) => setGenFrom(e.target.value)} className="input-field" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Pay Period To</label>
-                <input type="date" value={genTo} onChange={(e) => setGenTo(e.target.value)} className="input-field" />
-              </div>
-              <button onClick={handleGenerate} disabled={generating || !genFrom || !genTo} className="btn-primary w-full flex items-center justify-center gap-2">
-                {generating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
-                {generating ? 'Generating...' : 'Generate'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Payslip Modal */}
-      {selectedPayslip && (
-        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4">
-          <div className="card p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Payslip</h2>
-              <button onClick={() => setSelectedPayslip(null)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
-            </div>
-            <div className="border-b border-surface-200 pb-3 mb-4">
-              <p className="font-bold text-gray-900">{selectedPayslip.employee?.lastName}, {selectedPayslip.employee?.firstName}</p>
-              <p className="text-sm text-gray-500">{selectedPayslip.employee?.position} — {selectedPayslip.employee?.department}</p>
-              <p className="text-xs text-gray-400 mt-1">Period: {selectedPayslip.payDateFrom?.split('T')[0]} to {selectedPayslip.payDateTo?.split('T')[0]}</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm mb-4">
-              <p className="text-gray-500">Days Worked</p><p className="text-right font-medium">{Number(selectedPayslip.daysWorked)}</p>
-              <p className="text-gray-500">Days Absent</p><p className="text-right font-medium">{Number(selectedPayslip.daysAbsent)}</p>
-              <p className="text-gray-500">OT Hours</p><p className="text-right font-medium">{Number(selectedPayslip.totalOvertimeHours).toFixed(1)}</p>
-              <p className="text-gray-500">Late (min)</p><p className="text-right font-medium">{Number(selectedPayslip.totalLateMinutes).toFixed(0)}</p>
-            </div>
-
-            <div className="bg-green-50 rounded-lg p-3 mb-3">
-              <p className="text-xs font-semibold text-green-700 mb-2 uppercase">Earnings</p>
-              <div className="grid grid-cols-2 gap-y-1 text-sm">
-                <p className="text-gray-600">Basic Pay</p><p className="text-right">{fmt(selectedPayslip.basicPay)}</p>
-                <p className="text-gray-600">Overtime</p><p className="text-right">{fmt(selectedPayslip.overtimePay)}</p>
-                <p className="text-gray-600">Holiday</p><p className="text-right">{fmt(selectedPayslip.holidayPay)}</p>
-                <p className="text-gray-600">Allowance</p><p className="text-right">{fmt(selectedPayslip.allowance)}</p>
-                <p className="font-semibold text-gray-900 pt-1 border-t">Gross Pay</p><p className="text-right font-semibold pt-1 border-t">{fmt(selectedPayslip.grossPay)}</p>
-              </div>
-            </div>
-
-            <div className="bg-red-50 rounded-lg p-3 mb-3">
-              <p className="text-xs font-semibold text-red-700 mb-2 uppercase">Deductions</p>
-              <div className="grid grid-cols-2 gap-y-1 text-sm">
-                <p className="text-gray-600">SSS</p><p className="text-right">{fmt(selectedPayslip.sssContribution)}</p>
-                <p className="text-gray-600">PhilHealth</p><p className="text-right">{fmt(selectedPayslip.philhealthContribution)}</p>
-                <p className="text-gray-600">Pag-IBIG</p><p className="text-right">{fmt(selectedPayslip.pagibigContribution)}</p>
-                <p className="text-gray-600">Tax</p><p className="text-right">{fmt(selectedPayslip.withholdingTax)}</p>
-                <p className="text-gray-600">Late</p><p className="text-right">{fmt(selectedPayslip.lateDeduction)}</p>
-                <p className="text-gray-600">Absent</p><p className="text-right">{fmt(selectedPayslip.absentDeduction)}</p>
-                <p className="font-semibold text-gray-900 pt-1 border-t">Total</p><p className="text-right font-semibold pt-1 border-t">{fmt(selectedPayslip.totalDeductions)}</p>
-              </div>
-            </div>
-
-            <div className="bg-brand-50 rounded-lg p-4 text-center">
-              <p className="text-xs text-brand-600 uppercase font-semibold">Net Pay</p>
-              <p className="text-3xl font-bold text-brand-700">{fmt(selectedPayslip.netPay)}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Filters */}
-      <div className="card p-4 mb-6">
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="input-field sm:w-48">
+      <DataToolbar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search by employee, ID, or department…"
+        activeFilterCount={activeFilterCount}
+        onClear={() => { setStatusFilter(''); setSearch(''); }}
+      >
+        <FilterSelect value={statusFilter} onChange={setStatusFilter} ariaLabel="Filter by status">
           <option value="">All Status</option>
           <option value="draft">Draft</option>
+          <option value="processing">Processing</option>
           <option value="approved">Approved</option>
           <option value="released">Released</option>
           <option value="cancelled">Cancelled</option>
-        </select>
-      </div>
+        </FilterSelect>
+      </DataToolbar>
 
-      {/* Table */}
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-surface-50 border-b border-surface-200">
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Employee</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">Period</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600 hidden md:table-cell">Gross</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600 hidden lg:table-cell">Deductions</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600">Net Pay</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-600">Status</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-600">View</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={7} className="text-center py-12 text-gray-400">Loading...</td></tr>
-              ) : data.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-12 text-gray-400">No payroll records</td></tr>
-              ) : data.map((p) => (
-                <tr key={p.id} className="border-b border-surface-100 hover:bg-surface-50 transition-colors">
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-gray-900">{p.employee?.lastName}, {p.employee?.firstName}</p>
-                    <p className="text-xs text-gray-400">{p.employee?.department}</p>
-                  </td>
-                  <td className="px-4 py-3 text-gray-600 text-xs hidden md:table-cell">
-                    {p.payDateFrom?.split('T')[0]} — {p.payDateTo?.split('T')[0]}
-                  </td>
-                  <td className="px-4 py-3 text-right text-gray-700 hidden md:table-cell">{fmt(p.grossPay)}</td>
-                  <td className="px-4 py-3 text-right text-red-600 hidden lg:table-cell">{fmt(p.totalDeductions)}</td>
-                  <td className="px-4 py-3 text-right font-semibold text-gray-900">{fmt(p.netPay)}</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${statusColors[p.status] || 'bg-gray-100'}`}>
-                      {p.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button onClick={() => setSelectedPayslip(p)} className="p-2 rounded-lg hover:bg-surface-100 text-gray-500 hover:text-brand-600">
-                      <Eye className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {meta.totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-surface-200">
-            <p className="text-sm text-gray-500">Page {meta.page} of {meta.totalPages}</p>
-            <div className="flex gap-2">
-              <button onClick={() => fetchData(meta.page - 1)} disabled={meta.page <= 1} className="p-2 rounded-lg border border-surface-200 hover:bg-surface-100 disabled:opacity-40"><ChevronLeft className="w-4 h-4" /></button>
-              <button onClick={() => fetchData(meta.page + 1)} disabled={meta.page >= meta.totalPages} className="p-2 rounded-lg border border-surface-200 hover:bg-surface-100 disabled:opacity-40"><ChevronRight className="w-4 h-4" /></button>
+      <BulkActionBar selectedCount={selectedIds.length} onClear={() => setSelectedIds([])}>
+        <Button
+          size="sm"
+          variant="secondary"
+          leftIcon={<Download className="w-3.5 h-3.5" />}
+          onClick={handleExport}
+        >
+          Export selected
+        </Button>
+      </BulkActionBar>
+
+      <DataTable<PayrollRecord>
+        columns={columns}
+        data={filtered}
+        rowKey={(p) => p.id}
+        loading={loading}
+        selectable
+        selectedIds={selectedIds}
+        onSelectedChange={setSelectedIds}
+        onRowClick={(p) => setSelectedPayslip(p)}
+        emptyIcon={DollarSign}
+        emptyTitle="No payroll records"
+        emptyDescription={search || statusFilter
+          ? 'Try clearing your filters or search.'
+          : 'Generate your first payroll run to see records here.'}
+        emptyAction={!search && !statusFilter && (
+          <Button size="sm" leftIcon={<Play className="w-3.5 h-3.5" />} onClick={() => setShowGenerate(true)}>
+            Generate Payroll
+          </Button>
+        )}
+        rowActions={(p) => (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setSelectedPayslip(p); }}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-surface-400 hover:bg-surface-100 hover:text-primary-600 transition-colors"
+            aria-label="View payslip"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+        )}
+        mobileCard={(p) => (
+          <div className="space-y-1.5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="font-medium text-surface-900 truncate">{fullName(p)}</div>
+                <div className="text-xs text-surface-400">{p.employee?.department || '—'}</div>
+              </div>
+              <Badge variant={PAYROLL_STATUS_VARIANT[p.status] ?? 'neutral'} dot>{p.status}</Badge>
+            </div>
+            <div className="flex items-center justify-between text-xs text-surface-500 tabular-nums">
+              <span>{p.payDateFrom?.split('T')[0]} → {p.payDateTo?.split('T')[0]}</span>
+              <span className="font-semibold text-surface-900 text-sm">{fmt(p.netPay)}</span>
             </div>
           </div>
         )}
-      </div>
+      />
+
+      {meta.totalPages > 1 && (
+        <Card variant="ghost" padding="none">
+          <DataPagination
+            page={meta.page}
+            totalPages={meta.totalPages}
+            total={meta.total}
+            pageSize={pageSize}
+            onPageChange={(p) => fetchData(p)}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageSizeChange={(s) => { setPageSize(s); }}
+          />
+        </Card>
+      )}
+
+      {/* Generate Payroll Modal */}
+      <Modal
+        open={showGenerate}
+        onClose={() => setShowGenerate(false)}
+        title="Generate Payroll"
+        description="Run payroll for a date range. Attendance must already be approved."
+        size="md"
+        footer={
+          <>
+            <Button variant="ghost" size="sm" onClick={() => setShowGenerate(false)}>Cancel</Button>
+            <Button
+              size="sm"
+              leftIcon={<Play className="w-3.5 h-3.5" />}
+              onClick={handleGenerate}
+              loading={generating}
+              disabled={!genFrom || !genTo}
+            >
+              {generating ? 'Generating…' : 'Generate'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Input
+            type="date"
+            label="Pay Period From"
+            value={genFrom}
+            onChange={(e) => setGenFrom(e.target.value)}
+          />
+          <Input
+            type="date"
+            label="Pay Period To"
+            value={genTo}
+            onChange={(e) => setGenTo(e.target.value)}
+          />
+        </div>
+      </Modal>
+
+      {/* Payslip Modal */}
+      <Modal
+        open={!!selectedPayslip}
+        onClose={() => setSelectedPayslip(null)}
+        title="Payslip"
+        size="lg"
+      >
+        {selectedPayslip && (
+          <div className="space-y-4">
+            <div className="border-b border-surface-100 pb-3">
+              <p className="font-bold text-surface-900">{fullName(selectedPayslip)}</p>
+              <p className="text-sm text-surface-500">
+                {selectedPayslip.employee?.position} — {selectedPayslip.employee?.department}
+              </p>
+              <p className="text-xs text-surface-400 mt-1 tabular-nums">
+                Period: {selectedPayslip.payDateFrom?.split('T')[0]} to {selectedPayslip.payDateTo?.split('T')[0]}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+              <p className="text-surface-500">Days Worked</p>
+              <p className="text-right font-medium tabular-nums">{Number(selectedPayslip.daysWorked)}</p>
+              <p className="text-surface-500">Days Absent</p>
+              <p className="text-right font-medium tabular-nums">{Number(selectedPayslip.daysAbsent)}</p>
+              <p className="text-surface-500">OT Hours</p>
+              <p className="text-right font-medium tabular-nums">{Number(selectedPayslip.totalOvertimeHours).toFixed(1)}</p>
+              <p className="text-surface-500">Late (min)</p>
+              <p className="text-right font-medium tabular-nums">{Number(selectedPayslip.totalLateMinutes).toFixed(0)}</p>
+            </div>
+
+            <div className="bg-emerald-50/70 border border-emerald-200/60 rounded-xl p-3.5">
+              <p className="text-2xs font-bold text-emerald-700 mb-2 uppercase tracking-wider">Earnings</p>
+              <div className="grid grid-cols-2 gap-y-1 text-sm tabular-nums">
+                <p className="text-surface-600">Basic Pay</p>     <p className="text-right">{fmt(selectedPayslip.basicPay)}</p>
+                <p className="text-surface-600">Overtime</p>      <p className="text-right">{fmt(selectedPayslip.overtimePay)}</p>
+                <p className="text-surface-600">Holiday</p>       <p className="text-right">{fmt(selectedPayslip.holidayPay)}</p>
+                <p className="text-surface-600">Allowance</p>     <p className="text-right">{fmt(selectedPayslip.allowance)}</p>
+                <p className="font-semibold text-surface-900 pt-1 border-t border-emerald-200/60">Gross Pay</p>
+                <p className="text-right font-semibold pt-1 border-t border-emerald-200/60">{fmt(selectedPayslip.grossPay)}</p>
+              </div>
+            </div>
+
+            <div className="bg-rose-50/70 border border-rose-200/60 rounded-xl p-3.5">
+              <p className="text-2xs font-bold text-rose-700 mb-2 uppercase tracking-wider">Deductions</p>
+              <div className="grid grid-cols-2 gap-y-1 text-sm tabular-nums">
+                <p className="text-surface-600">SSS</p>           <p className="text-right">{fmt(selectedPayslip.sssContribution)}</p>
+                <p className="text-surface-600">PhilHealth</p>    <p className="text-right">{fmt(selectedPayslip.philhealthContribution)}</p>
+                <p className="text-surface-600">Pag-IBIG</p>      <p className="text-right">{fmt(selectedPayslip.pagibigContribution)}</p>
+                <p className="text-surface-600">Tax</p>           <p className="text-right">{fmt(selectedPayslip.withholdingTax)}</p>
+                <p className="text-surface-600">Late</p>          <p className="text-right">{fmt(selectedPayslip.lateDeduction)}</p>
+                <p className="text-surface-600">Absent</p>        <p className="text-right">{fmt(selectedPayslip.absentDeduction)}</p>
+                <p className="font-semibold text-surface-900 pt-1 border-t border-rose-200/60">Total</p>
+                <p className="text-right font-semibold pt-1 border-t border-rose-200/60">{fmt(selectedPayslip.totalDeductions)}</p>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-primary-50 to-accent-50 border border-primary-200 rounded-xl p-4 text-center">
+              <p className="text-2xs text-primary-700 uppercase font-bold tracking-wider">Net Pay</p>
+              <p className="text-3xl font-bold text-primary-700 tabular-nums mt-1">{fmt(selectedPayslip.netPay)}</p>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

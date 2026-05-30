@@ -148,9 +148,19 @@ export interface CustomTheme {
 
 export const PRESET_THEMES: CustomTheme[] = [
   {
-    name: 'Nova Indigo (default)',
-    primaryHex: '#4f46e5', accentHex: '#8b5cf6',
+    name: 'Corporate Dark',
+    primaryHex: '#6366f1', accentHex: '#8b5cf6',
+    scheme: 'dark', cornerStyle: 'default', density: 'comfortable', motionLevel: 'standard',
+  },
+  {
+    name: 'Executive Light',
+    primaryHex: '#4f46e5', accentHex: '#7c3aed',
     scheme: 'light', cornerStyle: 'default', density: 'comfortable', motionLevel: 'standard',
+  },
+  {
+    name: 'Aurora AI',
+    primaryHex: '#7c3aed', accentHex: '#ec4899',
+    scheme: 'dark', cornerStyle: 'round', density: 'comfortable', motionLevel: 'expressive',
   },
   {
     name: 'Ocean Blue',
@@ -158,23 +168,13 @@ export const PRESET_THEMES: CustomTheme[] = [
     scheme: 'light', cornerStyle: 'default', density: 'comfortable', motionLevel: 'standard',
   },
   {
-    name: 'Sunset Rose',
-    primaryHex: '#e11d48', accentHex: '#f59e0b',
-    scheme: 'light', cornerStyle: 'round', density: 'comfortable', motionLevel: 'expressive',
-  },
-  {
-    name: 'Forest Emerald',
+    name: 'Emerald Business',
     primaryHex: '#059669', accentHex: '#14b8a6',
     scheme: 'light', cornerStyle: 'default', density: 'comfortable', motionLevel: 'standard',
   },
   {
-    name: 'Midnight Violet',
-    primaryHex: '#7c3aed', accentHex: '#ec4899',
-    scheme: 'dark', cornerStyle: 'default', density: 'comfortable', motionLevel: 'expressive',
-  },
-  {
-    name: 'Linear Mono',
-    primaryHex: '#5046e5', accentHex: '#1e1e2e',
-    scheme: 'dark', cornerStyle: 'sharp', density: 'compact', motionLevel: 'minimal',
+    name: 'Glass Premium',
+    primaryHex: '#0ea5e9', accentHex: '#a855f7',
+    scheme: 'light', cornerStyle: 'round', density: 'comfortable', motionLevel: 'expressive',
   },
 ];

@@ -1,24 +1,39 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, FileWarning, X, Loader2 } from 'lucide-react';
+import { Plus, FileWarning, RefreshCw, Download } from 'lucide-react';
 import api from '@/lib/api';
 
-const NTE_STATUSES = ['issued', 'acknowledged', 'explained', 'closed'];
+import { Button, Badge, Card, Modal, Input, Select, Textarea, useToast } from '@/components/ui';
+import {
+  DataTable, DataToolbar, DataPagination, FilterSelect, BulkActionBar,
+  PageHeader, Column,
+} from '@/components/data';
+import { downloadCsv } from '@/lib/csv-export';
 
-const statusColor = (s: string) => ({
-  issued: 'bg-yellow-100 text-yellow-700',
-  acknowledged: 'bg-blue-100 text-blue-700',
-  explained: 'bg-purple-100 text-purple-700',
-  closed: 'bg-green-100 text-green-700',
-}[s] || 'bg-gray-100 text-gray-600');
+const NTE_STATUSES = ['issued', 'acknowledged', 'explained', 'closed'];
+const PAGE_SIZE_OPTIONS = [25, 50, 100];
+
+const STATUS_VARIANT: Record<string, 'warning' | 'info' | 'brand' | 'success' | 'neutral'> = {
+  issued:       'warning',
+  acknowledged: 'info',
+  explained:    'brand',
+  closed:       'success',
+};
 
 export default function NtePage() {
+  const toast = useToast();
+
   const [records, setRecords] = useState<any[]>([]);
   const [meta, setMeta] = useState({ total: 0, page: 1, totalPages: 1 });
   const [loading, setLoading] = useState(true);
+
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [pageSize, setPageSize] = useState(20);
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [employees, setEmployees] = useState<any[]>([]);
@@ -30,150 +45,274 @@ export default function NtePage() {
   const fetchRecords = useCallback(async (page = 1) => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(page), limit: '20' });
+      const params = new URLSearchParams({ page: String(page), limit: String(pageSize) });
       if (search) params.set('search', search);
       if (statusFilter) params.set('status', statusFilter);
       const res = await api.get(`/nte?${params}`);
       setRecords(res.data.data);
       setMeta(res.data.meta);
-    } catch { } finally { setLoading(false); }
-  }, [search, statusFilter]);
+    } catch {
+      toast.error('Failed to load NTEs');
+    } finally {
+      setLoading(false);
+    }
+  }, [search, statusFilter, pageSize, toast]);
 
   useEffect(() => { fetchRecords(1); }, [fetchRecords]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function openForm() {
+    try {
+      const r = await api.get('/employees?limit=200');
+      setEmployees(r.data.data);
+    } catch { /* */ }
+    setShowForm(true);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     try {
       await api.post('/nte', form);
+      toast.success('NTE issued', 'Notice recorded successfully.');
       setShowForm(false);
+      setForm({
+        employeeId: '', dateIssued: '', deadlineToReply: '',
+        subject: '', description: '', issuedBy: '', remarks: '',
+      });
       fetchRecords(1);
-    } catch { } finally { setSubmitting(false); }
-  };
+    } catch (e: any) {
+      toast.error('Failed to issue NTE', e?.response?.data?.message || 'Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function fullName(r: any) {
+    return `${r.employee?.firstName ?? ''} ${r.employee?.lastName ?? ''}`.trim();
+  }
+
+  function isOverdue(r: any) {
+    return r.deadlineToReply && new Date(r.deadlineToReply) < new Date() && r.status === 'issued';
+  }
+
+  function handleExport() {
+    const rows = selectedIds.length > 0 ? records.filter((r) => selectedIds.includes(r.id)) : records;
+    downloadCsv(`nte-${new Date().toISOString().slice(0, 10)}`, [
+      { header: 'NTE #',       accessor: (r: any) => r.nteNumber ?? '' },
+      { header: 'Employee',    accessor: (r) => fullName(r) },
+      { header: 'Employee ID', accessor: (r) => r.employee?.employeeId ?? '' },
+      { header: 'Subject',     accessor: (r) => r.subject ?? '' },
+      { header: 'Date Issued', accessor: (r) => r.dateIssued ? new Date(r.dateIssued).toISOString().slice(0, 10) : '' },
+      { header: 'Deadline',    accessor: (r) => r.deadlineToReply ? new Date(r.deadlineToReply).toISOString().slice(0, 10) : '' },
+      { header: 'Status',      accessor: (r) => r.status },
+    ], rows);
+    toast.success('Export ready', `${rows.length} NTEs downloaded.`);
+  }
+
+  const columns: Column<any>[] = [
+    {
+      key: 'nte',
+      header: 'NTE #',
+      sortAccessor: (r) => r.nteNumber ?? '',
+      cell: (r) => <span className="font-mono text-xs text-primary-700 font-medium">{r.nteNumber || '—'}</span>,
+    },
+    {
+      key: 'employee',
+      header: 'Employee',
+      sortAccessor: (r) => fullName(r),
+      cell: (r) => (
+        <div>
+          <div className="font-medium text-surface-900">{fullName(r)}</div>
+          <div className="text-xs text-surface-400">{r.employee?.employeeId}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'subject',
+      header: 'Subject',
+      hideOnMobile: true,
+      sortAccessor: (r) => r.subject ?? '',
+      cell: (r) => <span className="text-surface-700 line-clamp-1 max-w-md block">{r.subject}</span>,
+    },
+    {
+      key: 'issued',
+      header: 'Date Issued',
+      hideOnTablet: true,
+      sortAccessor: (r) => r.dateIssued ?? '',
+      cell: (r) => <span className="text-xs tabular-nums text-surface-600">{r.dateIssued ? new Date(r.dateIssued).toLocaleDateString() : '—'}</span>,
+    },
+    {
+      key: 'deadline',
+      header: 'Deadline',
+      hideOnTablet: true,
+      sortAccessor: (r) => r.deadlineToReply ?? '',
+      cell: (r) => r.deadlineToReply ? (
+        <span className={`text-xs tabular-nums ${isOverdue(r) ? 'text-rose-600 font-semibold' : 'text-surface-600'}`}>
+          {new Date(r.deadlineToReply).toLocaleDateString()}
+          {isOverdue(r) && <span className="ml-1 text-2xs">(overdue)</span>}
+        </span>
+      ) : <span className="text-surface-400">—</span>,
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      sortAccessor: (r) => r.status,
+      cell: (r) => <Badge variant={STATUS_VARIANT[r.status] ?? 'neutral'} dot>{r.status}</Badge>,
+    },
+  ];
+
+  const activeFilterCount = statusFilter ? 1 : 0;
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Notice to Explain (NTE)</h1>
-          <p className="text-sm text-gray-500 mt-1">Issue and track notices to explain for employee offenses</p>
-        </div>
-        <button onClick={() => { api.get('/employees?limit=200').then(r => setEmployees(r.data.data)); setShowForm(true); }}
-          className="flex items-center gap-2 bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700">
-          <Plus className="w-4 h-4" /> Issue NTE
-        </button>
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        icon={FileWarning}
+        title="Notice to Explain (NTE)"
+        subtitle="Issue and track notices to explain for employee offenses"
+        actions={
+          <>
+            <Button variant="secondary" size="sm" leftIcon={<RefreshCw className="w-3.5 h-3.5" />} onClick={() => fetchRecords(meta.page)} loading={loading}>
+              Refresh
+            </Button>
+            <Button variant="secondary" size="sm" leftIcon={<Download className="w-3.5 h-3.5" />} onClick={handleExport} disabled={records.length === 0}>
+              Export
+            </Button>
+            <Button variant="primary" size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />} onClick={openForm}>
+              Issue NTE
+            </Button>
+          </>
+        }
+      />
 
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search employee or NTE number..."
-            className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
-        </div>
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+      <DataToolbar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search employee or NTE number…"
+        activeFilterCount={activeFilterCount}
+        onClear={() => { setStatusFilter(''); setSearch(''); }}
+      >
+        <FilterSelect value={statusFilter} onChange={setStatusFilter} ariaLabel="Filter by status">
           <option value="">All Status</option>
-          {NTE_STATUSES.map(s => <option key={s} value={s} className="capitalize">{s}</option>)}
-        </select>
-      </div>
+          {NTE_STATUSES.map((s) => <option key={s} value={s} className="capitalize">{s}</option>)}
+        </FilterSelect>
+      </DataToolbar>
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center h-48"><Loader2 className="w-8 h-8 animate-spin text-brand-600" /></div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">NTE #</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Employee</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Subject</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Date Issued</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Deadline</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {records.map(r => (
-                <tr key={r.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-mono text-xs text-brand-700 font-medium">{r.nteNumber || '-'}</td>
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-gray-900">{r.employee?.firstName} {r.employee?.lastName}</div>
-                    <div className="text-xs text-gray-500">{r.employee?.employeeId}</div>
-                  </td>
-                  <td className="px-4 py-3 text-gray-700 max-w-xs truncate">{r.subject}</td>
-                  <td className="px-4 py-3 text-gray-600">{r.dateIssued ? new Date(r.dateIssued).toLocaleDateString() : '-'}</td>
-                  <td className="px-4 py-3 text-gray-600">
-                    {r.deadlineToReply ? (
-                      <span className={new Date(r.deadlineToReply) < new Date() && r.status === 'issued' ? 'text-red-600 font-medium' : ''}>
-                        {new Date(r.deadlineToReply).toLocaleDateString()}
-                      </span>
-                    ) : '-'}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${statusColor(r.status)}`}>{r.status}</span>
-                  </td>
-                </tr>
-              ))}
-              {records.length === 0 && (
-                <tr><td colSpan={6} className="text-center py-12 text-gray-500">No NTE records found.</td></tr>
-              )}
-            </tbody>
-          </table>
+      <BulkActionBar selectedCount={selectedIds.length} onClear={() => setSelectedIds([])}>
+        <Button size="sm" variant="secondary" leftIcon={<Download className="w-3.5 h-3.5" />} onClick={handleExport}>
+          Export selected
+        </Button>
+      </BulkActionBar>
+
+      <DataTable<any>
+        columns={columns}
+        data={records}
+        rowKey={(r) => r.id}
+        loading={loading}
+        selectable
+        selectedIds={selectedIds}
+        onSelectedChange={setSelectedIds}
+        emptyIcon={FileWarning}
+        emptyTitle="No NTE records"
+        emptyDescription={search || statusFilter
+          ? 'Try clearing your filters or search.'
+          : 'When you issue your first Notice to Explain, it will appear here.'}
+        emptyAction={!search && !statusFilter && (
+          <Button size="sm" leftIcon={<Plus className="w-3.5 h-3.5" />} onClick={openForm}>Issue NTE</Button>
         )}
-      </div>
-
-      {showForm && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-lg font-semibold text-gray-900">Issue Notice to Explain</h2>
-              <button onClick={() => setShowForm(false)}><X className="w-5 h-5 text-gray-500" /></button>
+        mobileCard={(r) => (
+          <div className="space-y-1.5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="font-medium text-surface-900 truncate">{fullName(r)}</div>
+                <div className="text-xs text-surface-400 font-mono">{r.nteNumber || '—'}</div>
+              </div>
+              <Badge variant={STATUS_VARIANT[r.status] ?? 'neutral'} dot>{r.status}</Badge>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Employee *</label>
-                <select required value={form.employeeId} onChange={e => setForm(f => ({ ...f, employeeId: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                  <option value="">Select Employee</option>
-                  {employees.map(e => <option key={e.id} value={e.id}>{e.firstName} {e.lastName} ({e.employeeId})</option>)}
-                </select>
+            <div className="text-xs text-surface-600 line-clamp-1">{r.subject}</div>
+            {r.deadlineToReply && (
+              <div className={`text-2xs tabular-nums ${isOverdue(r) ? 'text-rose-600 font-semibold' : 'text-surface-500'}`}>
+                Deadline: {new Date(r.deadlineToReply).toLocaleDateString()} {isOverdue(r) && '(overdue)'}
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Date Issued *</label>
-                  <input type="date" required value={form.dateIssued} onChange={e => setForm(f => ({ ...f, dateIssued: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Reply Deadline</label>
-                  <input type="date" value={form.deadlineToReply} onChange={e => setForm(f => ({ ...f, deadlineToReply: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Subject *</label>
-                <input type="text" required value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="e.g., Unauthorized Absence, Violation of Company Policy" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-                <textarea required value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  rows={4} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Detailed description of the offense..." />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Issued By</label>
-                <input type="text" value={form.issuedBy} onChange={e => setForm(f => ({ ...f, issuedBy: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Officer name" />
-              </div>
-              <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowForm(false)} className="flex-1 px-4 py-2 border rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-60 flex items-center justify-center gap-2">
-                  {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Issuing...</> : 'Issue NTE'}
-                </button>
-              </div>
-            </form>
+            )}
           </div>
-        </div>
+        )}
+      />
+
+      {meta.totalPages > 1 && (
+        <Card variant="ghost" padding="none">
+          <DataPagination
+            page={meta.page}
+            totalPages={meta.totalPages}
+            total={meta.total}
+            pageSize={pageSize}
+            onPageChange={(p) => fetchRecords(p)}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageSizeChange={(s) => { setPageSize(s); }}
+          />
+        </Card>
       )}
+
+      {/* Issue NTE Modal */}
+      <Modal
+        open={showForm}
+        onClose={() => setShowForm(false)}
+        title="Issue Notice to Explain"
+        description="Formally request a written explanation for a workplace incident."
+        size="lg"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Select
+            label="Employee" required
+            value={form.employeeId}
+            onChange={(e) => setForm((f) => ({ ...f, employeeId: e.target.value }))}
+          >
+            <option value="">Select Employee</option>
+            {employees.map((e) => (
+              <option key={e.id} value={e.id}>{e.firstName} {e.lastName} ({e.employeeId})</option>
+            ))}
+          </Select>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              type="date" label="Date Issued" required
+              value={form.dateIssued}
+              onChange={(e) => setForm((f) => ({ ...f, dateIssued: e.target.value }))}
+            />
+            <Input
+              type="date" label="Reply Deadline"
+              value={form.deadlineToReply}
+              onChange={(e) => setForm((f) => ({ ...f, deadlineToReply: e.target.value }))}
+            />
+          </div>
+
+          <Input
+            label="Subject" required
+            placeholder="e.g., Unauthorized Absence, Violation of Company Policy"
+            value={form.subject}
+            onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
+          />
+
+          <Textarea
+            label="Description" required rows={4}
+            placeholder="Detailed description of the offense…"
+            value={form.description}
+            onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+          />
+
+          <Input
+            label="Issued By" placeholder="Officer name"
+            value={form.issuedBy}
+            onChange={(e) => setForm((f) => ({ ...f, issuedBy: e.target.value }))}
+          />
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-surface-100">
+            <Button type="button" variant="ghost" size="sm" onClick={() => setShowForm(false)}>Cancel</Button>
+            <Button type="submit" size="sm" loading={submitting}>
+              {submitting ? 'Issuing…' : 'Issue NTE'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
