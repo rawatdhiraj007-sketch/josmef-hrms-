@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Palette, User, Bell, Shield, Key, Plug, Building2,
+  Palette, User, Bell, Plug, Building2,
   Settings as SettingsIcon, Sparkles, Boxes,
 } from 'lucide-react';
 
@@ -13,8 +13,8 @@ const sections = [
     items: [
       { href: '/dashboard/settings',            label: 'General',     icon: SettingsIcon },
       { href: '/dashboard/settings/appearance', label: 'Appearance',  icon: Palette },
-      { href: '/dashboard/settings/profile',    label: 'Profile',     icon: User, disabled: true },
-      { href: '/dashboard/settings/notifications', label: 'Notifications', icon: Bell, disabled: true },
+      { href: '/dashboard/settings/profile',    label: 'Profile',     icon: User },
+      { href: '/dashboard/settings/notifications', label: 'Notifications', icon: Bell },
     ],
   },
   {
@@ -25,17 +25,10 @@ const sections = [
     ],
   },
   {
-    label: 'Security',
-    items: [
-      { href: '/dashboard/settings/security', label: 'Password & 2FA', icon: Key, disabled: true },
-      { href: '/dashboard/settings/audit',    label: 'Login activity', icon: Shield, disabled: true },
-    ],
-  },
-  {
     label: 'Workspace',
     items: [
-      { href: '/dashboard/settings/workspace',    label: 'Branding & Plan', icon: Building2 },
-      { href: '/dashboard/settings/integrations', label: 'Integrations',    icon: Plug, disabled: true },
+      { href: '/dashboard/settings/workspace', label: 'Branding & Plan', icon: Building2 },
+      { href: '/dashboard/integrations',       label: 'Integrations',    icon: Plug },
     ],
   },
 ];
@@ -61,28 +54,16 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
               {section.items.map(item => {
                 const active = pathname === item.href ||
                   (item.href !== '/dashboard/settings' && pathname.startsWith(item.href));
-                const Inner = (
-                  <span className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all
-                    ${item.disabled
-                      ? 'text-surface-300 cursor-not-allowed'
-                      : active
+                return (
+                  <Link key={item.href} href={item.href}>
+                    <span className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-all
+                      ${active
                         ? 'bg-gradient-to-r from-primary-50 via-primary-50/50 to-transparent text-primary-700'
                         : 'text-surface-600 hover:bg-surface-100/70 hover:text-surface-900'}`}
-                  >
-                    <item.icon className={`w-4 h-4 ${active ? 'text-primary-600' : 'text-surface-400'}`} />
-                    <span className="flex-1">{item.label}</span>
-                    {item.disabled && (
-                      <span className="text-[9px] font-semibold uppercase tracking-wider text-surface-400 bg-surface-100 px-1.5 py-0.5 rounded">
-                        Soon
-                      </span>
-                    )}
-                  </span>
-                );
-                return item.disabled ? (
-                  <div key={item.href}>{Inner}</div>
-                ) : (
-                  <Link key={item.href} href={item.href}>
-                    {Inner}
+                    >
+                      <item.icon className={`w-4 h-4 ${active ? 'text-primary-600' : 'text-surface-400'}`} />
+                      <span className="flex-1">{item.label}</span>
+                    </span>
                   </Link>
                 );
               })}
