@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Palette, User, Bell, Shield, Key, Plug, Building2,
-  Settings as SettingsIcon,
+  Settings as SettingsIcon, Sparkles, Boxes,
 } from 'lucide-react';
 
 const sections = [
@@ -15,6 +15,13 @@ const sections = [
       { href: '/dashboard/settings/appearance', label: 'Appearance',  icon: Palette },
       { href: '/dashboard/settings/profile',    label: 'Profile',     icon: User, disabled: true },
       { href: '/dashboard/settings/notifications', label: 'Notifications', icon: Bell, disabled: true },
+    ],
+  },
+  {
+    label: 'Design System',
+    items: [
+      { href: '/dashboard/settings/theme-studio', label: 'Theme Studio', icon: Sparkles },
+      { href: '/dashboard/settings/components',   label: 'Components',   icon: Boxes },
     ],
   },
   {

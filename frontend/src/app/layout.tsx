@@ -2,6 +2,7 @@ import '@/styles/globals.css';
 import { Suspense } from 'react';
 import { AuthProvider } from '@/hooks/useAuth';
 import { ThemeProvider } from '@/hooks/useTheme';
+import { ToastProvider } from '@/components/ui/Toast';
 import NavProgress from '@/components/NavProgress';
 import { BRAND } from '@/lib/brand';
 
@@ -21,12 +22,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className="dark">
       <body className="bg-nova-900 min-h-screen antialiased text-nova-100">
         <ThemeProvider>
-          <AuthProvider>
-            <Suspense fallback={null}>
-              <NavProgress />
-            </Suspense>
-            {children}
-          </AuthProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <Suspense fallback={null}>
+                <NavProgress />
+              </Suspense>
+              {children}
+            </AuthProvider>
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>
