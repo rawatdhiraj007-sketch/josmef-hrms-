@@ -4,21 +4,22 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { Applicant, ApplicantStatus, ApplicantListResponse } from '@/types/applicant';
-import {
-  Search, Plus, ChevronLeft, ChevronRight,
-  Eye, Pencil, Trash2, Filter, UserPlus,
-} from 'lucide-react';
+import { Plus, Eye, Pencil, Trash2, UserPlus } from 'lucide-react';
+import PageHeader from '@/components/data/PageHeader';
+import DataToolbar, { FilterSelect } from '@/components/data/DataToolbar';
+import DataPagination from '@/components/data/DataPagination';
+import DataEmpty from '@/components/data/DataEmpty';
 
 const STATUS_BADGE: Record<string, string> = {
-  new: 'badge-info',
-  screening: 'badge-warning',
-  interview: 'badge-info',
-  exam: 'badge-info',
+  new:              'badge-info',
+  screening:        'badge-warning',
+  interview:        'badge-info',
+  exam:             'badge-info',
   for_requirements: 'badge-warning',
-  approved: 'badge-success',
-  rejected: 'badge-danger',
-  pooled: 'badge-neutral',
-  withdrawn: 'badge-neutral',
+  approved:         'badge-success',
+  rejected:         'badge-danger',
+  pooled:           'badge-neutral',
+  withdrawn:        'badge-neutral',
 };
 
 export default function ApplicantsPage() {
@@ -28,11 +29,12 @@ export default function ApplicantsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading] = useState(true);
+  const [density, setDensity] = useState<'compact' | 'comfy'>('comfy');
 
-  const fetchData = useCallback(async (page = 1) => {
+  const fetchData = useCallback(async (page = 1, limit = meta.limit) => {
     setLoading(true);
     try {
-      const params: any = { page, limit: 20 };
+      const params: any = { page, limit };
       if (search) params.search = search;
       if (statusFilter) params.status = statusFilter;
       const res = await api.get<ApplicantListResponse>('/applicants', { params });
@@ -40,76 +42,62 @@ export default function ApplicantsPage() {
       setMeta(res.data.meta);
     } catch (err) {
       console.error('Failed to fetch applicants', err);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, statusFilter]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { fetchData(1); }, [fetchData]);
 
   async function handleDelete(id: string) {
     if (!confirm('Are you sure you want to delete this applicant?')) return;
     try {
       await api.delete(`/applicants/${id}`);
       fetchData(meta.page);
-    } catch (err) {
-      alert('Failed to delete applicant');
-    }
+    } catch { alert('Failed to delete applicant'); }
   }
 
-  return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-surface-900 flex items-center gap-2 tracking-tight">
-            <UserPlus className="w-6 h-6 text-primary-600" /> Applicants
-          </h1>
-          <p className="text-sm text-surface-500 mt-1">
-            {meta.total.toLocaleString()} total · recruitment pipeline
-          </p>
-        </div>
-        <button onClick={() => router.push('/dashboard/applicants/new')} className="btn-primary w-fit">
-          <Plus className="w-4 h-4" /> Add Applicant
-        </button>
-      </div>
+  const activeFilterCount = (search ? 1 : 0) + (statusFilter ? 1 : 0);
 
-      {/* Filters */}
-      <div className="card p-4 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2 bg-surface-50 border border-surface-200 rounded-lg px-3 py-1.5 flex-1 min-w-64">
-          <Search className="w-4 h-4 text-surface-400" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, email, mobile, position..."
-            className="bg-transparent text-sm flex-1 outline-none placeholder:text-surface-400"
-          />
-        </div>
-        <Filter className="w-4 h-4 text-surface-400" />
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="text-sm border border-surface-200 rounded-lg px-3 py-1.5 bg-white"
-        >
+  return (
+    <div className="space-y-5 animate-fade-in">
+      <PageHeader
+        icon={UserPlus}
+        title="Applicants"
+        subtitle={
+          <span>
+            <span className="font-semibold text-surface-700 tabular-nums">{meta.total.toLocaleString()}</span>
+            {' '}total · recruitment pipeline
+          </span>
+        }
+        actions={
+          <button onClick={() => router.push('/dashboard/applicants/new')} className="btn-primary">
+            <Plus className="w-4 h-4" /> Add Applicant
+          </button>
+        }
+      />
+
+      <DataToolbar
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search by name, email, mobile, position…"
+        activeFilterCount={activeFilterCount}
+        onClear={() => { setSearch(''); setStatusFilter(''); }}
+        densityKey="nn:applicants:density"
+        onDensityChange={setDensity}
+      >
+        <FilterSelect value={statusFilter} onChange={setStatusFilter} ariaLabel="Filter by status">
           <option value="">All statuses</option>
           {Object.values(ApplicantStatus).map((s) => (
             <option key={s} value={s}>
               {s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
             </option>
           ))}
-        </select>
-        {(search || statusFilter) && (
-          <button onClick={() => { setSearch(''); setStatusFilter(''); }} className="text-xs text-surface-500 hover:text-surface-700">
-            Clear
-          </button>
-        )}
-      </div>
+        </FilterSelect>
+      </DataToolbar>
 
-      {/* Table */}
-      <div className="card overflow-hidden">
+      <div className="rounded-xl border border-surface-200 bg-white shadow-card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="table-modern">
+          <table className={`table-modern ${density === 'compact' ? 'table-compact' : 'table-comfy'}`}>
             <thead>
               <tr>
                 <th>Name</th>
@@ -122,33 +110,60 @@ export default function ApplicantsPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} className="text-center py-16 text-surface-400">Loading applicants...</td></tr>
+                <tr>
+                  <td colSpan={6} className="text-center py-12 text-surface-400">
+                    <div className="inline-flex items-center gap-2">
+                      <div className="w-3 h-3 border-2 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
+                      Loading applicants…
+                    </div>
+                  </td>
+                </tr>
               ) : data.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-16">
-                    <UserPlus className="w-10 h-10 text-surface-200 mx-auto mb-2" />
-                    <p className="text-sm text-surface-500">No applicants match your filters</p>
+                  <td colSpan={6}>
+                    <DataEmpty
+                      icon={UserPlus}
+                      title={activeFilterCount > 0 ? 'No applicants match your filters' : 'No applicants yet'}
+                      description={activeFilterCount > 0 ? 'Try clearing filters or adjusting your search.' : 'Add your first applicant or share the public application link.'}
+                      action={
+                        activeFilterCount > 0 ? (
+                          <button
+                            onClick={() => { setSearch(''); setStatusFilter(''); }}
+                            className="btn-secondary text-xs"
+                          >
+                            Clear all filters
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => router.push('/dashboard/applicants/new')}
+                            className="btn-primary text-xs"
+                          >
+                            <Plus className="w-3 h-3" /> Add Applicant
+                          </button>
+                        )
+                      }
+                    />
                   </td>
                 </tr>
               ) : (
                 data.map((a) => (
-                  <tr key={a.id} className="group">
+                  <tr key={a.id} onClick={() => router.push(`/dashboard/applicants/${a.id}`)} className="cursor-pointer">
                     <td>
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-pink-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 shadow-soft">
                           {a.firstName?.[0]?.toUpperCase()}
                         </div>
-                        <div>
-                          <div className="font-medium text-surface-900">
+                        <div className="min-w-0">
+                          <div className="font-medium text-surface-900 truncate">
                             {a.lastName}, {a.firstName} {a.middleName?.[0] ? `${a.middleName[0]}.` : ''}
                           </div>
-                          <div className="text-xs text-surface-500 md:hidden">{a.positionApplied}</div>
+                          <div className="text-xs text-surface-500 truncate md:hidden">{a.positionApplied}</div>
                         </div>
                       </div>
                     </td>
                     <td>{a.positionApplied}</td>
                     <td className="hidden md:table-cell">
-                      <div className="text-surface-700">{a.email}</div>
+                      <div className="text-surface-700 truncate max-w-xs">{a.email}</div>
                       <div className="text-xs text-surface-400">{a.mobile}</div>
                     </td>
                     <td>
@@ -156,22 +171,25 @@ export default function ApplicantsPage() {
                         {a.status.replace(/_/g, ' ')}
                       </span>
                     </td>
-                    <td className="hidden lg:table-cell text-surface-500">
+                    <td className="hidden lg:table-cell text-surface-500 tabular-nums">
                       {a.applicationDate ? new Date(a.applicationDate).toLocaleDateString() : '—'}
                     </td>
                     <td>
-                      <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                      <div
+                        className="flex items-center justify-end gap-1 opacity-50 group-hover/row:opacity-100 transition-opacity"
+                        onClick={(ev) => ev.stopPropagation()}
+                      >
                         <button onClick={() => router.push(`/dashboard/applicants/${a.id}`)}
-                          className="p-2 rounded-md hover:bg-surface-100 text-surface-500 hover:text-primary-600 transition-colors" title="View">
-                          <Eye className="w-4 h-4" />
+                          className="w-7 h-7 rounded-md hover:bg-surface-100 text-surface-500 hover:text-primary-600 flex items-center justify-center transition-colors" title="View">
+                          <Eye className="w-3.5 h-3.5" />
                         </button>
                         <button onClick={() => router.push(`/dashboard/applicants/${a.id}/edit`)}
-                          className="p-2 rounded-md hover:bg-surface-100 text-surface-500 hover:text-primary-600 transition-colors" title="Edit">
-                          <Pencil className="w-4 h-4" />
+                          className="w-7 h-7 rounded-md hover:bg-surface-100 text-surface-500 hover:text-primary-600 flex items-center justify-center transition-colors" title="Edit">
+                          <Pencil className="w-3.5 h-3.5" />
                         </button>
                         <button onClick={() => handleDelete(a.id)}
-                          className="p-2 rounded-md hover:bg-rose-50 text-surface-500 hover:text-rose-600 transition-colors" title="Delete">
-                          <Trash2 className="w-4 h-4" />
+                          className="w-7 h-7 rounded-md hover:bg-rose-50 text-surface-500 hover:text-rose-600 flex items-center justify-center transition-colors" title="Delete">
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </td>
@@ -182,25 +200,15 @@ export default function ApplicantsPage() {
           </table>
         </div>
 
-        {meta.totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-surface-100 bg-surface-50/50">
-            <p className="text-xs text-surface-500">
-              Page <span className="font-semibold text-surface-700">{meta.page}</span> of {meta.totalPages}
-              <span className="mx-2 text-surface-300">·</span>
-              {meta.total} total
-            </p>
-            <div className="flex gap-1">
-              <button onClick={() => fetchData(meta.page - 1)} disabled={meta.page <= 1}
-                className="p-1.5 rounded-md border border-surface-200 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button onClick={() => fetchData(meta.page + 1)} disabled={meta.page >= meta.totalPages}
-                className="p-1.5 rounded-md border border-surface-200 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed">
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
+        <DataPagination
+          page={meta.page}
+          totalPages={meta.totalPages}
+          total={meta.total}
+          pageSize={meta.limit}
+          onPageChange={(p) => fetchData(p)}
+          pageSizeOptions={[10, 20, 50, 100]}
+          onPageSizeChange={(s) => { setMeta(m => ({ ...m, limit: s })); fetchData(1, s); }}
+        />
       </div>
     </div>
   );

@@ -101,21 +101,35 @@ html:has(.force-light) {
     @apply dark-card transition-all duration-200 hover:bg-nova-800 hover:border-white/[0.12] hover:shadow-dark-hover;
   }
 
-  /* ─── Tables ──────────────────────────────────────── */
+  /* ─── Tables — Linear/Notion/Stripe premium style ─────── */
   .table-modern {
-    @apply w-full text-sm;
+    @apply w-full text-sm border-separate border-spacing-0;
   }
   .table-modern thead {
-    @apply bg-surface-50 border-b border-surface-200;
+    @apply bg-surface-50/60 backdrop-blur-sm;
   }
-  .table-modern th {
-    @apply text-left px-4 py-3 font-semibold text-2xs uppercase tracking-wider text-surface-500;
+  .table-modern thead th {
+    @apply text-left px-4 py-2.5 font-medium text-2xs uppercase tracking-[0.08em] text-surface-500
+           border-b border-surface-200/80 first:rounded-tl-xl last:rounded-tr-xl;
   }
   .table-modern tbody tr {
-    @apply border-b border-surface-100 transition-colors hover:bg-surface-50/60;
+    @apply transition-all duration-150 hover:bg-primary-50/30 group/row;
   }
-  .table-modern tbody tr:last-child { @apply border-0; }
-  .table-modern td { @apply px-4 py-3.5 text-surface-700; }
+  .table-modern tbody td {
+    @apply px-4 py-3 text-surface-700 border-b border-surface-100/70 align-middle
+           transition-colors duration-150 group-hover/row:border-primary-100/60;
+  }
+  .table-modern tbody tr:last-child td { @apply border-b-0; }
+  .table-modern tbody tr:last-child td:first-child { @apply rounded-bl-xl; }
+  .table-modern tbody tr:last-child td:last-child { @apply rounded-br-xl; }
+
+  /* Compact density */
+  .table-compact tbody td  { @apply py-2; }
+  .table-compact thead th  { @apply py-2; }
+
+  /* Comfortable density */
+  .table-comfy tbody td  { @apply py-4; }
+  .table-comfy thead th  { @apply py-3.5; }
 
   /* ─── Badges ──────────────────────────────────────── */
   .badge {
