@@ -26,9 +26,9 @@ const SIZES = {
 } as const;
 
 const DRAWER_SIZES = {
-  right:  'right-0 top-0 h-full max-w-md w-full animate-slide-up [animation-name:slideInRight]',
-  left:   'left-0 top-0 h-full max-w-md w-full',
-  bottom: 'left-0 right-0 bottom-0 max-h-[85vh] rounded-b-none',
+  right:  'right-0 top-0 h-full max-w-md w-full !rounded-r-none animate-slide-in-right',
+  left:   'left-0 top-0 h-full max-w-md w-full !rounded-l-none animate-slide-in-left',
+  bottom: 'left-0 right-0 bottom-0 max-h-[85vh] !rounded-b-none animate-slide-in-bottom',
 } as const;
 
 export default function Modal({
@@ -66,8 +66,8 @@ export default function Modal({
         onClick={(e) => e.stopPropagation()}
         className={`
           relative bg-white rounded-2xl shadow-[0_20px_50px_-10px_rgb(0_0_0_/_0.25)]
-          w-full overflow-hidden animate-slide-up
-          ${drawer ? `fixed ${DRAWER_SIZES[drawer]}` : SIZES[size]}
+          w-full overflow-hidden
+          ${drawer ? `fixed ${DRAWER_SIZES[drawer]}` : `${SIZES[size]} animate-scale-in`}
         `}
       >
         {/* Header */}

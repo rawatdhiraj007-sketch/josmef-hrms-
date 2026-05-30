@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { PRESET_THEMES, type CustomTheme } from '@/lib/design-tokens';
 import { useTheme } from '@/hooks/useTheme';
+import { applyColorPalette, resetColorPalette, mapDensityForUseTheme } from '@/lib/color-utils';
 import {
   Button, Input, Select, Card, CardHeader, CardBody,
   Badge, Avatar, Tabs, useToast,
@@ -17,7 +18,7 @@ const LS_DRAFTS = 'nn:theme:drafts';
 const LS_APPLIED = 'nn:theme:applied';
 
 export default function ThemeStudioPage() {
-  const { reset: resetGlobalTheme } = useTheme();
+  const { set: setThemePref, reset: resetGlobalTheme } = useTheme();
   const toast = useToast();
 
   // ── Working draft (the live editing state) ──
@@ -29,7 +30,7 @@ export default function ThemeStudioPage() {
   // ── New preset name input ──
   const [newName, setNewName] = useState('');
 
-  // ── Load applied + saved on mount ──
+  // ── Load applied + saved on mount AND re-apply colors ──
   useEffect(() => {
     try {
       const a = localStorage.getItem(LS_APPLIED);
@@ -37,6 +38,8 @@ export default function ThemeStudioPage() {
         const parsed = JSON.parse(a) as CustomTheme;
         setApplied(parsed);
         setDraft(parsed);
+        // Re-apply colors on every load (in case localStorage survived a refresh)
+        applyColorPalette(parsed.primaryHex, parsed.accentHex);
       }
       const d = localStorage.getItem(LS_DRAFTS);
       if (d) setSavedThemes(JSON.parse(d));
@@ -78,12 +81,18 @@ export default function ThemeStudioPage() {
   function applyDraft() {
     setApplied(draft);
     try { localStorage.setItem(LS_APPLIED, JSON.stringify(draft)); } catch {}
-    // Push to live <html> data attributes too
-    document.documentElement.setAttribute('data-theme', draft.scheme === 'system'
-      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-      : draft.scheme);
-    document.documentElement.setAttribute('data-density', draft.density === 'cozy' ? 'comfortable' : draft.density);
-    toast.success('Theme applied', 'Your new theme is now live across the app.');
+
+    // 1. Generate full color shade scales + write CSS vars (this changes
+    //    all .bg-accent / .text-accent / etc. across the whole app).
+    applyColorPalette(draft.primaryHex, draft.accentHex);
+
+    // 2. Sync with useTheme for the prefs it tracks
+    setThemePref('colorScheme', draft.scheme);
+    setThemePref('density',     mapDensityForUseTheme(draft.density));
+    setThemePref('animations',
+      draft.motionLevel === 'minimal' ? 'reduced' : 'on');
+
+    toast.success('Theme applied', 'New colors live across the entire app.');
   }
 
   function cancelDraft() {
@@ -100,7 +109,8 @@ export default function ThemeStudioPage() {
       localStorage.removeItem(LS_DRAFTS);
       localStorage.removeItem(LS_APPLIED);
     } catch {}
-    resetGlobalTheme();
+    resetColorPalette();   // strip inline color CSS vars from <html>
+    resetGlobalTheme();    // reset useTheme prefs
     toast.warning('Reset complete', 'All custom themes removed.');
   }
 

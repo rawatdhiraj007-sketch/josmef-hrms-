@@ -34,9 +34,8 @@ export default function Avatar({
   name, src, size = 'md', status, gradient, square, className = '',
 }: AvatarProps) {
   const s = SIZE_MAP[size];
-  const initials = (name ?? '?')
-    .split(' ').filter(Boolean).slice(0, 2)
-    .map(p => p[0]?.toUpperCase()).join('') || '?';
+  const initials = extractInitials(name);
+  const computedGradient = gradient ?? deriveGradient(name);
 
   return (
     <div className={`relative inline-block flex-shrink-0 ${className}`}>
@@ -49,9 +48,8 @@ export default function Avatar({
         ) : (
           <div
             className={`w-full h-full flex items-center justify-center text-white font-semibold ${s.txt}`}
-            style={{
-              background: gradient ?? 'linear-gradient(135deg, #4f46e5, #8b5cf6)',
-            }}
+            style={{ background: computedGradient }}
+            aria-label={name}
           >
             {initials}
           </div>
@@ -60,10 +58,64 @@ export default function Avatar({
       {status && (
         <span
           className={`absolute bottom-0 right-0 ${s.dot} ${STATUS_COLOR[status]} rounded-full ring-2 ring-white`}
+          aria-label={`Status: ${status}`}
         />
       )}
     </div>
   );
+}
+
+// ─── Helpers ─────────────────────────────────────────────────
+/**
+ * Robust initials: handles emails, single names, hyphens, special chars.
+ * "Maria Cruz"            → MC
+ * "maria.cruz@email.com"  → MC
+ * "Maria"                 → MA
+ * "M"                     → M
+ * ""                      → ?
+ * "Anne-Marie O'Brien"    → AO
+ */
+function extractInitials(name?: string): string {
+  if (!name) return '?';
+  // If it's an email, use the local part
+  const cleanedSource = name.includes('@') ? name.split('@')[0] : name;
+  // Replace common separators with spaces, strip non-letters
+  // Strip separators → spaces, then keep only A-Z/a-z (es5-safe regex)
+  const cleaned = cleanedSource
+    .replace(/[._\-+]+/g, ' ')
+    .replace(/[^a-zA-Z\s]/g, '')
+    .trim();
+  if (!cleaned) return '?';
+  const parts = cleaned.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) {
+    // Single word → first two letters
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+  // Multi-word → first letter of first + first letter of last
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+/**
+ * Pick a deterministic gradient from a 6-color palette based on name.
+ * Same name always → same gradient (consistent across renders).
+ */
+const GRADIENTS = [
+  'linear-gradient(135deg, #6366f1, #a855f7)',  // indigo→violet
+  'linear-gradient(135deg, #3b82f6, #06b6d4)',  // blue→cyan
+  'linear-gradient(135deg, #ec4899, #f43f5e)',  // pink→rose
+  'linear-gradient(135deg, #f59e0b, #f97316)',  // amber→orange
+  'linear-gradient(135deg, #10b981, #14b8a6)',  // emerald→teal
+  'linear-gradient(135deg, #8b5cf6, #ec4899)',  // violet→pink
+];
+
+function deriveGradient(name?: string): string {
+  if (!name) return GRADIENTS[0];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = ((hash << 5) - hash + name.charCodeAt(i)) | 0;
+  }
+  return GRADIENTS[Math.abs(hash) % GRADIENTS.length];
 }
 
 // ─── Stacked avatars (e.g. "+3 more") ──────────────────────

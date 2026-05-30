@@ -93,7 +93,7 @@ export default function Tabs({
       </div>
 
       {children && (
-        <div role="tabpanel" className="mt-4 animate-fade-in" key={active}>
+        <div role="tabpanel" className="mt-4 animate-tab-in" key={active}>
           {children(active)}
         </div>
       )}

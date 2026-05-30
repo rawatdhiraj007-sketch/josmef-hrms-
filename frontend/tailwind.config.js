@@ -69,12 +69,17 @@ module.exports = {
         'nova-mesh':    'radial-gradient(at 0% 0%, rgba(59,130,246,0.18) 0px, transparent 50%), radial-gradient(at 100% 0%, rgba(139,92,246,0.18) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(99,102,241,0.18) 0px, transparent 50%), radial-gradient(at 0% 100%, rgba(168,85,247,0.18) 0px, transparent 50%)',
       },
       animation: {
-        'slide-up':   'slide-up 0.4s cubic-bezier(0.22, 1, 0.36, 1)',
-        'fade-in':    'fade-in 0.3s ease-out',
-        'shimmer':    'shimmer 2.5s linear infinite',
-        'pulse-ring': 'pulse-ring 2s cubic-bezier(0.22,1,0.36,1) infinite',
-        'aurora':     'aurora 16s ease infinite',
-        'spin-slow':  'spin 12s linear infinite',
+        'slide-up':           'slide-up 0.4s cubic-bezier(0.22, 1, 0.36, 1)',
+        'fade-in':            'fade-in 0.3s ease-out',
+        'shimmer':            'shimmer 2.5s linear infinite',
+        'pulse-ring':         'pulse-ring 2s cubic-bezier(0.22,1,0.36,1) infinite',
+        'aurora':             'aurora 16s ease infinite',
+        'spin-slow':          'spin 12s linear infinite',
+        'slide-in-right':     'slide-in-right 0.3s cubic-bezier(0.22, 1, 0.36, 1)',
+        'slide-in-left':      'slide-in-left  0.3s cubic-bezier(0.22, 1, 0.36, 1)',
+        'slide-in-bottom':    'slide-in-bottom 0.3s cubic-bezier(0.22, 1, 0.36, 1)',
+        'scale-in':           'scale-in 0.2s cubic-bezier(0.22, 1, 0.36, 1)',
+        'tab-in':             'tab-in 0.18s ease-out',
       },
       keyframes: {
         'slide-up': {
@@ -97,6 +102,26 @@ module.exports = {
         'aurora': {
           '0%, 100%': { backgroundPosition: '0% 50%' },
           '50%':      { backgroundPosition: '100% 50%' },
+        },
+        'slide-in-right': {
+          '0%':   { opacity: '0', transform: 'translateX(24px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        'slide-in-left': {
+          '0%':   { opacity: '0', transform: 'translateX(-24px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        'slide-in-bottom': {
+          '0%':   { opacity: '0', transform: 'translateY(24px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'scale-in': {
+          '0%':   { opacity: '0', transform: 'scale(0.96)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        'tab-in': {
+          '0%':   { opacity: '0', transform: 'translateY(4px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },
     },
