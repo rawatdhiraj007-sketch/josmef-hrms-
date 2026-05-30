@@ -56,7 +56,8 @@ export default function NtePage() {
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter, pageSize, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, statusFilter, pageSize]);
 
   useEffect(() => { fetchRecords(1); }, [fetchRecords]);
 

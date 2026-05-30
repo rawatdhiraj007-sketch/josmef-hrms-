@@ -59,7 +59,8 @@ export default function PayrollPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, pageSize, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter, pageSize]);
 
   useEffect(() => { fetchData(1); }, [fetchData]);
 

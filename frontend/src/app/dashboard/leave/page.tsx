@@ -72,7 +72,8 @@ export default function LeavePage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter]);
 
   useEffect(() => { load(); }, [load]);
 

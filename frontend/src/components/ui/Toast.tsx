@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
+import { createContext, useContext, useState, ReactNode, useCallback, useMemo } from 'react';
 import { CheckCircle2, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 
 type Variant = 'success' | 'error' | 'warning' | 'info';
@@ -47,14 +47,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     }
   }, [dismiss]);
 
-  const helpers = {
+  // IMPORTANT: helpers must be memoized — otherwise every render produces a
+  // new context value, which cascades into infinite re-fetch loops in any
+  // consumer that puts `toast` in a useCallback/useEffect dependency list.
+  const helpers = useMemo<ToastContextType>(() => ({
     show,
     success: (title: string, description?: string) => show({ variant: 'success', title, description }),
     error:   (title: string, description?: string) => show({ variant: 'error',   title, description }),
     warning: (title: string, description?: string) => show({ variant: 'warning', title, description }),
     info:    (title: string, description?: string) => show({ variant: 'info',    title, description }),
     dismiss,
-  };
+  }), [show, dismiss]);
 
   return (
     <ToastContext.Provider value={helpers}>

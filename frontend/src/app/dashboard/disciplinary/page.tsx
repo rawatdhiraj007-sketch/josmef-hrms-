@@ -73,7 +73,8 @@ export default function DisciplinaryPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, typeFilter, statusFilter, pageSize, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, typeFilter, statusFilter, pageSize]);
 
   useEffect(() => { fetchRecords(1); }, [fetchRecords]);
 

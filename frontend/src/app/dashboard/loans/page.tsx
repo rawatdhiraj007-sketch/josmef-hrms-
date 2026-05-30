@@ -67,7 +67,10 @@ export default function LoansPage() {
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter, typeFilter, pageSize, toast]);
+    // toast intentionally omitted — context value is stable; including it
+    // would create a re-fetch loop on any provider re-render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, statusFilter, typeFilter, pageSize]);
 
   useEffect(() => { fetchLoans(1); }, [fetchLoans]);
 
