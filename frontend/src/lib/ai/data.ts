@@ -10,23 +10,60 @@ import type { AiData } from './types';
 export async function loadAiData(): Promise<AiData> {
   const failed: string[] = [];
 
+  // Generic safe-wrapper. Catches ALL throws — even those from the .then
+  // callback (e.g. accessing a field on a 204 response body). Always returns
+  // the fallback on any failure.
   async function safe<T>(name: string, p: Promise<T>, fallback: T): Promise<T> {
-    try { return await p; } catch { failed.push(name); return fallback; }
+    try {
+      const v = await p;
+      return v;
+    } catch {
+      failed.push(name);
+      return fallback;
+    }
   }
+
+  // Bulletproof array-extractor: regardless of what the API returns
+  // ({ data: [...] }, { rows: [...] }, raw [...], '', null, undefined, etc.),
+  // always hand back an actual array. Prevents .filter/.map/.reduce on
+  // non-array values inside the AI compute functions.
+  const toArray = (r: any): any[] => {
+    const d = r?.data;
+    if (Array.isArray(d)) return d;
+    if (Array.isArray(d?.data)) return d.data;
+    if (Array.isArray(d?.rows)) return d.rows;
+    return [];
+  };
+
+  const toLeaveSummary = (r: any) => {
+    const d = r?.data ?? {};
+    return {
+      total:    Number(d.total)    || 0,
+      pending:  Number(d.pending)  || 0,
+      approved: Number(d.approved) || 0,
+      rejected: Number(d.rejected) || 0,
+    };
+  };
 
   const [
     employees, licenses, leaveRequests, leaveSummary, trainings, trainingEnrollments,
   ] = await Promise.all([
-    safe('employees', api.get('/employees', { params: { limit: 1000 } }).then((r) => r.data?.data ?? r.data ?? []), []),
-    safe('licenses',  api.get('/licenses',  { params: { limit: 500 } }).then((r) => r.data?.data ?? r.data ?? []), []),
-    safe('leaveRequests', api.get('/leave/requests', { params: { limit: 500 } }).then((r) => r.data?.rows ?? r.data?.data ?? r.data ?? []), []),
-    safe('leaveSummary',  api.get('/leave/summary').then((r) => r.data), { total: 0, pending: 0, approved: 0, rejected: 0 }),
-    safe('trainings',          api.get('/training/courses').then((r) => r.data?.data ?? r.data ?? []), []),
-    safe('trainingEnrollments', api.get('/training/enrollments').then((r) => r.data?.data ?? r.data ?? []), []),
+    safe('employees',           api.get('/employees', { params: { limit: 1000 } }).then(toArray), [] as any[]),
+    safe('licenses',            api.get('/licenses',  { params: { limit: 500 } }).then(toArray),  [] as any[]),
+    safe('leaveRequests',       api.get('/leave/requests', { params: { limit: 500 } }).then(toArray), [] as any[]),
+    safe('leaveSummary',        api.get('/leave/summary').then(toLeaveSummary), { total: 0, pending: 0, approved: 0, rejected: 0 }),
+    safe('trainings',           api.get('/training/courses').then(toArray), [] as any[]),
+    safe('trainingEnrollments', api.get('/training/enrollments').then(toArray), [] as any[]),
   ]);
 
   return {
-    employees, licenses, leaveRequests, leaveSummary, trainings, trainingEnrollments,
+    // Hard guarantee: every field is the right type — even if upstream lied.
+    employees:           Array.isArray(employees)           ? employees           : [],
+    licenses:            Array.isArray(licenses)            ? licenses            : [],
+    leaveRequests:       Array.isArray(leaveRequests)       ? leaveRequests       : [],
+    leaveSummary,
+    trainings:           Array.isArray(trainings)           ? trainings           : [],
+    trainingEnrollments: Array.isArray(trainingEnrollments) ? trainingEnrollments : [],
     loadedAt: new Date(),
     failed,
   };

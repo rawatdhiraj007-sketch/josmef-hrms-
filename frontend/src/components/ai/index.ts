@@ -16,3 +16,4 @@ export { default as AiInsightsGrid }      from './AiInsightsGrid';
 export { default as AiAlertList }         from './AiAlertList';
 export { default as AiRecommendations }   from './AiRecommendations';
 export { default as BusinessHealthScore } from './BusinessHealthScore';
+export { default as AiErrorBoundary }     from './AiErrorBoundary';
