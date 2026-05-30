@@ -1,33 +1,49 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { Employee, Document201, DocumentCategory } from '@/types/employee';
 import {
-  ArrowLeft, Pencil, Mail, Phone, Briefcase, Calendar, MapPin,
-  Shield, FileText, Upload, CheckCircle, Trash2, ExternalLink,
-  Archive, BookOpen, X, Loader2,
+  Pencil, Mail, Phone, Briefcase, Calendar, MapPin, Shield, FileText,
+  CheckCircle, Trash2, ExternalLink, Archive, BookOpen, Loader2,
+  UserPlus, ClipboardList, MessageSquare, History, User, Building2,
+  DollarSign, AlertCircle, StickyNote,
 } from 'lucide-react';
 
-const statusColors: Record<string, string> = {
-  probationary: 'bg-amber-100 text-amber-700', regular: 'bg-green-100 text-green-700',
-  resigned: 'bg-gray-100 text-gray-500', terminated: 'bg-red-100 text-red-700',
-  end_of_contract: 'bg-orange-100 text-orange-700', awol: 'bg-red-100 text-red-600',
+import { Button, Badge, Card, Modal, Input, Select, Textarea, Tabs, useToast } from '@/components/ui';
+import {
+  DetailHeader, InfoRow, Timeline, StickyActionBar, type TimelineEvent,
+} from '@/components/detail';
+import { FilterSelect } from '@/components/data/DataToolbar';
+
+// ─── Status → Badge variant mapping (theme-aware) ───
+const STATUS_VARIANT: Record<string, 'warning' | 'success' | 'neutral' | 'danger' | 'info'> = {
+  probationary:    'warning',
+  regular:         'success',
+  resigned:        'neutral',
+  terminated:      'danger',
+  end_of_contract: 'warning',
+  awol:            'danger',
 };
 
 const SEPARATION_REASONS = [
-  'resigned', 'terminated', 'end_of_contract', 'retired', 'awol', 'redundancy', 'retrenchment', 'death', 'other'
+  'resigned', 'terminated', 'end_of_contract', 'retired',
+  'awol', 'redundancy', 'retrenchment', 'death', 'other',
 ];
 
 export default function ViewEmployeePage() {
   const params = useParams();
   const router = useRouter();
+  const toast  = useToast();
+
   const [data, setData] = useState<Employee | null>(null);
   const [docs, setDocs] = useState<Document201[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'profile' | '201file'>('profile');
+
+  const [tab, setTab] = useState<string>('overview');
   const [catFilter, setCatFilter] = useState('');
+
   const [showArchive, setShowArchive] = useState(false);
   const [archiving, setArchiving] = useState(false);
   const [archiveForm, setArchiveForm] = useState({
@@ -47,8 +63,9 @@ export default function ViewEmployeePage() {
         setData(empRes.data);
         setDocs(docRes.data);
       })
-      .catch(() => alert('Not found'))
+      .catch(() => toast.error('Employee not found'))
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   async function handleArchive(e: React.FormEvent) {
@@ -61,232 +78,459 @@ export default function ViewEmployeePage() {
         finalPay: archiveForm.finalPay ? Number(archiveForm.finalPay) : 0,
       });
       setShowArchive(false);
+      toast.success('Employee archived', 'Marked as Former Employee.');
       router.push('/dashboard/former-employees');
-    } catch { alert('Archive failed.'); } finally { setArchiving(false); }
+    } catch {
+      toast.error('Archive failed', 'Please try again.');
+    } finally {
+      setArchiving(false);
+    }
   }
 
   async function handleDeleteDoc(docId: string) {
     if (!confirm('Delete this document?')) return;
     try {
       await api.delete(`/documents/${docId}`);
-      setDocs(docs.filter((d) => d.id !== docId));
-    } catch { alert('Failed'); }
+      setDocs((prev) => prev.filter((d) => d.id !== docId));
+      toast.success('Document deleted');
+    } catch {
+      toast.error('Failed to delete document');
+    }
   }
 
-  if (loading) return <div className="text-center py-12 text-gray-400">Loading...</div>;
-  if (!data) return <div className="text-center py-12 text-red-500">Not found</div>;
+  // ── Activity derived from entity data (no backend changes) ──
+  const activity: TimelineEvent[] = useMemo(() => {
+    if (!data) return [];
+    const events: TimelineEvent[] = [];
+    if ((data as any).createdAt) {
+      events.push({
+        id: 'created', icon: UserPlus, variant: 'success',
+        title: 'Profile created',
+        description: 'Employee record added to the system.',
+        timestamp: (data as any).createdAt,
+      });
+    }
+    if (data.dateHired) {
+      events.push({
+        id: 'hired', icon: Briefcase, variant: 'brand',
+        title: 'Hired',
+        description: `Started as ${data.position}${data.department ? ` in ${data.department}` : ''}.`,
+        timestamp: data.dateHired,
+      });
+    }
+    if (data.dateRegularized) {
+      events.push({
+        id: 'regularized', icon: CheckCircle, variant: 'success',
+        title: 'Regularized',
+        description: 'Probationary period completed.',
+        timestamp: data.dateRegularized,
+      });
+    }
+    if (data.contractEndDate) {
+      const isPast = new Date(data.contractEndDate) < new Date();
+      events.push({
+        id: 'contract', icon: Calendar, variant: isPast ? 'warning' : 'info',
+        title: isPast ? 'Contract ended' : 'Contract end scheduled',
+        timestamp: data.contractEndDate,
+      });
+    }
+    if (data.dateSeparated) {
+      events.push({
+        id: 'separated', icon: AlertCircle, variant: 'danger',
+        title: 'Separated',
+        description: data.employmentStatus.replace(/_/g, ' '),
+        timestamp: data.dateSeparated,
+      });
+    }
+    if ((data as any).updatedAt && (data as any).updatedAt !== (data as any).createdAt) {
+      events.push({
+        id: 'updated', icon: History, variant: 'neutral',
+        title: 'Profile updated',
+        description: 'Details were edited.',
+        timestamp: (data as any).updatedAt,
+      });
+    }
+    // Documents — one event per doc
+    docs.forEach((d) => {
+      events.push({
+        id: `doc-${d.id}`,
+        icon: FileText, variant: 'info',
+        title: `Document added: ${d.documentName}`,
+        description: d.category.replace(/_/g, ' '),
+        timestamp: (d as any).createdAt ?? d.documentDate,
+        trailing: d.isVerified ? <Badge variant="success" size="sm" dot>Verified</Badge> : undefined,
+      });
+    });
+    return events;
+  }, [data, docs]);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20 text-surface-400 text-sm gap-2">
+        <Loader2 className="w-4 h-4 animate-spin" /> Loading…
+      </div>
+    );
+  }
+  if (!data) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-rose-600 text-sm">Employee not found</p>
+        <Button variant="ghost" size="sm" onClick={() => router.back()} className="mt-3">Go back</Button>
+      </div>
+    );
+  }
+
+  const fullName = [data.firstName, data.middleName, data.lastName].filter(Boolean).join(' ');
   const filteredDocs = catFilter ? docs.filter((d) => d.category === catFilter) : docs;
+  const filteredCount = filteredDocs.length;
 
   return (
-    <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="p-2 rounded-lg hover:bg-surface-100"><ArrowLeft className="w-5 h-5 text-gray-500" /></button>
-          <div>
-            <p className="text-xs text-gray-400 font-mono">{data.employeeId}</p>
-            <h1 className="text-2xl font-bold text-gray-900">{data.firstName} {data.middleName} {data.lastName}</h1>
-            <div className="flex items-center gap-2 mt-1">
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[data.employmentStatus]}`}>
-                {data.employmentStatus.replace(/_/g, ' ')}
-              </span>
-              <span className="text-sm text-gray-500">{data.position} — {data.department}</span>
-            </div>
+    <div className="space-y-5 pb-24">
+      <DetailHeader
+        eyebrow={data.employeeId}
+        title={fullName}
+        avatarName={fullName}
+        subtitle={
+          <div className="flex items-center gap-2 flex-wrap">
+            <Briefcase className="w-3.5 h-3.5 text-surface-400" />
+            <span>{data.position}{data.department ? ` · ${data.department}` : ''}</span>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => router.push(`/dashboard/employees/${data.id}/201`)}
-            className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700"
-          >
-            <BookOpen className="w-4 h-4" /> 201 File
-          </button>
-          <button
-            onClick={() => setShowArchive(true)}
-            className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700"
-          >
-            <Archive className="w-4 h-4" /> Archive
-          </button>
-          <button onClick={() => router.push(`/dashboard/employees/${data.id}/edit`)} className="btn-primary flex items-center gap-2">
-            <Pencil className="w-4 h-4" /> Edit
-          </button>
-        </div>
-      </div>
+        }
+        badge={
+          <Badge variant={STATUS_VARIANT[data.employmentStatus] ?? 'neutral'} dot>
+            {data.employmentStatus.replace(/_/g, ' ')}
+          </Badge>
+        }
+        actions={
+          <>
+            <Button
+              variant="secondary" size="sm"
+              leftIcon={<BookOpen className="w-3.5 h-3.5" />}
+              onClick={() => router.push(`/dashboard/employees/${data.id}/201`)}
+            >
+              201 File
+            </Button>
+            <Button
+              variant="danger" size="sm"
+              leftIcon={<Archive className="w-3.5 h-3.5" />}
+              onClick={() => setShowArchive(true)}
+            >
+              Archive
+            </Button>
+            <Button
+              variant="primary" size="sm"
+              leftIcon={<Pencil className="w-3.5 h-3.5" />}
+              onClick={() => router.push(`/dashboard/employees/${data.id}/edit`)}
+            >
+              Edit
+            </Button>
+          </>
+        }
+      />
 
-      {/* Tab toggle */}
-      <div className="flex gap-1 mb-6">
-        <button onClick={() => setTab('profile')}
-          className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${tab === 'profile' ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-surface-100'}`}>
-          Profile
-        </button>
-        <button onClick={() => setTab('201file')}
-          className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${tab === '201file' ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-surface-100'}`}>
-          <FileText className="w-4 h-4" /> 201 File ({docs.length})
-        </button>
-      </div>
-
-      {/* Profile Tab */}
-      {tab === 'profile' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Section title="Personal Information">
-            <Row icon={Mail} label="Email" value={data.email} />
-            <Row icon={Phone} label="Mobile" value={data.mobile} />
-            <Row label="Telephone" value={data.telephone} />
-            <Row icon={Calendar} label="Birthday" value={data.dateOfBirth?.split('T')[0]} />
-            <Row label="Gender" value={data.gender} />
-            <Row label="Civil Status" value={data.civilStatus} />
-            <Row label="Nationality" value={data.nationality} />
-          </Section>
-
-          <Section title="Address">
-            <Row icon={MapPin} label="Present" value={data.presentAddress} />
-            <Row icon={MapPin} label="Permanent" value={data.permanentAddress} />
-            <Row label="City" value={[data.city, data.province, data.zipCode].filter(Boolean).join(', ')} />
-          </Section>
-
-          <Section title="Government IDs">
-            <Row icon={Shield} label="SSS" value={data.sssNumber} />
-            <Row label="PhilHealth" value={data.philhealthNumber} />
-            <Row label="Pag-IBIG" value={data.pagibigNumber} />
-            <Row label="TIN" value={data.tinNumber} />
-          </Section>
-
-          <Section title="Employment">
-            <Row icon={Briefcase} label="Position" value={data.position} />
-            <Row label="Department" value={data.department} />
-            <Row label="Branch" value={data.branch} />
-            <Row label="Client" value={data.client} />
-            <Row icon={Calendar} label="Date Hired" value={data.dateHired?.split('T')[0]} />
-            <Row label="Regularized" value={data.dateRegularized?.split('T')[0]} />
-            <Row label="Contract End" value={data.contractEndDate?.split('T')[0]} />
-            <Row label="Type" value={data.employmentType} />
-          </Section>
-
-          <Section title="Compensation">
-            <Row label="Basic Salary" value={`₱${Number(data.basicSalary).toLocaleString()}`} />
-            <Row label="Daily Rate" value={`₱${Number(data.dailyRate).toLocaleString()}`} />
-            <Row label="Allowance" value={`₱${Number(data.allowance).toLocaleString()}`} />
-          </Section>
-
-          <Section title="Emergency Contact">
-            <Row label="Name" value={data.emergencyContactName} />
-            <Row label="Relation" value={data.emergencyContactRelation} />
-            <Row icon={Phone} label="Phone" value={data.emergencyContactPhone} />
-          </Section>
-        </div>
-      )}
-
-      {/* Archive Modal */}
-      {showArchive && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-lg font-semibold text-gray-900">Archive Employee</h2>
-              <button onClick={() => setShowArchive(false)}><X className="w-5 h-5 text-gray-500" /></button>
-            </div>
-            <form onSubmit={handleArchive} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Separation Reason *</label>
-                <select required value={archiveForm.separationReason}
-                  onChange={e => setArchiveForm(f => ({ ...f, separationReason: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                  {SEPARATION_REASONS.map(r => <option key={r} value={r} className="capitalize">{r.replace('_', ' ')}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date Separated</label>
-                <input type="date" value={archiveForm.dateSeparated}
-                  onChange={e => setArchiveForm(f => ({ ...f, dateSeparated: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Final Pay (₱)</label>
-                <input type="number" value={archiveForm.finalPay}
-                  onChange={e => setArchiveForm(f => ({ ...f, finalPay: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="0.00" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Details / Remarks</label>
-                <textarea value={archiveForm.separationDetails}
-                  onChange={e => setArchiveForm(f => ({ ...f, separationDetails: e.target.value }))}
-                  rows={3} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                  placeholder="Additional details about the separation..." />
-              </div>
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
-                This will create a Former Employee record (FMR-YYYY-NNN) and mark the employee as separated.
-              </div>
-              <div className="flex gap-3">
-                <button type="button" onClick={() => setShowArchive(false)} className="flex-1 px-4 py-2 border rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button type="submit" disabled={archiving} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-60 flex items-center justify-center gap-2">
-                  {archiving ? <><Loader2 className="w-4 h-4 animate-spin" /> Archiving...</> : 'Confirm Archive'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 201 File Tab */}
-      {tab === '201file' && (
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="input-field w-56">
-              <option value="">All Categories</option>
-              {Object.values(DocumentCategory).map((c) => (
-                <option key={c} value={c}>{c.replace(/_/g, ' ').replace(/\b\w/g, (x) => x.toUpperCase())}</option>
-              ))}
-            </select>
-          </div>
-
-          {filteredDocs.length === 0 ? (
-            <div className="card p-12 text-center text-gray-400">
-              <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p>No documents uploaded yet</p>
-            </div>
-          ) : (
-            <div className="grid gap-3">
-              {filteredDocs.map((d) => (
-                <div key={d.id} className="card p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-brand-50 rounded-lg flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-brand-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{d.documentName}</p>
-                      <div className="flex items-center gap-2 text-xs text-gray-400">
-                        <span className="px-2 py-0.5 bg-surface-100 rounded">{d.category.replace(/_/g, ' ')}</span>
-                        {d.documentDate && <span>{d.documentDate.split('T')[0]}</span>}
-                        {d.isVerified && <span className="flex items-center gap-1 text-green-600"><CheckCircle className="w-3 h-3" />Verified</span>}
-                      </div>
-                    </div>
+      <Tabs
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { value: 'overview',  label: 'Overview',  icon: User },
+          { value: 'documents', label: 'Documents', icon: FileText, count: docs.length },
+          { value: 'activity',  label: 'Activity',  icon: History,  count: activity.length },
+          { value: 'notes',     label: 'Notes',     icon: StickyNote },
+        ]}
+      >
+        {(active) => (
+          <>
+            {/* ── OVERVIEW ── */}
+            {active === 'overview' && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <Card>
+                  <h2 className="text-sm font-semibold text-surface-900 mb-4 flex items-center gap-2">
+                    <User className="w-4 h-4 text-primary-600" /> Personal Information
+                  </h2>
+                  <div className="space-y-3">
+                    <InfoRow icon={Mail}     label="Email"        value={data.email} />
+                    <InfoRow icon={Phone}    label="Mobile"       value={data.mobile} mono />
+                    <InfoRow icon={Phone}    label="Telephone"    value={data.telephone} mono />
+                    <InfoRow icon={Calendar} label="Birthday"     value={data.dateOfBirth?.split('T')[0]} />
+                    <InfoRow                 label="Gender"       value={data.gender} />
+                    <InfoRow                 label="Civil Status" value={data.civilStatus} />
+                    <InfoRow                 label="Nationality"  value={data.nationality} />
                   </div>
-                  <div className="flex gap-1">
-                    {d.fileUrl && (
-                      <a href={d.fileUrl} target="_blank" rel="noopener" className="p-2 rounded-lg hover:bg-surface-100 text-gray-500 hover:text-brand-600">
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    )}
-                    <button onClick={() => handleDeleteDoc(d.id)} className="p-2 rounded-lg hover:bg-red-50 text-gray-500 hover:text-red-600">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                </Card>
+
+                <Card>
+                  <h2 className="text-sm font-semibold text-surface-900 mb-4 flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-primary-600" /> Address
+                  </h2>
+                  <div className="space-y-3">
+                    <InfoRow icon={MapPin} label="Present"   value={data.presentAddress} />
+                    <InfoRow icon={MapPin} label="Permanent" value={data.permanentAddress} />
+                    <InfoRow               label="City"      value={[data.city, data.province, data.zipCode].filter(Boolean).join(', ')} />
+                  </div>
+                </Card>
+
+                <Card>
+                  <h2 className="text-sm font-semibold text-surface-900 mb-4 flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-primary-600" /> Government IDs
+                  </h2>
+                  <div className="space-y-3">
+                    <InfoRow icon={Shield} label="SSS"        value={data.sssNumber}        mono />
+                    <InfoRow               label="PhilHealth" value={data.philhealthNumber} mono />
+                    <InfoRow               label="Pag-IBIG"   value={data.pagibigNumber}    mono />
+                    <InfoRow               label="TIN"        value={data.tinNumber}        mono />
+                  </div>
+                </Card>
+
+                <Card>
+                  <h2 className="text-sm font-semibold text-surface-900 mb-4 flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-primary-600" /> Employment
+                  </h2>
+                  <div className="space-y-3">
+                    <InfoRow icon={Briefcase} label="Position"    value={data.position} />
+                    <InfoRow                  label="Department"  value={data.department} />
+                    <InfoRow                  label="Branch"      value={data.branch} />
+                    <InfoRow                  label="Client"      value={data.client} />
+                    <InfoRow icon={Calendar}  label="Date Hired"  value={data.dateHired?.split('T')[0]} />
+                    <InfoRow                  label="Regularized" value={data.dateRegularized?.split('T')[0]} />
+                    <InfoRow                  label="Contract End" value={data.contractEndDate?.split('T')[0]} />
+                    <InfoRow                  label="Type"        value={data.employmentType} />
+                  </div>
+                </Card>
+
+                <Card>
+                  <h2 className="text-sm font-semibold text-surface-900 mb-4 flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-primary-600" /> Compensation
+                  </h2>
+                  <div className="space-y-3">
+                    <InfoRow label="Basic Salary" value={fmtPHP(data.basicSalary)} mono />
+                    <InfoRow label="Daily Rate"   value={fmtPHP(data.dailyRate)}   mono />
+                    <InfoRow label="Allowance"    value={fmtPHP(data.allowance)}   mono />
+                  </div>
+                </Card>
+
+                <Card>
+                  <h2 className="text-sm font-semibold text-surface-900 mb-4 flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-primary-600" /> Emergency Contact
+                  </h2>
+                  <div className="space-y-3">
+                    <InfoRow              label="Name"     value={data.emergencyContactName} />
+                    <InfoRow              label="Relation" value={data.emergencyContactRelation} />
+                    <InfoRow icon={Phone} label="Phone"    value={data.emergencyContactPhone} mono />
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            {/* ── DOCUMENTS ── */}
+            {active === 'documents' && (
+              <Card padding="none">
+                <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-surface-100">
+                  <h2 className="text-sm font-semibold text-surface-900 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-primary-600" /> 201 File
+                    <span className="text-xs text-surface-500 font-normal">({filteredCount} of {docs.length})</span>
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <FilterSelect value={catFilter} onChange={setCatFilter} ariaLabel="Filter by category">
+                      <option value="">All categories</option>
+                      {Object.values(DocumentCategory).map((c) => (
+                        <option key={c} value={c}>
+                          {c.replace(/_/g, ' ').replace(/\b\w/g, (x) => x.toUpperCase())}
+                        </option>
+                      ))}
+                    </FilterSelect>
+                    <Button
+                      variant="primary" size="sm"
+                      leftIcon={<BookOpen className="w-3.5 h-3.5" />}
+                      onClick={() => router.push(`/dashboard/employees/${data.id}/201`)}
+                    >
+                      Manage
+                    </Button>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+
+                {filteredDocs.length === 0 ? (
+                  <div className="py-16 text-center">
+                    <FileText className="w-10 h-10 mx-auto mb-3 text-surface-300" />
+                    <p className="text-sm font-medium text-surface-700">No documents{catFilter ? ' in this category' : ' uploaded yet'}</p>
+                    <p className="text-xs text-surface-500 mt-1">Add files via the 201 File workspace.</p>
+                  </div>
+                ) : (
+                  <ul className="divide-y divide-surface-100">
+                    {filteredDocs.map((d) => (
+                      <li key={d.id} className="flex items-center gap-3 px-5 py-3 hover:bg-surface-50/60 transition-colors">
+                        <div className="w-9 h-9 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center flex-shrink-0">
+                          <FileText className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-surface-900 truncate">{d.documentName}</p>
+                          <div className="flex items-center gap-2 text-2xs text-surface-500 mt-0.5 flex-wrap">
+                            <Badge variant="neutral" size="sm">{d.category.replace(/_/g, ' ')}</Badge>
+                            {d.documentDate && <span className="tabular-nums">{d.documentDate.split('T')[0]}</span>}
+                            {d.isVerified && (
+                              <span className="flex items-center gap-1 text-emerald-600">
+                                <CheckCircle className="w-3 h-3" /> Verified
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {d.fileUrl && (
+                            <a
+                              href={d.fileUrl} target="_blank" rel="noopener"
+                              className="w-8 h-8 rounded-lg flex items-center justify-center text-surface-400 hover:bg-surface-100 hover:text-primary-600 transition-colors"
+                              aria-label="Open"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          )}
+                          <button
+                            type="button" onClick={() => handleDeleteDoc(d.id)}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-surface-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                            aria-label="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card>
+            )}
+
+            {/* ── ACTIVITY ── */}
+            {active === 'activity' && (
+              <Card>
+                <h2 className="text-sm font-semibold text-surface-900 mb-5 flex items-center gap-2">
+                  <History className="w-4 h-4 text-primary-600" /> Activity History
+                </h2>
+                <Timeline
+                  events={activity}
+                  emptyTitle="No activity yet"
+                  emptyDescription="Key events like hiring, regularization, and document uploads will appear here."
+                />
+              </Card>
+            )}
+
+            {/* ── NOTES ── */}
+            {active === 'notes' && (
+              <Card>
+                <h2 className="text-sm font-semibold text-surface-900 mb-3 flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-primary-600" /> Notes &amp; Remarks
+                </h2>
+                {data.remarks ? (
+                  <div className="px-4 py-3 rounded-xl bg-surface-50 border border-surface-100">
+                    <p className="text-sm text-surface-800 whitespace-pre-wrap leading-relaxed">{data.remarks}</p>
+                  </div>
+                ) : (
+                  <div className="py-12 text-center">
+                    <StickyNote className="w-10 h-10 mx-auto mb-3 text-surface-300" />
+                    <p className="text-sm font-medium text-surface-700">No notes yet</p>
+                    <p className="text-xs text-surface-500 mt-1">Add notes by editing this employee.</p>
+                    <Button
+                      variant="ghost" size="sm" className="mt-4"
+                      leftIcon={<Pencil className="w-3.5 h-3.5" />}
+                      onClick={() => router.push(`/dashboard/employees/${data.id}/edit`)}
+                    >
+                      Add notes
+                    </Button>
+                  </div>
+                )}
+              </Card>
+            )}
+          </>
+        )}
+      </Tabs>
+
+      {/* Sticky action bar — keeps actions in reach on long pages */}
+      <StickyActionBar
+        hideOnMobile
+        context={
+          <div className="flex items-center gap-2 text-xs text-surface-500">
+            <ClipboardList className="w-3.5 h-3.5" />
+            <span>{fullName}</span>
+            <Badge variant={STATUS_VARIANT[data.employmentStatus] ?? 'neutral'} size="sm">
+              {data.employmentStatus.replace(/_/g, ' ')}
+            </Badge>
+          </div>
+        }
+        actions={
+          <>
+            <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard/employees')}>Back to list</Button>
+            <Button
+              variant="secondary" size="sm"
+              leftIcon={<BookOpen className="w-3.5 h-3.5" />}
+              onClick={() => router.push(`/dashboard/employees/${data.id}/201`)}
+            >
+              201 File
+            </Button>
+            <Button
+              variant="primary" size="sm"
+              leftIcon={<Pencil className="w-3.5 h-3.5" />}
+              onClick={() => router.push(`/dashboard/employees/${data.id}/edit`)}
+            >
+              Edit
+            </Button>
+          </>
+        }
+      />
+
+      {/* Archive Modal — uses new design system */}
+      <Modal
+        open={showArchive}
+        onClose={() => setShowArchive(false)}
+        title="Archive Employee"
+        description="Convert this employee into a Former Employee record."
+        size="md"
+      >
+        <form onSubmit={handleArchive} className="space-y-4">
+          <Select
+            label="Separation Reason" required
+            value={archiveForm.separationReason}
+            onChange={(e) => setArchiveForm((f) => ({ ...f, separationReason: e.target.value }))}
+          >
+            {SEPARATION_REASONS.map((r) => (
+              <option key={r} value={r}>{r.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}</option>
+            ))}
+          </Select>
+
+          <Input
+            type="date" label="Date Separated"
+            value={archiveForm.dateSeparated}
+            onChange={(e) => setArchiveForm((f) => ({ ...f, dateSeparated: e.target.value }))}
+          />
+
+          <Input
+            type="number" label="Final Pay (₱)" placeholder="0.00"
+            value={archiveForm.finalPay}
+            onChange={(e) => setArchiveForm((f) => ({ ...f, finalPay: e.target.value }))}
+          />
+
+          <Textarea
+            label="Details / Remarks" rows={3}
+            placeholder="Additional details about the separation…"
+            value={archiveForm.separationDetails}
+            onChange={(e) => setArchiveForm((f) => ({ ...f, separationDetails: e.target.value }))}
+          />
+
+          <div className="px-4 py-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+            This will create a Former Employee record (FMR-YYYY-NNN) and mark the employee as separated.
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-surface-100">
+            <Button type="button" variant="ghost" size="sm" onClick={() => setShowArchive(false)}>Cancel</Button>
+            <Button type="submit" variant="danger" size="sm" loading={archiving}>
+              {archiving ? 'Archiving…' : 'Confirm Archive'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (<div className="card p-6"><h2 className="text-lg font-semibold text-gray-900 mb-4">{title}</h2><div className="space-y-3">{children}</div></div>);
-}
-function Row({ icon: Icon, label, value }: { icon?: any; label: string; value?: string }) {
-  return (<div className="flex items-start gap-3">
-    {Icon ? <Icon className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" /> : <div className="w-4" />}
-    <div><p className="text-xs text-gray-400 uppercase tracking-wide">{label}</p><p className="text-gray-800">{value || '-'}</p></div>
-  </div>);
+function fmtPHP(n: any): string {
+  const num = Number(n);
+  if (!isFinite(num) || num === 0) return '—';
+  return `₱${num.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 }

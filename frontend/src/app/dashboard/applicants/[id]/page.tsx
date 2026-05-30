@@ -1,28 +1,41 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { Applicant } from '@/types/applicant';
-import { ArrowLeft, Pencil, Mail, Phone, MapPin, Briefcase, Calendar, GraduationCap, X, Loader2 } from 'lucide-react';
+import {
+  Pencil, Mail, Phone, MapPin, Briefcase, Calendar, GraduationCap, Loader2,
+  User, History, FileText, MessageSquare, StickyNote, UserPlus, ClipboardList,
+  DollarSign, CheckCircle, XCircle, Inbox, ArrowRight,
+} from 'lucide-react';
 
-const statusColors: Record<string, string> = {
-  new: 'bg-blue-100 text-blue-700',
-  screening: 'bg-yellow-100 text-yellow-700',
-  interview: 'bg-purple-100 text-purple-700',
-  exam: 'bg-indigo-100 text-indigo-700',
-  for_requirements: 'bg-orange-100 text-orange-700',
-  approved: 'bg-green-100 text-green-700',
-  rejected: 'bg-red-100 text-red-700',
-  pooled: 'bg-gray-100 text-gray-600',
-  withdrawn: 'bg-gray-100 text-gray-400',
+import { Button, Badge, Card, Modal, Input, Textarea, Tabs, useToast } from '@/components/ui';
+import {
+  DetailHeader, InfoRow, Timeline, StickyActionBar, type TimelineEvent,
+} from '@/components/detail';
+
+const STATUS_VARIANT: Record<string, 'info' | 'warning' | 'success' | 'danger' | 'neutral' | 'brand'> = {
+  new:              'info',
+  screening:        'warning',
+  interview:        'brand',
+  exam:             'brand',
+  for_requirements: 'warning',
+  approved:         'success',
+  rejected:         'danger',
+  pooled:           'neutral',
+  withdrawn:        'neutral',
 };
 
 export default function ViewApplicantPage() {
   const params = useParams();
   const router = useRouter();
+  const toast  = useToast();
+
   const [data, setData] = useState<Applicant | null>(null);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<string>('overview');
+
   const [showConvert, setShowConvert] = useState(false);
   const [converting, setConverting] = useState(false);
   const [convertForm, setConvertForm] = useState({
@@ -33,8 +46,9 @@ export default function ViewApplicantPage() {
   useEffect(() => {
     api.get(`/applicants/${params.id}`)
       .then((res) => setData(res.data))
-      .catch(() => alert('Not found'))
+      .catch(() => toast.error('Applicant not found'))
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   async function handleConvert(e: React.FormEvent) {
@@ -43,142 +57,317 @@ export default function ViewApplicantPage() {
     try {
       const res = await api.post(`/trainees/from-applicant/${data!.id}`, convertForm);
       setShowConvert(false);
+      toast.success('Converted to Trainee');
       router.push(`/dashboard/trainees/${res.data.id}`);
-    } catch { alert('Conversion failed. The applicant may already be a trainee.'); } finally { setConverting(false); }
+    } catch {
+      toast.error('Conversion failed', 'The applicant may already be a trainee.');
+    } finally {
+      setConverting(false);
+    }
   }
 
-  if (loading) return <div className="text-center py-12 text-gray-400">Loading...</div>;
-  if (!data) return <div className="text-center py-12 text-red-500">Not found</div>;
+  // ── Activity derived from entity data ──
+  const activity: TimelineEvent[] = useMemo(() => {
+    if (!data) return [];
+    const events: TimelineEvent[] = [];
+    if ((data as any).createdAt) {
+      events.push({
+        id: 'created', icon: UserPlus, variant: 'info',
+        title: 'Application received',
+        description: `Applied for ${data.positionApplied}.`,
+        timestamp: (data as any).createdAt,
+      });
+    }
+    if (data.applicationDate) {
+      events.push({
+        id: 'app-date', icon: ClipboardList, variant: 'brand',
+        title: 'Application logged',
+        timestamp: data.applicationDate,
+      });
+    }
+    if (data.interviewDate) {
+      const isPast = new Date(data.interviewDate) < new Date();
+      events.push({
+        id: 'interview', icon: User, variant: isPast ? 'success' : 'warning',
+        title: isPast ? 'Interview held' : 'Interview scheduled',
+        timestamp: data.interviewDate,
+      });
+    }
+    if (data.status === 'approved') {
+      events.push({
+        id: 'status-approved', icon: CheckCircle, variant: 'success',
+        title: 'Approved',
+        timestamp: (data as any).updatedAt,
+      });
+    }
+    if (data.status === 'rejected') {
+      events.push({
+        id: 'status-rejected', icon: XCircle, variant: 'danger',
+        title: 'Rejected',
+        timestamp: (data as any).updatedAt,
+      });
+    }
+    if ((data as any).updatedAt && (data as any).updatedAt !== (data as any).createdAt) {
+      events.push({
+        id: 'updated', icon: History, variant: 'neutral',
+        title: 'Profile updated',
+        timestamp: (data as any).updatedAt,
+      });
+    }
+    return events;
+  }, [data]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20 text-surface-400 text-sm gap-2">
+        <Loader2 className="w-4 h-4 animate-spin" /> Loading…
+      </div>
+    );
+  }
+  if (!data) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-rose-600 text-sm">Applicant not found</p>
+        <Button variant="ghost" size="sm" onClick={() => router.back()} className="mt-3">Go back</Button>
+      </div>
+    );
+  }
+
+  const fullName = [data.firstName, data.middleName, data.lastName].filter(Boolean).join(' ');
+  const refNumber = (data as any).applicantNumber;
+  const canConvert = data.status !== 'rejected' && data.status !== 'withdrawn';
 
   return (
-    <div>
-      {showConvert && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-lg font-semibold text-gray-900">Convert to Trainee</h2>
-              <button onClick={() => setShowConvert(false)}><X className="w-5 h-5 text-gray-500" /></button>
-            </div>
-            <form onSubmit={handleConvert} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Training Start Date *</label>
-                <input type="date" required value={convertForm.trainingStartDate}
-                  onChange={e => setConvertForm(f => ({ ...f, trainingStartDate: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Training Program</label>
-                <input type="text" value={convertForm.trainingProgram}
-                  onChange={e => setConvertForm(f => ({ ...f, trainingProgram: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="e.g., Basic Security Training" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Training Location</label>
-                <input type="text" value={convertForm.trainingLocation}
-                  onChange={e => setConvertForm(f => ({ ...f, trainingLocation: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Location / Venue" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Trainer</label>
-                <input type="text" value={convertForm.trainer}
-                  onChange={e => setConvertForm(f => ({ ...f, trainer: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="Trainer name" />
-              </div>
-              <div className="flex gap-3">
-                <button type="button" onClick={() => setShowConvert(false)} className="flex-1 px-4 py-2 border rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button type="submit" disabled={converting} className="flex-1 px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 disabled:opacity-60 flex items-center justify-center gap-2">
-                  {converting ? <><Loader2 className="w-4 h-4 animate-spin" /> Converting...</> : 'Convert to Trainee'}
-                </button>
-              </div>
-            </form>
+    <div className="space-y-5 pb-24">
+      <DetailHeader
+        eyebrow={refNumber}
+        title={fullName}
+        avatarName={fullName}
+        subtitle={
+          <div className="flex items-center gap-2">
+            <Briefcase className="w-3.5 h-3.5 text-surface-400" />
+            <span>{data.positionApplied}{data.department ? ` · ${data.department}` : ''}</span>
           </div>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="p-2 rounded-lg hover:bg-surface-100">
-            <ArrowLeft className="w-5 h-5 text-gray-500" />
-          </button>
-          <div>
-            {(data as any).applicantNumber && (
-              <p className="text-xs font-mono text-brand-600 font-medium">{(data as any).applicantNumber}</p>
+        }
+        badge={
+          <Badge variant={STATUS_VARIANT[data.status] ?? 'neutral'} dot>
+            {data.status.replace(/_/g, ' ')}
+          </Badge>
+        }
+        actions={
+          <>
+            {canConvert && (
+              <Button
+                variant="success" size="sm"
+                leftIcon={<GraduationCap className="w-3.5 h-3.5" />}
+                onClick={() => setShowConvert(true)}
+              >
+                Convert to Trainee
+              </Button>
             )}
-            <h1 className="text-2xl font-bold text-gray-900">
-              {data.firstName} {data.middleName} {data.lastName}
-            </h1>
-            <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-medium ${statusColors[data.status]}`}>
-              {data.status.replace(/_/g, ' ')}
-            </span>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {data.status !== 'rejected' && data.status !== 'withdrawn' && (
-            <button
-              onClick={() => setShowConvert(true)}
-              className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700"
+            <Button
+              variant="primary" size="sm"
+              leftIcon={<Pencil className="w-3.5 h-3.5" />}
+              onClick={() => router.push(`/dashboard/applicants/${data.id}/edit`)}
             >
-              <GraduationCap className="w-4 h-4" /> Convert to Trainee
-            </button>
-          )}
-          <button
-            onClick={() => router.push(`/dashboard/applicants/${data.id}/edit`)}
-            className="btn-primary flex items-center gap-2"
-          >
-            <Pencil className="w-4 h-4" />
-            Edit
-          </button>
-        </div>
-      </div>
+              Edit
+            </Button>
+          </>
+        }
+      />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Personal Info */}
-        <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h2>
-          <div className="space-y-3">
-            <InfoRow icon={Mail} label="Email" value={data.email} />
-            <InfoRow icon={Phone} label="Mobile" value={data.mobile} />
-            <InfoRow icon={Calendar} label="Date of Birth" value={data.dateOfBirth?.split('T')[0]} />
-            <InfoRow label="Gender" value={data.gender} />
-            <InfoRow icon={MapPin} label="Address" value={[data.address, data.city, data.province, data.zipCode].filter(Boolean).join(', ')} />
-          </div>
-        </div>
+      <Tabs
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { value: 'overview',  label: 'Overview',  icon: User },
+          { value: 'documents', label: 'Documents', icon: FileText },
+          { value: 'activity',  label: 'Activity',  icon: History, count: activity.length },
+          { value: 'notes',     label: 'Notes',     icon: StickyNote },
+        ]}
+      >
+        {(active) => (
+          <>
+            {/* ── OVERVIEW ── */}
+            {active === 'overview' && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <Card>
+                  <h2 className="text-sm font-semibold text-surface-900 mb-4 flex items-center gap-2">
+                    <User className="w-4 h-4 text-primary-600" /> Personal Information
+                  </h2>
+                  <div className="space-y-3">
+                    <InfoRow icon={Mail}     label="Email"         value={data.email} />
+                    <InfoRow icon={Phone}    label="Mobile"        value={data.mobile} mono />
+                    <InfoRow icon={Calendar} label="Date of Birth" value={data.dateOfBirth?.split('T')[0]} />
+                    <InfoRow                 label="Gender"        value={data.gender} />
+                    <InfoRow icon={MapPin}   label="Address"
+                      value={[data.address, data.city, data.province, data.zipCode].filter(Boolean).join(', ')}
+                    />
+                  </div>
+                </Card>
 
-        {/* Application Info */}
-        <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Application Details</h2>
-          <div className="space-y-3">
-            <InfoRow icon={Briefcase} label="Position" value={data.positionApplied} />
-            <InfoRow label="Department" value={data.department} />
-            <InfoRow label="Source" value={data.sourceChannel} />
-            <InfoRow label="Application Date" value={data.applicationDate?.split('T')[0]} />
-            <InfoRow label="Interview Date" value={data.interviewDate?.split('T')[0]} />
-            <InfoRow label="Expected Salary" value={data.expectedSalary ? `₱${Number(data.expectedSalary).toLocaleString()}` : '-'} />
-            <InfoRow label="Referred By" value={data.referredBy} />
-          </div>
-        </div>
+                <Card>
+                  <h2 className="text-sm font-semibold text-surface-900 mb-4 flex items-center gap-2">
+                    <Briefcase className="w-4 h-4 text-primary-600" /> Application Details
+                  </h2>
+                  <div className="space-y-3">
+                    <InfoRow icon={Briefcase} label="Position"         value={data.positionApplied} />
+                    <InfoRow                  label="Department"       value={data.department} />
+                    <InfoRow                  label="Source"           value={data.sourceChannel} />
+                    <InfoRow icon={Calendar}  label="Application Date" value={data.applicationDate?.split('T')[0]} />
+                    <InfoRow icon={Calendar}  label="Interview Date"   value={data.interviewDate?.split('T')[0]} />
+                    <InfoRow icon={DollarSign} label="Expected Salary"
+                      value={data.expectedSalary ? `₱${Number(data.expectedSalary).toLocaleString()}` : undefined}
+                      mono
+                    />
+                    <InfoRow                  label="Referred By"      value={data.referredBy} />
+                  </div>
+                </Card>
+              </div>
+            )}
 
-        {/* Notes */}
-        {data.notes && (
-          <div className="card p-6 lg:col-span-2">
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">Notes</h2>
-            <p className="text-gray-600 whitespace-pre-wrap">{data.notes}</p>
-          </div>
+            {/* ── DOCUMENTS ── (placeholder — no doc API yet for applicants) */}
+            {active === 'documents' && (
+              <Card>
+                <div className="py-16 text-center">
+                  <FileText className="w-10 h-10 mx-auto mb-3 text-surface-300" />
+                  <p className="text-sm font-medium text-surface-700">No applicant documents</p>
+                  <p className="text-xs text-surface-500 mt-1 max-w-sm mx-auto">
+                    Resumes and supporting documents will be available here once attached during the application process.
+                  </p>
+                  {canConvert && (
+                    <Button
+                      variant="ghost" size="sm" className="mt-4"
+                      rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
+                      onClick={() => setShowConvert(true)}
+                    >
+                      Convert to Trainee to start a 201 File
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            )}
+
+            {/* ── ACTIVITY ── */}
+            {active === 'activity' && (
+              <Card>
+                <h2 className="text-sm font-semibold text-surface-900 mb-5 flex items-center gap-2">
+                  <History className="w-4 h-4 text-primary-600" /> Activity History
+                </h2>
+                <Timeline
+                  events={activity}
+                  emptyTitle="No activity yet"
+                  emptyDescription="Application milestones — screening, interviews, status changes — will show here."
+                />
+              </Card>
+            )}
+
+            {/* ── NOTES ── */}
+            {active === 'notes' && (
+              <Card>
+                <h2 className="text-sm font-semibold text-surface-900 mb-3 flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-primary-600" /> Notes
+                </h2>
+                {data.notes ? (
+                  <div className="px-4 py-3 rounded-xl bg-surface-50 border border-surface-100">
+                    <p className="text-sm text-surface-800 whitespace-pre-wrap leading-relaxed">{data.notes}</p>
+                  </div>
+                ) : (
+                  <div className="py-12 text-center">
+                    <StickyNote className="w-10 h-10 mx-auto mb-3 text-surface-300" />
+                    <p className="text-sm font-medium text-surface-700">No notes yet</p>
+                    <p className="text-xs text-surface-500 mt-1">Add interview notes or screening observations by editing this applicant.</p>
+                    <Button
+                      variant="ghost" size="sm" className="mt-4"
+                      leftIcon={<Pencil className="w-3.5 h-3.5" />}
+                      onClick={() => router.push(`/dashboard/applicants/${data.id}/edit`)}
+                    >
+                      Add notes
+                    </Button>
+                  </div>
+                )}
+              </Card>
+            )}
+          </>
         )}
-      </div>
-    </div>
-  );
-}
+      </Tabs>
 
-function InfoRow({ icon: Icon, label, value }: { icon?: any; label: string; value?: string }) {
-  return (
-    <div className="flex items-start gap-3">
-      {Icon && <Icon className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />}
-      {!Icon && <div className="w-4" />}
-      <div>
-        <p className="text-xs text-gray-400 uppercase tracking-wide">{label}</p>
-        <p className="text-gray-800">{value || '-'}</p>
-      </div>
+      <StickyActionBar
+        hideOnMobile
+        context={
+          <div className="flex items-center gap-2 text-xs text-surface-500">
+            <Inbox className="w-3.5 h-3.5" />
+            <span>{fullName}</span>
+            <Badge variant={STATUS_VARIANT[data.status] ?? 'neutral'} size="sm">
+              {data.status.replace(/_/g, ' ')}
+            </Badge>
+          </div>
+        }
+        actions={
+          <>
+            <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard/applicants')}>
+              Back to list
+            </Button>
+            {canConvert && (
+              <Button
+                variant="success" size="sm"
+                leftIcon={<GraduationCap className="w-3.5 h-3.5" />}
+                onClick={() => setShowConvert(true)}
+              >
+                Convert
+              </Button>
+            )}
+            <Button
+              variant="primary" size="sm"
+              leftIcon={<Pencil className="w-3.5 h-3.5" />}
+              onClick={() => router.push(`/dashboard/applicants/${data.id}/edit`)}
+            >
+              Edit
+            </Button>
+          </>
+        }
+      />
+
+      {/* Convert Modal */}
+      <Modal
+        open={showConvert}
+        onClose={() => setShowConvert(false)}
+        title="Convert to Trainee"
+        description="Move this applicant into the training pipeline."
+        size="md"
+      >
+        <form onSubmit={handleConvert} className="space-y-4">
+          <Input
+            type="date" label="Training Start Date" required
+            value={convertForm.trainingStartDate}
+            onChange={(e) => setConvertForm((f) => ({ ...f, trainingStartDate: e.target.value }))}
+          />
+          <Input
+            label="Training Program"
+            placeholder="e.g., Basic Security Training"
+            value={convertForm.trainingProgram}
+            onChange={(e) => setConvertForm((f) => ({ ...f, trainingProgram: e.target.value }))}
+          />
+          <Input
+            label="Training Location"
+            placeholder="Location / Venue"
+            value={convertForm.trainingLocation}
+            onChange={(e) => setConvertForm((f) => ({ ...f, trainingLocation: e.target.value }))}
+          />
+          <Input
+            label="Trainer"
+            placeholder="Trainer name"
+            value={convertForm.trainer}
+            onChange={(e) => setConvertForm((f) => ({ ...f, trainer: e.target.value }))}
+          />
+          <div className="flex justify-end gap-2 pt-2 border-t border-surface-100">
+            <Button type="button" variant="ghost" size="sm" onClick={() => setShowConvert(false)}>Cancel</Button>
+            <Button type="submit" variant="success" size="sm" loading={converting}>
+              {converting ? 'Converting…' : 'Convert to Trainee'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
