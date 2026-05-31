@@ -6,82 +6,107 @@ import { BRAND } from '@/lib/brand';
 /**
  * Path to the official NextNova logo PNG (mark + wordmark lockup).
  * Asset lives at /public/branding/nextnova-logo.png.
- * Dimensions: 1536 × 1024, transparent background, 3:2 aspect ratio.
+ * Dimensions: 1536 × 1024 → 3:2 aspect ratio · transparent background.
  */
 const LOGO_SRC = '/branding/nextnova-logo.png';
 const LOGO_NATIVE_W = 1536;
 const LOGO_NATIVE_H = 1024;
+const LOGO_RATIO = LOGO_NATIVE_W / LOGO_NATIVE_H; // 1.5
+
+/** Mobile minimum width — enforced via min-width style. */
+const MIN_WIDTH_MOBILE = 100;
 
 interface LogoProps {
   /**
-   * Height in pixels. Width is derived automatically from the
-   * native 3:2 aspect ratio so the lockup never distorts.
-   * Default: 32px.
+   * Width in pixels — PREFERRED API. Drives both dimensions
+   * (height = width / 1.5). Aspect ratio always preserved.
+   */
+  width?: number;
+  /**
+   * Height in pixels — legacy API. Used when `width` is not
+   * provided. Width derives from native 3:2 aspect ratio.
+   * Default: 32 px (≈ 48 px wide).
    */
   size?: number;
   /**
-   * When false, falls back to a minimal SVG mark (no wordmark) —
-   * useful for very tight spots like a collapsed sidebar.
-   * Default: true (renders the full PNG lockup).
+   * Collapsed mode — renders just the minimal SVG N mark
+   * (no wordmark). Used in tight spots like a collapsed sidebar.
+   * `width` (or `size`) becomes the SQUARE side length.
+   * Equivalent to legacy `showText={false}`.
    */
+  collapsed?: boolean;
+  /** Legacy alias for `!collapsed`. */
   showText?: boolean;
-  /** Extra classes on the logo image (e.g. opacity tweaks). */
-  className?: string;
-  /**
-   * Adds an ambient glow halo behind the mark (good for dark
-   * surfaces). Default: false.
-   */
+  /** Adds an ambient glow halo behind the mark. */
   glow?: boolean;
+  /** Extra classes on the wrapper. */
+  className?: string;
+
   /**
    * Cosmetic-only — preserved for backward compatibility with
-   * existing call sites. The official PNG already encodes its own
-   * color treatment, so this is a no-op for the lockup view.
-   * Still applied to the SVG-mark fallback so dark/light tints work.
+   * existing call sites. The PNG already encodes its own colors
+   * so this is a no-op for the lockup view.
    */
   variant?: 'light' | 'dark' | 'auto';
 
   /**
-   * Backward-compat shim — older call sites passed text-related
-   * className props. The official lockup already includes the
-   * wordmark inside the PNG, so the separate text was removed.
-   * These remain accepted but unused.
+   * Backward-compat shims for older call sites — accepted but unused.
+   * The wordmark now lives inside the PNG, so per-call-site text
+   * styling is moot.
    */
   textClassName?: string;
   taglineClassName?: string;
 }
 
 /**
- * Official NextNova logo.
+ * Official NextNova logo — single source of truth across the app.
  *
- * - Default: full lockup (mark + wordmark) loaded from
- *   /branding/nextnova-logo.png via next/image (optimized + lazy).
- * - showText=false: minimal SVG mark only — used in the collapsed
- *   sidebar where there's no room for the wordmark.
- * - Aspect ratio is locked to the native 3:2 so the logo never
- *   stretches or crops.
- * - Transparent background preserved in the source PNG.
+ * Two render modes:
  *
- * Edit the source file at /public/branding/nextnova-logo.png to
- * update the logo. Do not edit colors / shape here.
+ *   1. Default — full lockup PNG (mark + wordmark)
+ *      <Logo width={180} />          // 180w × 120h
+ *      <Logo size={42} />            // 42h × 63w (legacy height-based)
+ *
+ *   2. Collapsed — minimal square SVG N mark (no wordmark)
+ *      <Logo collapsed width={40} /> // 40 × 40
+ *
+ * The lockup uses next/image (optimized, responsive srcset).
+ * The collapsed mark uses an inline SVG (no network round-trip,
+ * scales perfectly at tiny sizes).
+ *
+ * Mobile safety:
+ *   - Lockup enforces a minimum 100px width via inline style so the
+ *     logo never becomes illegible on narrow screens.
+ *   - Aspect ratio locked at 3:2 — never stretches or crops.
+ *
+ * Source asset: /public/branding/nextnova-logo.png
+ * Edit the file to update the logo. Do NOT edit colors here.
  */
 export default function Logo({
+  width,
   size = 32,
-  showText = true,
-  className = '',
+  collapsed,
+  showText,
   glow = false,
+  className = '',
   variant: _variant = 'auto',
   textClassName: _textClassName,
   taglineClassName: _taglineClassName,
 }: LogoProps) {
-  // Mark-only fallback for ultra-tight spots (collapsed sidebar).
-  if (!showText) {
+  // Resolve mode: `collapsed` wins, then legacy `showText={false}`,
+  // otherwise full lockup.
+  const isCollapsed = collapsed === true || showText === false;
+
+  // ── Collapsed mark — square SVG N ──
+  if (isCollapsed) {
+    const side = width ?? size; // square either way
     return (
       <span
-        className={`inline-flex shrink-0 ${className}`}
+        className={`inline-flex shrink-0 items-center justify-center ${className}`}
         style={{
-          width: size,
-          height: size,
-          filter: glow ? `drop-shadow(0 0 12px rgba(99,102,241,0.45))` : undefined,
+          width: side,
+          height: side,
+          filter: glow ? `drop-shadow(0 0 12px rgba(59,130,246,0.45))` : undefined,
         }}
         aria-label={BRAND.name}
         role="img"
@@ -91,16 +116,19 @@ export default function Logo({
     );
   }
 
-  // Default: full lockup PNG.
-  // Width derived from native aspect ratio so the image never warps.
-  const renderedWidth = Math.round(size * (LOGO_NATIVE_W / LOGO_NATIVE_H));
+  // ── Full lockup ──
+  // If `width` provided it drives. Otherwise derive from height (`size`).
+  const renderedWidth = width ?? Math.round(size * LOGO_RATIO);
+  const renderedHeight = Math.round(renderedWidth / LOGO_RATIO);
 
   return (
     <span
       className={`inline-flex shrink-0 ${className}`}
       style={{
-        height: size,
         width: renderedWidth,
+        height: renderedHeight,
+        // Enforced mobile floor: never below MIN_WIDTH_MOBILE px wide.
+        minWidth: Math.min(MIN_WIDTH_MOBILE, renderedWidth),
         filter: glow ? `drop-shadow(0 0 14px rgba(99,102,241,0.35))` : undefined,
       }}
     >
@@ -119,9 +147,8 @@ export default function Logo({
 }
 
 /**
- * Minimal mark used when there's no room for the wordmark
- * (e.g. collapsed sidebar). A simple ribbon-style N inspired by
- * the official lockup, in a single gradient.
+ * Minimal mark for collapsed contexts (no room for the wordmark).
+ * Inspired by the official lockup's ribbon-N silhouette.
  */
 function MarkSvg() {
   return (
@@ -138,7 +165,6 @@ function MarkSvg() {
           <stop offset="100%" stopColor="#8B5CF6" />
         </linearGradient>
       </defs>
-      {/* Stylized N — left stroke, diagonal, right stroke */}
       <path
         d="M8 32 L8 8 L14 8 L14 22 L26 8 L32 8 L32 32 L26 32 L26 18 L14 32 Z"
         fill="url(#nnMarkGrad)"

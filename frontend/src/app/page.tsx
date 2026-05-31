@@ -19,8 +19,12 @@ export default function MarketingHome() {
          NAVBAR — minimal glass, sticky
          ════════════════════════════════════════════════════════ */}
       <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
-        <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Logo size={28} />
+        {/* Nav row — taller than default to give the lockup logo
+            (140-160px wide × ~95px tall) proper breathing room.
+            Linear/Stripe/Vercel use 64-80px nav rows; ours uses 88px
+            to fit our 3:2 lockup without cropping. */}
+        <nav className="max-w-7xl mx-auto px-6 h-[88px] flex items-center justify-between">
+          <Logo width={160} />
           <div className="hidden md:flex items-center gap-7 text-sm font-medium text-slate-600">
             <a href="#product"   className="hover:text-slate-900 transition-colors">Product</a>
             <a href="#platform"  className="hover:text-slate-900 transition-colors">Platform</a>
@@ -422,7 +426,7 @@ export default function MarketingHome() {
       <footer className="border-t border-slate-200/60 bg-white py-10">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <Logo size={26} />
+            <Logo width={140} />
             <p className="text-xs text-slate-500">
               © {new Date().getFullYear()} {BRAND.name}. All rights reserved.
             </p>

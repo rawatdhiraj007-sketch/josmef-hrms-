@@ -181,8 +181,8 @@ export default function ApplyPage() {
     <div className="min-h-screen bg-gradient-to-b from-surface-50 via-white to-surface-50">
       {/* Top nav */}
       <nav className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-surface-100">
-        <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Logo size={32} textClassName="text-base text-surface-900" taglineClassName="hidden" />
+        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between min-h-[64px]">
+          <Logo width={130} />
           <div className="text-xs text-surface-500">
             Step {step} of 2
           </div>

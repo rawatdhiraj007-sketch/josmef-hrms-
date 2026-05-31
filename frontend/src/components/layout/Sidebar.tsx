@@ -178,7 +178,8 @@ export default function Sidebar() {
           <ChevronsLeft className="w-5 h-5 rotate-180" />
         </button>
         <div className="ml-2">
-          <Logo size={26} variant="light" textClassName="text-base text-white" />
+          {/* Mobile top-bar logo (visible when sidebar is closed on mobile) */}
+          <Logo width={120} variant="light" />
         </div>
       </div>
 
@@ -211,14 +212,18 @@ export default function Sidebar() {
           <div className="pointer-events-none absolute -top-32 -left-16 w-64 h-64 bg-primary-500/10 rounded-full blur-3xl" />
           <div className="pointer-events-none absolute -bottom-32 -right-16 w-64 h-64 bg-accent-600/10 rounded-full blur-3xl" />
 
-          {/* Header / Logo */}
-          <div className="relative h-16 flex items-center justify-between px-4 border-b border-white/[0.06]">
+          {/* Header / Logo
+              Sized per branding spec: 150px-wide lockup when expanded
+              (≈100px tall), 40px square mark when collapsed.
+              Header height is auto-driven by py-5 so the logo fits
+              without cropping. */}
+          <div className="relative py-5 px-4 flex items-center justify-between border-b border-white/[0.06]">
             {collapsed ? (
               <div className="w-full flex justify-center">
-                <Logo size={28} showText={false} glow />
+                <Logo collapsed width={40} glow />
               </div>
             ) : (
-              <Logo size={28} variant="light" glow textClassName="text-base text-white font-bold" />
+              <Logo width={150} variant="light" glow />
             )}
             {/* Mobile close */}
             <button

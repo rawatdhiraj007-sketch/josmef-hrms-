@@ -44,7 +44,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           {/* Logo */}
           <Link href="/portal" className="flex items-center gap-2">
-            <Logo size={32} textClassName="text-base text-surface-900 hidden sm:block" />
+            <Logo width={140} />
           </Link>
 
           {/* User menu */}

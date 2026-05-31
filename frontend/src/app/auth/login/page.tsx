@@ -74,9 +74,11 @@ export default function LoginPage() {
          Centered card stack
          ══════════════════════════════════════════════════════ */}
       <div className="w-full max-w-md animate-slide-up">
-        {/* Brand line above the card */}
-        <div className="flex flex-col items-center gap-3 mb-8">
-          <Logo size={42} />
+        {/* Brand line above the card — logo is one of the first
+            visual elements users see, sized like Linear/Stripe enterprise
+            login screens (~180px wide). */}
+        <div className="flex flex-col items-center gap-4 mb-10">
+          <Logo width={180} />
           <p className="text-xs text-slate-500 max-w-xs text-center leading-relaxed">
             The operating system for modern workforce management.
           </p>

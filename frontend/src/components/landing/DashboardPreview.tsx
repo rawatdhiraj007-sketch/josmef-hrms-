@@ -43,7 +43,7 @@ export default function DashboardPreview() {
           {/* Sidebar */}
           <aside className="border-r border-slate-200 bg-white px-3 py-4 flex flex-col gap-1">
             <div className="px-2 pb-3 mb-2 border-b border-slate-100">
-              <Logo size={22} />
+              <Logo width={100} />
             </div>
             <SidebarItem icon={BarChart3} label="Overview" />
             <SidebarItem icon={Users}     label="Employees" active={tab === 'employees'} onClick={() => setTab('employees')} />
