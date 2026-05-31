@@ -1,132 +1,148 @@
 'use client';
 
+import Image from 'next/image';
 import { BRAND } from '@/lib/brand';
 
+/**
+ * Path to the official NextNova logo PNG (mark + wordmark lockup).
+ * Asset lives at /public/branding/nextnova-logo.png.
+ * Dimensions: 1536 × 1024, transparent background, 3:2 aspect ratio.
+ */
+const LOGO_SRC = '/branding/nextnova-logo.png';
+const LOGO_NATIVE_W = 1536;
+const LOGO_NATIVE_H = 1024;
+
 interface LogoProps {
+  /**
+   * Height in pixels. Width is derived automatically from the
+   * native 3:2 aspect ratio so the lockup never distorts.
+   * Default: 32px.
+   */
   size?: number;
+  /**
+   * When false, falls back to a minimal SVG mark (no wordmark) —
+   * useful for very tight spots like a collapsed sidebar.
+   * Default: true (renders the full PNG lockup).
+   */
   showText?: boolean;
+  /** Extra classes on the logo image (e.g. opacity tweaks). */
+  className?: string;
+  /**
+   * Adds an ambient glow halo behind the mark (good for dark
+   * surfaces). Default: false.
+   */
+  glow?: boolean;
+  /**
+   * Cosmetic-only — preserved for backward compatibility with
+   * existing call sites. The official PNG already encodes its own
+   * color treatment, so this is a no-op for the lockup view.
+   * Still applied to the SVG-mark fallback so dark/light tints work.
+   */
+  variant?: 'light' | 'dark' | 'auto';
+
+  /**
+   * Backward-compat shim — older call sites passed text-related
+   * className props. The official lockup already includes the
+   * wordmark inside the PNG, so the separate text was removed.
+   * These remain accepted but unused.
+   */
   textClassName?: string;
   taglineClassName?: string;
-  /** Add an ambient glow behind the mark (good for dark backgrounds). */
-  glow?: boolean;
-  /** Force light text (for dark backgrounds). */
-  variant?: 'light' | 'dark' | 'auto';
 }
 
 /**
- * NextNova logo — a stylized 4-point nova/diamond with glow.
+ * Official NextNova logo.
  *
- * The mark is a sharp diamond with a brighter inner highlight + radial sparkle.
- * Inspired by Linear's mark, Vercel's triangle, and ChatGPT's gradient orb.
- * Edit colors in BRAND.logo.stops (lib/brand.ts).
+ * - Default: full lockup (mark + wordmark) loaded from
+ *   /branding/nextnova-logo.png via next/image (optimized + lazy).
+ * - showText=false: minimal SVG mark only — used in the collapsed
+ *   sidebar where there's no room for the wordmark.
+ * - Aspect ratio is locked to the native 3:2 so the logo never
+ *   stretches or crops.
+ * - Transparent background preserved in the source PNG.
+ *
+ * Edit the source file at /public/branding/nextnova-logo.png to
+ * update the logo. Do not edit colors / shape here.
  */
 export default function Logo({
   size = 32,
   showText = true,
-  textClassName = '',
-  taglineClassName = '',
+  className = '',
   glow = false,
-  variant = 'auto',
+  variant: _variant = 'auto',
+  textClassName: _textClassName,
+  taglineClassName: _taglineClassName,
 }: LogoProps) {
-  const [c0, c1, c2, c3] = BRAND.logo.stops;
-  const textClass =
-    textClassName ||
-    (variant === 'light'
-      ? 'text-base text-white'
-      : variant === 'dark'
-        ? 'text-base text-surface-900'
-        : 'text-base text-surface-900 dark:text-white');
-
-  return (
-    <div className="flex items-center gap-2.5 select-none">
-      <div
-        className="relative shrink-0"
+  // Mark-only fallback for ultra-tight spots (collapsed sidebar).
+  if (!showText) {
+    return (
+      <span
+        className={`inline-flex shrink-0 ${className}`}
         style={{
           width: size,
           height: size,
-          filter: glow ? `drop-shadow(0 0 14px ${BRAND.logo.glowColor}55)` : undefined,
+          filter: glow ? `drop-shadow(0 0 12px rgba(99,102,241,0.45))` : undefined,
         }}
+        aria-label={BRAND.name}
+        role="img"
       >
-        <svg
-          viewBox="0 0 40 40"
-          className="w-full h-full"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <defs>
-            {/* Main diamond gradient */}
-            <linearGradient id="nnDiamond" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%"   stopColor={c0} />
-              <stop offset="40%"  stopColor={c1} />
-              <stop offset="70%"  stopColor={c2} />
-              <stop offset="100%" stopColor={c3} />
-            </linearGradient>
-            {/* Inner highlight */}
-            <radialGradient id="nnSheen" cx="35%" cy="30%" r="50%">
-              <stop offset="0%"   stopColor="#ffffff" stopOpacity="0.55" />
-              <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-            </radialGradient>
-            {/* Edge glow halo */}
-            <radialGradient id="nnHalo" cx="50%" cy="50%" r="50%">
-              <stop offset="0%"   stopColor={c1} stopOpacity="0.35" />
-              <stop offset="100%" stopColor={c2} stopOpacity="0" />
-            </radialGradient>
-          </defs>
+        <MarkSvg />
+      </span>
+    );
+  }
 
-          {/* Soft ambient halo */}
-          <circle cx="20" cy="20" r="20" fill="url(#nnHalo)" />
+  // Default: full lockup PNG.
+  // Width derived from native aspect ratio so the image never warps.
+  const renderedWidth = Math.round(size * (LOGO_NATIVE_W / LOGO_NATIVE_H));
 
-          {/* Main 4-point nova / diamond */}
-          <path
-            d="M20 3 L37 20 L20 37 L3 20 Z"
-            fill="url(#nnDiamond)"
-          />
+  return (
+    <span
+      className={`inline-flex shrink-0 ${className}`}
+      style={{
+        height: size,
+        width: renderedWidth,
+        filter: glow ? `drop-shadow(0 0 14px rgba(99,102,241,0.35))` : undefined,
+      }}
+    >
+      <Image
+        src={LOGO_SRC}
+        alt={BRAND.name}
+        width={LOGO_NATIVE_W}
+        height={LOGO_NATIVE_H}
+        priority
+        sizes={`${renderedWidth}px`}
+        className="w-full h-full object-contain select-none"
+        draggable={false}
+      />
+    </span>
+  );
+}
 
-          {/* Inner inset shape — creates depth */}
-          <path
-            d="M20 9.5 L30.5 20 L20 30.5 L9.5 20 Z"
-            fill="url(#nnDiamond)"
-            opacity="0.55"
-          />
-
-          {/* Specular highlight */}
-          <path
-            d="M20 3 L37 20 L20 37 L3 20 Z"
-            fill="url(#nnSheen)"
-          />
-
-          {/* Inner sparkle line */}
-          <path
-            d="M20 6 L20 34 M6 20 L34 20"
-            stroke="#ffffff"
-            strokeWidth="0.6"
-            strokeLinecap="round"
-            opacity="0.45"
-          />
-
-          {/* Center bright dot */}
-          <circle cx="20" cy="20" r="1.8" fill="#ffffff" opacity="0.9" />
-        </svg>
-      </div>
-
-      {showText && (
-        <div className="leading-tight">
-          <div className={`font-bold tracking-tight ${textClass}`}>
-            {BRAND.name}
-          </div>
-          {taglineClassName !== 'hidden' && BRAND.tagline && (
-            <div
-              className={`text-2xs ${
-                taglineClassName ||
-                (variant === 'light'
-                  ? 'text-white/50'
-                  : 'text-surface-400 -mt-0.5')
-              }`}
-            >
-              {BRAND.tagline}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+/**
+ * Minimal mark used when there's no room for the wordmark
+ * (e.g. collapsed sidebar). A simple ribbon-style N inspired by
+ * the official lockup, in a single gradient.
+ */
+function MarkSvg() {
+  return (
+    <svg
+      viewBox="0 0 40 40"
+      className="w-full h-full"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <defs>
+        <linearGradient id="nnMarkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%"   stopColor="#06B6D4" />
+          <stop offset="50%"  stopColor="#3B82F6" />
+          <stop offset="100%" stopColor="#8B5CF6" />
+        </linearGradient>
+      </defs>
+      {/* Stylized N — left stroke, diagonal, right stroke */}
+      <path
+        d="M8 32 L8 8 L14 8 L14 22 L26 8 L32 8 L32 32 L26 32 L26 18 L14 32 Z"
+        fill="url(#nnMarkGrad)"
+      />
+    </svg>
   );
 }
