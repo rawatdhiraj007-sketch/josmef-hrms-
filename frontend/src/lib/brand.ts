@@ -10,18 +10,18 @@
 
 export const BRAND = {
   name: 'NextNova',
-  tagline: '',
+  tagline: 'The Operating System for Modern Workforce Management',
   hero: {
-    headline: 'The next era of\nworkforce\nintelligence.',
+    headline: 'The operating system\nfor modern workforce\nmanagement.',
     body:
-      'NextNova is the AI-native HR platform powering modern teams. ' +
-      'Run recruitment, payroll, compliance, and shifts on one ' +
-      'unified system — built for scale.',
+      'Unify HR, payroll, compliance, training, attendance, and AI ' +
+      'automation in one platform. Built for HR teams, healthcare ' +
+      'companies, distributors, and growing enterprises.',
   },
-  metaTitle: 'NextNova — AI-Native Workforce Platform',
+  metaTitle: 'NextNova — The OS for Modern Workforce Management',
   metaDescription:
-    'NextNova is the next-generation HR & workforce platform. ' +
-    'AI insights, automation, compliance, and modern UX in one SaaS.',
+    'Unify HR, payroll, compliance, training, attendance, and AI in one ' +
+    'enterprise platform. Built for healthcare, distribution, and SMEs.',
 
   /** Dark mode is the default brand aesthetic */
   defaultTheme: 'dark' as 'dark' | 'light',
@@ -30,11 +30,11 @@ export const BRAND = {
   useHealthcareLogo: false,
 
   logo: {
-    /** Solid colors used for the nova SVG gradient */
-    stops: ['#3b82f6', '#6366f1', '#8b5cf6', '#a855f7'],
+    /** Solid colors used for the nova SVG gradient — slate → teal → amber */
+    stops: ['#0F172A', '#0F766E', '#14B8A6', '#F59E0B'],
     /** Tailwind classes for hero text gradient */
-    textGradient: 'from-blue-400 via-indigo-400 to-violet-400',
-    /** Hex used in CSS shadows / glows */
-    glowColor: '#6366f1',
+    textGradient: 'from-primary-300 via-primary-400 to-accent-400',
+    /** Hex used in CSS shadows / glows (teal) */
+    glowColor: '#14B8A6',
   },
 } as const;
