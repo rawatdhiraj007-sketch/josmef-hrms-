@@ -7,8 +7,14 @@ import Logo from '@/components/Logo';
 import SplashLoader from '@/components/SplashLoader';
 import { BRAND } from '@/lib/brand';
 
-// ⚠️ TESTING MODE: auto-logs you in as admin on page load
-const TESTING_OPEN_MODE = true;
+// ⚠️ SECURITY: this flag controls automatic admin login on page visit.
+// MUST stay false in production / shared deployments. If you re-enable
+// it for local development, NEVER ship that commit.
+//
+// Optional override via env: set NEXT_PUBLIC_TESTING_OPEN_MODE=true at
+// build time to enable auto-login (e.g. for ephemeral preview builds).
+const TESTING_OPEN_MODE =
+  process.env.NEXT_PUBLIC_TESTING_OPEN_MODE === 'true';
 
 export default function LoginPage() {
   const { login, error } = useAuth();
