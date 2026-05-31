@@ -7,6 +7,12 @@ import { BRAND } from '@/lib/brand';
  * Path to the official NextNova logo PNG (mark + wordmark lockup).
  * Asset lives at /public/branding/nextnova-logo.png.
  * Dimensions: 1536 × 1024 → 3:2 aspect ratio · transparent background.
+ *
+ * The PNG has the dark navy "NextNova" wordmark baked into the raster.
+ * It renders perfectly on light backgrounds (variant="dark"), but on
+ * dark backgrounds the text disappears. For dark surfaces we render a
+ * second mode (variant="light") that uses our SVG mark + live HTML
+ * text in white. See <SvgLockupLight /> below.
  */
 const LOGO_SRC = '/branding/nextnova-logo.png';
 const LOGO_NATIVE_W = 1536;
@@ -15,6 +21,8 @@ const LOGO_RATIO = LOGO_NATIVE_W / LOGO_NATIVE_H; // 1.5
 
 /** Mobile minimum width — enforced via min-width style. */
 const MIN_WIDTH_MOBILE = 100;
+
+export type LogoVariant = 'light' | 'dark';
 
 interface LogoProps {
   /**
@@ -29,10 +37,8 @@ interface LogoProps {
    */
   size?: number;
   /**
-   * Collapsed mode — renders just the minimal SVG N mark
-   * (no wordmark). Used in tight spots like a collapsed sidebar.
-   * `width` (or `size`) becomes the SQUARE side length.
-   * Equivalent to legacy `showText={false}`.
+   * Collapsed mode — renders just the minimal SVG N mark (no wordmark).
+   * Used in tight spots like a collapsed sidebar.
    */
   collapsed?: boolean;
   /** Legacy alias for `!collapsed`. */
@@ -43,17 +49,20 @@ interface LogoProps {
   className?: string;
 
   /**
-   * Cosmetic-only — preserved for backward compatibility with
-   * existing call sites. The PNG already encodes its own colors
-   * so this is a no-op for the lockup view.
+   * Background mode the logo will sit on.
+   *
+   *   "dark"  (default) — official PNG lockup (gradient symbol +
+   *                       DARK navy wordmark). Designed for light
+   *                       backgrounds: landing, login, portal, white
+   *                       cards, etc.
+   *
+   *   "light"           — SVG mark + WHITE "NextNova" wordmark.
+   *                       Designed for dark backgrounds: sidebar,
+   *                       splash, any dark-themed surface.
    */
-  variant?: 'light' | 'dark' | 'auto';
+  variant?: LogoVariant;
 
-  /**
-   * Backward-compat shims for older call sites — accepted but unused.
-   * The wordmark now lives inside the PNG, so per-call-site text
-   * styling is moot.
-   */
+  /** Backward-compat shims for older call sites. Accepted but unused. */
   textClassName?: string;
   taglineClassName?: string;
 }
@@ -61,26 +70,23 @@ interface LogoProps {
 /**
  * Official NextNova logo — single source of truth across the app.
  *
- * Two render modes:
+ * Render modes:
  *
- *   1. Default — full lockup PNG (mark + wordmark)
- *      <Logo width={180} />          // 180w × 120h
- *      <Logo size={42} />            // 42h × 63w (legacy height-based)
+ *   1. variant="dark" (default) — full PNG lockup. Best on light bg.
+ *      <Logo width={180} />                          // PNG, dark text
  *
- *   2. Collapsed — minimal square SVG N mark (no wordmark)
- *      <Logo collapsed width={40} /> // 40 × 40
+ *   2. variant="light"          — SVG mark + white HTML text.
+ *      <Logo width={150} variant="light" />          // for dark bg
  *
- * The lockup uses next/image (optimized, responsive srcset).
- * The collapsed mark uses an inline SVG (no network round-trip,
- * scales perfectly at tiny sizes).
+ *   3. collapsed                — square SVG N mark only (no text).
+ *      <Logo collapsed width={40} />                 // tight spaces
  *
  * Mobile safety:
- *   - Lockup enforces a minimum 100px width via inline style so the
- *     logo never becomes illegible on narrow screens.
+ *   - Lockup enforces min-width 100px so it never becomes illegible.
  *   - Aspect ratio locked at 3:2 — never stretches or crops.
  *
  * Source asset: /public/branding/nextnova-logo.png
- * Edit the file to update the logo. Do NOT edit colors here.
+ * Edit the file to update the official logo. Do NOT edit colors here.
  */
 export default function Logo({
   width,
@@ -89,17 +95,15 @@ export default function Logo({
   showText,
   glow = false,
   className = '',
-  variant: _variant = 'auto',
+  variant = 'dark',
   textClassName: _textClassName,
   taglineClassName: _taglineClassName,
 }: LogoProps) {
-  // Resolve mode: `collapsed` wins, then legacy `showText={false}`,
-  // otherwise full lockup.
   const isCollapsed = collapsed === true || showText === false;
 
-  // ── Collapsed mark — square SVG N ──
+  // ── Collapsed mark — square SVG N (same in both variants) ──
   if (isCollapsed) {
-    const side = width ?? size; // square either way
+    const side = width ?? size;
     return (
       <span
         className={`inline-flex shrink-0 items-center justify-center ${className}`}
@@ -116,18 +120,29 @@ export default function Logo({
     );
   }
 
-  // ── Full lockup ──
-  // If `width` provided it drives. Otherwise derive from height (`size`).
+  // Resolve dimensions
   const renderedWidth = width ?? Math.round(size * LOGO_RATIO);
   const renderedHeight = Math.round(renderedWidth / LOGO_RATIO);
 
+  // ── variant="light" — SVG mark + white wordmark ──
+  if (variant === 'light') {
+    return (
+      <SvgLockupLight
+        width={renderedWidth}
+        height={renderedHeight}
+        glow={glow}
+        className={className}
+      />
+    );
+  }
+
+  // ── variant="dark" (default) — official PNG lockup ──
   return (
     <span
       className={`inline-flex shrink-0 ${className}`}
       style={{
         width: renderedWidth,
         height: renderedHeight,
-        // Enforced mobile floor: never below MIN_WIDTH_MOBILE px wide.
         minWidth: Math.min(MIN_WIDTH_MOBILE, renderedWidth),
         filter: glow ? `drop-shadow(0 0 14px rgba(99,102,241,0.35))` : undefined,
       }}
@@ -147,8 +162,57 @@ export default function Logo({
 }
 
 /**
- * Minimal mark for collapsed contexts (no room for the wordmark).
- * Inspired by the official lockup's ribbon-N silhouette.
+ * Light-variant lockup — for use on dark surfaces (sidebar, dark hero, etc.)
+ *
+ * Composition:
+ *   [SVG gradient N mark]   NextNova
+ *      ~ container height   white, bold, tracking-tight
+ *
+ * The SVG mark uses the same cyan→blue→violet gradient as the official
+ * PNG mark. The wordmark is rendered as live HTML text in white — fully
+ * legible against any dark background and matches the proportions of
+ * the official PNG lockup (mark sits at ~33% of total width).
+ */
+function SvgLockupLight({
+  width, height, glow, className,
+}: { width: number; height: number; glow?: boolean; className: string }) {
+  const markSize = Math.round(height * 0.95);
+  const fontSize = Math.round(height * 0.50);
+  const gap      = Math.round(height * 0.12);
+
+  return (
+    <span
+      className={`inline-flex shrink-0 items-center ${className}`}
+      style={{
+        width,
+        height,
+        gap,
+        minWidth: Math.min(MIN_WIDTH_MOBILE, width),
+        filter: glow ? `drop-shadow(0 0 14px rgba(99,102,241,0.45))` : undefined,
+      }}
+      aria-label={BRAND.name}
+      role="img"
+    >
+      <span
+        className="flex-shrink-0 inline-flex"
+        style={{ width: markSize, height: markSize }}
+      >
+        <MarkSvg />
+      </span>
+      <span
+        className="font-bold tracking-tight text-white whitespace-nowrap leading-none select-none"
+        style={{ fontSize }}
+      >
+        {BRAND.name}
+      </span>
+    </span>
+  );
+}
+
+/**
+ * Minimal mark for collapsed contexts and the light-variant lockup.
+ * Inline SVG with the official cyan→blue→violet ribbon gradient.
+ * Scales perfectly at any size.
  */
 function MarkSvg() {
   return (
