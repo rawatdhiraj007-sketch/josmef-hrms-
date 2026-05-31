@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import {
-  Eye, EyeOff, ArrowRight, ShieldCheck, Lock, Sparkles,
+  Eye, EyeOff, ArrowRight, ShieldCheck, Lock, Sparkles, Users,
 } from 'lucide-react';
 import Logo from '@/components/Logo';
 import SplashLoader from '@/components/SplashLoader';
@@ -74,9 +74,12 @@ export default function LoginPage() {
          Centered card stack
          ══════════════════════════════════════════════════════ */}
       <div className="w-full max-w-md animate-slide-up">
-        {/* Logo above the card */}
-        <div className="flex justify-center mb-7">
+        {/* Brand line above the card */}
+        <div className="flex flex-col items-center gap-3 mb-8">
           <Logo size={42} />
+          <p className="text-xs text-slate-500 max-w-xs text-center leading-relaxed">
+            The operating system for modern workforce management.
+          </p>
         </div>
 
         {/* The login card — glassmorphism + soft shadow */}
@@ -201,9 +204,10 @@ export default function LoginPage() {
         {/* ══════════════════════════════════════════════════════
            Trust indicators — below the card
            ══════════════════════════════════════════════════════ */}
-        <div className="mt-7 flex items-center justify-center gap-4 sm:gap-6 text-2xs text-slate-500 flex-wrap">
-          <TrustChip icon={Lock}        label="Encrypted in transit" />
-          <TrustChip icon={ShieldCheck} label="SOC-grade security" />
+        <div className="mt-8 flex items-center justify-center gap-2 sm:gap-2.5 text-2xs text-slate-500 flex-wrap">
+          <TrustChip icon={Lock}        label="TLS 1.3 encrypted" />
+          <TrustChip icon={ShieldCheck} label="SOC-grade controls" />
+          <TrustChip icon={Users}       label="Role-based access" />
           <TrustChip icon={Sparkles}    label="AI co-pilot" />
         </div>
 

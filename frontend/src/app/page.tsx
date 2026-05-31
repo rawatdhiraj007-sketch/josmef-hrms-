@@ -6,7 +6,11 @@ import Logo from '@/components/Logo';
 import {
   Sparkles, Users, ShieldCheck, Award, ArrowRight, Check, Plane, CalendarCheck,
   Stethoscope, Truck, Building2, Cpu, Smartphone, LockKeyhole, Layers, Star,
+  Palette, Activity,
 } from 'lucide-react';
+import {
+  HeroParticles, DashboardPreview, LiveActivityFeed, ThemePreview,
+} from '@/components/landing';
 
 export default function MarketingHome() {
   return (
@@ -18,8 +22,9 @@ export default function MarketingHome() {
         <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Logo size={28} />
           <div className="hidden md:flex items-center gap-7 text-sm font-medium text-slate-600">
+            <a href="#product"   className="hover:text-slate-900 transition-colors">Product</a>
             <a href="#platform"  className="hover:text-slate-900 transition-colors">Platform</a>
-            <a href="#segments"  className="hover:text-slate-900 transition-colors">For your team</a>
+            <a href="#themes"    className="hover:text-slate-900 transition-colors">Themes</a>
             <a href="#pricing"   className="hover:text-slate-900 transition-colors">Pricing</a>
             <a href="#contact"   className="hover:text-slate-900 transition-colors">Contact</a>
           </div>
@@ -44,7 +49,7 @@ export default function MarketingHome() {
          HERO — white base, animated soft gradient glow
          ════════════════════════════════════════════════════════ */}
       <section className="relative overflow-hidden">
-        {/* Animated background glow */}
+        {/* Animated background glow + particle field */}
         <div aria-hidden className="absolute inset-0 -z-10 pointer-events-none">
           <div className="absolute top-[-220px] left-1/2 -translate-x-1/2 w-[1100px] h-[700px] rounded-full bg-gradient-to-br from-primary-200/40 via-primary-100/30 to-accent-200/30 blur-[120px] animate-aurora bg-[length:200%_200%]" />
           <div className="absolute top-32 -left-32 w-[420px] h-[420px] rounded-full bg-primary-300/20 blur-[100px]" />
@@ -52,6 +57,8 @@ export default function MarketingHome() {
           {/* Subtle dot grid */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgb(15_23_42/0.05)_1px,transparent_0)] bg-[size:24px_24px]" />
         </div>
+        {/* Floating particles — pure CSS, ~18 dots */}
+        <HeroParticles count={18} />
 
         <div className="relative max-w-7xl mx-auto px-6 pt-20 pb-24 lg:pt-32 lg:pb-32">
           <div className="max-w-4xl mx-auto text-center">
@@ -125,6 +132,97 @@ export default function MarketingHome() {
             <Segment icon={Building2}   title="SMEs"         detail="50–500 employees" />
             <Segment icon={Cpu}         title="Enterprises"  detail="500+ workforce" />
           </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════
+         INTERACTIVE PRODUCT PREVIEW — dashboard mock + live feed
+         ════════════════════════════════════════════════════════ */}
+      <section id="product" className="relative py-24 lg:py-32 bg-white overflow-hidden">
+        <div aria-hidden className="absolute inset-0 -z-10 pointer-events-none">
+          <div className="absolute top-32 -left-32 w-[480px] h-[480px] rounded-full bg-primary-200/25 blur-[120px]" />
+          <div className="absolute bottom-32 -right-32 w-[480px] h-[480px] rounded-full bg-accent-200/25 blur-[120px]" />
+        </div>
+
+        <div className="max-w-7xl mx-auto px-6">
+          {/* Section heading */}
+          <div className="max-w-3xl mx-auto text-center mb-12 lg:mb-16">
+            <div className="text-2xs uppercase tracking-[0.2em] font-semibold text-primary-700 mb-3">
+              See it in action
+            </div>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 tracking-tight leading-tight">
+              Your workforce, <span className="nova-gradient-text">in real time.</span>
+            </h2>
+            <p className="text-lg text-slate-600 mt-5 leading-relaxed">
+              An interactive preview of the actual product. Click the tabs to
+              explore Employees, Analytics, Payroll, and the AI Co-pilot.
+            </p>
+          </div>
+
+          {/* Dashboard preview — full-width on mobile, contained on desktop */}
+          <DashboardPreview />
+
+          {/* Live activity feed + supporting feature */}
+          <div className="grid lg:grid-cols-[1fr_380px] gap-6 mt-16 lg:mt-20 items-start">
+            {/* Left: feature copy */}
+            <div className="space-y-5">
+              <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-3 py-1 text-2xs font-semibold text-slate-700 shadow-soft">
+                <Activity className="w-3 h-3 text-primary-600" />
+                <span className="uppercase tracking-wider">Real-time</span>
+              </div>
+              <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                Every event, instantly.
+              </h3>
+              <p className="text-base text-slate-600 leading-relaxed max-w-lg">
+                New hires onboarded, leave requests, license renewals, payroll
+                runs, training completions — every change across your
+                workspace surfaces in a single live activity stream, with
+                AI-prioritized insights when something needs attention.
+              </p>
+              <ul className="space-y-2.5 max-w-lg">
+                {[
+                  'Auto-prioritized — critical first',
+                  'Click any event to jump to the source',
+                  'Email + Slack + Teams notifications',
+                  'Filter by employee, dept, or module',
+                ].map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-sm text-slate-700">
+                    <Check className="w-4 h-4 text-primary-600 flex-shrink-0 mt-0.5" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {/* Right: live feed */}
+            <LiveActivityFeed />
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════
+         THEME SHOWCASE — make it your own
+         ════════════════════════════════════════════════════════ */}
+      <section id="themes" className="py-24 lg:py-28 bg-slate-50/50 border-y border-slate-200/60">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="max-w-2xl mb-12">
+            <div className="text-2xs uppercase tracking-[0.2em] font-semibold text-primary-700 mb-3 flex items-center gap-1.5">
+              <Palette className="w-3 h-3" /> Themes
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+              Looks like your brand. Out of the box.
+            </h2>
+            <p className="text-base text-slate-600 mt-4 leading-relaxed">
+              Choose from 6 premium themes or customize colors, density, and
+              corner style live in Theme Studio. Re-themes the entire app
+              instantly — no rebuild required.
+            </p>
+          </div>
+
+          <ThemePreview />
+
+          <p className="text-center text-xs text-slate-500 mt-8">
+            Plus full Theme Studio customization · Re-paints live · Persists per workspace
+          </p>
         </div>
       </section>
 
