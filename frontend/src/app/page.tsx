@@ -337,7 +337,7 @@ export default function MarketingHome() {
 
           <div className="flex flex-wrap items-center justify-center gap-3 mt-10">
             <a
-              href="mailto:hello@example.com?subject=Demo%20request"
+              href="mailto:support@nextnova.ai?subject=Demo%20request"
               className="bg-white text-surface-900 hover:bg-surface-100 px-6 py-3 rounded-xl font-semibold transition-colors inline-flex items-center gap-2"
             >
               Email us <ArrowRight className="w-4 h-4" />
@@ -353,11 +353,11 @@ export default function MarketingHome() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 max-w-3xl mx-auto text-left">
             <div>
               <div className="text-2xs font-semibold uppercase tracking-widest text-white/50">Email</div>
-              <div className="font-medium mt-1">hello@example.com</div>
+              <div className="font-medium mt-1">support@nextnova.ai</div>
             </div>
             <div>
-              <div className="text-2xs font-semibold uppercase tracking-widest text-white/50">Phone</div>
-              <div className="font-medium mt-1">+63 …</div>
+              <div className="text-2xs font-semibold uppercase tracking-widest text-white/50">Hours</div>
+              <div className="font-medium mt-1">Mon–Fri · 9am–6pm PHT</div>
             </div>
             <div>
               <div className="text-2xs font-semibold uppercase tracking-widest text-white/50">Office</div>
