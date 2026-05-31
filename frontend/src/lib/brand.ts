@@ -30,11 +30,12 @@ export const BRAND = {
   useHealthcareLogo: false,
 
   logo: {
-    /** Solid colors used for the nova SVG gradient — slate → teal → amber */
-    stops: ['#0F172A', '#0F766E', '#14B8A6', '#F59E0B'],
+    /** Solid colors used for the nova SVG gradient —
+     *  mirrors the official PNG: cyan → electric blue → violet */
+    stops: ['#06B6D4', '#3B82F6', '#6366F1', '#8B5CF6'],
     /** Tailwind classes for hero text gradient */
-    textGradient: 'from-primary-300 via-primary-400 to-accent-400',
-    /** Hex used in CSS shadows / glows (teal) */
-    glowColor: '#14B8A6',
+    textGradient: 'from-primary-500 via-primary-600 to-accent-500',
+    /** Hex used in CSS shadows / glows (electric blue) */
+    glowColor: '#3B82F6',
   },
 } as const;

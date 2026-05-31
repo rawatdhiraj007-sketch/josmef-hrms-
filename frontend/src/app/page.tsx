@@ -4,198 +4,188 @@ import Link from 'next/link';
 import { BRAND } from '@/lib/brand';
 import Logo from '@/components/Logo';
 import {
-  Sparkles, Users, ShieldCheck, BarChart3, Award, ArrowRight, Check,
-  Zap, Plane, CalendarCheck, GraduationCap, Stethoscope, Truck, Building2,
-  Cpu, Smartphone, LockKeyhole, Layers,
+  Sparkles, Users, ShieldCheck, Award, ArrowRight, Check, Plane, CalendarCheck,
+  Stethoscope, Truck, Building2, Cpu, Smartphone, LockKeyhole, Layers, Star,
 } from 'lucide-react';
 
 export default function MarketingHome() {
   return (
-    <div className="min-h-screen bg-white light-mode-page text-slate-900">
+    <div className="min-h-screen bg-white text-slate-900 antialiased">
       {/* ════════════════════════════════════════════════════════
-         HERO — Slate-900 surface, teal accents, enterprise feel
+         NAVBAR — minimal glass, sticky
          ════════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden bg-[#0F172A] text-white">
-        {/* Subtle radial glow + grid background */}
-        <div aria-hidden className="absolute inset-0 -z-10">
-          <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1100px] h-[600px] rounded-full bg-primary-500/[0.06] blur-[120px]" />
-          <div className="absolute inset-0 bg-grid-pattern opacity-[0.08]" />
-        </div>
-
-        {/* Navbar */}
-        <nav className="relative z-20 border-b border-white/[0.06]">
-          <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            <Logo size={30} variant="light" textClassName="text-base text-white font-semibold tracking-tight" />
-            <div className="hidden md:flex items-center gap-7 text-sm font-medium text-white/65">
-              <a href="#platform"     className="hover:text-white transition-colors">Platform</a>
-              <a href="#segments"     className="hover:text-white transition-colors">For your team</a>
-              <a href="#pricing"      className="hover:text-white transition-colors">Pricing</a>
-              <a href="#contact"      className="hover:text-white transition-colors">Contact</a>
-            </div>
-            <div className="flex items-center gap-2">
-              <Link href="/auth/login" className="text-sm text-white/70 hover:text-white px-3 py-2 transition-colors">
-                Sign in
-              </Link>
-              <a
-                href="#contact"
-                className="bg-white text-slate-900 hover:bg-white/95 text-sm font-semibold px-4 py-2 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm"
-              >
-                Book a demo <ArrowRight className="w-3.5 h-3.5" />
-              </a>
-            </div>
+      <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
+        <nav className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Logo size={28} />
+          <div className="hidden md:flex items-center gap-7 text-sm font-medium text-slate-600">
+            <a href="#platform"  className="hover:text-slate-900 transition-colors">Platform</a>
+            <a href="#segments"  className="hover:text-slate-900 transition-colors">For your team</a>
+            <a href="#pricing"   className="hover:text-slate-900 transition-colors">Pricing</a>
+            <a href="#contact"   className="hover:text-slate-900 transition-colors">Contact</a>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/auth/login"
+              className="text-sm text-slate-600 hover:text-slate-900 px-3 py-2 transition-colors"
+            >
+              Sign in
+            </Link>
+            <a
+              href="#contact"
+              className="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors shadow-sm"
+            >
+              Book a demo <ArrowRight className="w-3.5 h-3.5" />
+            </a>
           </div>
         </nav>
+      </header>
 
-        {/* Hero body */}
-        <div className="relative max-w-7xl mx-auto px-6 pt-20 pb-24 lg:pt-28 lg:pb-32">
-          <div className="max-w-4xl">
+      {/* ════════════════════════════════════════════════════════
+         HERO — white base, animated soft gradient glow
+         ════════════════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden">
+        {/* Animated background glow */}
+        <div aria-hidden className="absolute inset-0 -z-10 pointer-events-none">
+          <div className="absolute top-[-220px] left-1/2 -translate-x-1/2 w-[1100px] h-[700px] rounded-full bg-gradient-to-br from-primary-200/40 via-primary-100/30 to-accent-200/30 blur-[120px] animate-aurora bg-[length:200%_200%]" />
+          <div className="absolute top-32 -left-32 w-[420px] h-[420px] rounded-full bg-primary-300/20 blur-[100px]" />
+          <div className="absolute top-48 -right-32 w-[420px] h-[420px] rounded-full bg-accent-300/20 blur-[100px]" />
+          {/* Subtle dot grid */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgb(15_23_42/0.05)_1px,transparent_0)] bg-[size:24px_24px]" />
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-6 pt-20 pb-24 lg:pt-32 lg:pb-32">
+          <div className="max-w-4xl mx-auto text-center">
             {/* Eyebrow */}
-            <div className="inline-flex items-center gap-2 bg-white/[0.04] backdrop-blur border border-white/[0.08] rounded-full px-3 py-1 text-2xs font-medium text-white/75 mb-7 animate-fade-in">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary-400 animate-pulse" />
-              Now in private beta · AI-assisted workforce operations
+            <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur border border-slate-200 rounded-full px-3 py-1 text-2xs font-semibold text-slate-700 mb-7 shadow-soft animate-fade-in">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse" />
+              <span className="uppercase tracking-wider">Now in private beta</span>
+              <span className="text-slate-300">·</span>
+              <span className="text-slate-500">AI-assisted workforce ops</span>
             </div>
 
             {/* Headline */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight leading-[1.05]">
-              The operating system for
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight leading-[1.05] text-slate-900">
+              The operating system
               <br className="hidden sm:block" />
-              <span className="nova-gradient-text"> modern workforce management.</span>
+              <span className="nova-gradient-text"> for modern workforce management.</span>
             </h1>
 
             {/* Sub-headline */}
-            <p className="text-base sm:text-lg lg:text-xl text-white/65 mt-6 max-w-2xl leading-relaxed">
+            <p className="text-base sm:text-lg lg:text-xl text-slate-600 mt-7 max-w-2xl mx-auto leading-relaxed">
               Unify HR, payroll, compliance, training, attendance, and AI
               automation in one platform. Built for HR teams, healthcare
               companies, distributors, and growing enterprises.
             </p>
 
             {/* CTAs */}
-            <div className="flex flex-wrap items-center gap-3 mt-8">
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-9">
               <a
                 href="#contact"
-                className="bg-primary-500 hover:bg-primary-400 text-white text-sm font-semibold px-5 py-3 rounded-lg transition-all inline-flex items-center gap-2 shadow-[0_6px_24px_-8px_rgba(20,184,166,0.5)]"
+                className="inline-flex items-center gap-2 bg-gradient-to-br from-primary-600 to-accent-600 hover:from-primary-500 hover:to-accent-500 text-white text-sm font-semibold px-6 py-3 rounded-xl transition-all shadow-[0_8px_28px_-10px_rgba(59,130,246,0.55)] hover:shadow-[0_12px_32px_-8px_rgba(59,130,246,0.6)]"
               >
                 Start free trial <ArrowRight className="w-4 h-4" />
               </a>
               <Link
                 href="/auth/login"
-                className="bg-white/[0.05] backdrop-blur border border-white/[0.10] hover:bg-white/[0.08] text-white text-sm font-semibold px-5 py-3 rounded-lg transition-all inline-flex items-center gap-2"
+                className="inline-flex items-center gap-2 bg-white/90 backdrop-blur border border-slate-200 hover:border-slate-300 hover:bg-white text-slate-900 text-sm font-semibold px-6 py-3 rounded-xl transition-all shadow-soft"
               >
                 Try interactive demo
               </Link>
             </div>
 
             {/* Trust micro-row */}
-            <div className="flex items-center gap-5 mt-7 text-xs text-white/45 flex-wrap">
-              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-primary-400" /> 14-day free trial</span>
-              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-primary-400" /> No credit card required</span>
-              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-primary-400" /> Set up in under a day</span>
+            <div className="flex items-center justify-center gap-5 mt-7 text-xs text-slate-500 flex-wrap">
+              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-primary-600" /> 14-day free trial</span>
+              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-primary-600" /> No credit card required</span>
+              <span className="flex items-center gap-1.5"><Check className="w-3.5 h-3.5 text-primary-600" /> Set up in under a day</span>
             </div>
           </div>
 
-          {/* Enterprise KPI cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-16 lg:mt-20 max-w-5xl">
-            <KpiCard icon={Layers}      label="Workforce modules" value="24+"          sub="Unified in one platform" />
-            <KpiCard icon={Sparkles}    label="AI assisted"        value="Operations"   sub="Insights, alerts, reports" />
-            <KpiCard icon={Smartphone}  label="Mobile ready"       value="iOS · Android" sub="Employee portal + kiosk" />
-            <KpiCard icon={LockKeyhole} label="Enterprise secure"  value="SOC-grade"    sub="Audit logs · roles" />
+          {/* Glass KPI cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-16 lg:mt-24 max-w-5xl mx-auto">
+            <GlassKpi icon={Layers}      label="Workforce modules" value="24+"          sub="Unified in one platform" />
+            <GlassKpi icon={Sparkles}    label="AI assisted"        value="Operations"   sub="Insights, alerts, reports" />
+            <GlassKpi icon={Smartphone}  label="Mobile ready"       value="iOS · Android" sub="Employee portal + kiosk" />
+            <GlassKpi icon={LockKeyhole} label="Enterprise secure"  value="SOC-grade"    sub="Audit logs · roles" />
           </div>
         </div>
-
-        {/* Bottom fade into next section */}
-        <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-b from-transparent to-white/5 pointer-events-none" />
       </section>
 
       {/* ════════════════════════════════════════════════════════
-         TRUST BAND — Segments served
+         SEGMENTS — trust band
          ════════════════════════════════════════════════════════ */}
-      <section id="segments" className="py-16 lg:py-20 bg-slate-50 border-y border-slate-200/60">
+      <section id="segments" className="py-20 lg:py-24 border-y border-slate-200/60 bg-gradient-to-b from-white via-slate-50/40 to-white">
         <div className="max-w-7xl mx-auto px-6">
-          <p className="text-center text-2xs font-semibold uppercase tracking-[0.18em] text-slate-500 mb-8">
-            Trusted by teams across
+          <p className="text-center text-2xs font-semibold uppercase tracking-[0.2em] text-slate-500 mb-10">
+            Built for teams across
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-4xl mx-auto">
-            <SegmentCard icon={Stethoscope} title="Healthcare"   detail="Clinics & hospitals" />
-            <SegmentCard icon={Truck}       title="Distribution" detail="Logistics & supply" />
-            <SegmentCard icon={Building2}   title="SMEs"         detail="50–500 employees" />
-            <SegmentCard icon={Cpu}         title="Enterprises"  detail="500+ workforce" />
+            <Segment icon={Stethoscope} title="Healthcare"   detail="Clinics & hospitals" />
+            <Segment icon={Truck}       title="Distribution" detail="Logistics & supply" />
+            <Segment icon={Building2}   title="SMEs"         detail="50–500 employees" />
+            <Segment icon={Cpu}         title="Enterprises"  detail="500+ workforce" />
           </div>
         </div>
       </section>
 
       {/* ════════════════════════════════════════════════════════
-         PLATFORM — 6 pillars
+         PLATFORM PILLARS — 6 glass cards
          ════════════════════════════════════════════════════════ */}
-      <section id="platform" className="py-20 lg:py-28 bg-white">
+      <section id="platform" className="relative py-24 lg:py-32 bg-white overflow-hidden">
+        {/* Soft accent glow */}
+        <div aria-hidden className="absolute inset-0 -z-10 pointer-events-none">
+          <div className="absolute top-1/2 -translate-y-1/2 -left-32 w-[420px] h-[420px] rounded-full bg-primary-200/30 blur-[120px]" />
+          <div className="absolute top-1/2 -translate-y-1/2 -right-32 w-[420px] h-[420px] rounded-full bg-accent-200/30 blur-[120px]" />
+        </div>
+
         <div className="max-w-7xl mx-auto px-6">
-          <div className="max-w-3xl mb-14 lg:mb-16">
-            <div className="text-2xs uppercase tracking-[0.18em] font-semibold text-primary-700 mb-3">
+          <div className="max-w-3xl mb-16 lg:mb-20">
+            <div className="text-2xs uppercase tracking-[0.2em] font-semibold text-primary-700 mb-3">
               Platform
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 tracking-tight">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 tracking-tight leading-tight">
               One platform, every workforce workflow.
             </h2>
-            <p className="text-lg text-slate-600 mt-5 leading-relaxed">
+            <p className="text-lg text-slate-600 mt-5 leading-relaxed max-w-2xl">
               From the moment someone applies to the day they retire — every
               touchpoint covered, every record audited, every report ready.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            <PillarCard
-              icon={Users}
-              title="People & records"
-              body="40+ field employee records, 201 file, license tracking with auto-expiry alerts, former employee archive."
-            />
-            <PillarCard
-              icon={CalendarCheck}
-              title="Shifts & attendance"
-              body="24/7 rotating shifts with skill-based assignment, fatigue rules, swap requests, kiosk clock-in mode."
-            />
-            <PillarCard
-              icon={Award}
-              title="Payroll & bonuses"
-              body="Run payroll with PH statutory deductions, 13th-month auto-compute, bonus runs, gov reports (SSS, PhilHealth, BIR)."
-            />
-            <PillarCard
-              icon={Plane}
-              title="Leave management"
-              body="8 PH leave types pre-configured, multi-level approval workflow, balance tracking, calendar view."
-            />
-            <PillarCard
-              icon={ShieldCheck}
-              title="Compliance engine"
-              body="Real-time alerts for expired licenses, overdue NTEs, expiring contracts, stale disciplinary cases."
-            />
-            <PillarCard
-              icon={Sparkles}
-              title="AI co-pilot"
-              body="Smart insights, executive briefings, business health score, natural-language search, alert prioritization."
-            />
+            <Pillar icon={Users}         title="People & records"     body="40+ field employee records, 201 file, license tracking with auto-expiry alerts, former employee archive." />
+            <Pillar icon={CalendarCheck} title="Shifts & attendance"  body="24/7 rotating shifts with skill-based assignment, fatigue rules, swap requests, kiosk clock-in mode." />
+            <Pillar icon={Award}         title="Payroll & bonuses"    body="Run payroll with PH statutory deductions, 13th-month auto-compute, bonus runs, gov reports (SSS, PhilHealth, BIR)." />
+            <Pillar icon={Plane}         title="Leave management"     body="8 PH leave types pre-configured, multi-level approval workflow, balance tracking, calendar view." />
+            <Pillar icon={ShieldCheck}   title="Compliance engine"    body="Real-time alerts for expired licenses, overdue NTEs, expiring contracts, stale disciplinary cases." />
+            <Pillar icon={Sparkles}      title="AI co-pilot"          body="Smart insights, executive briefings, business health score, natural-language search, alert prioritization." />
           </div>
         </div>
       </section>
 
       {/* ════════════════════════════════════════════════════════
-         24+ MODULES — clean grid
+         MODULES — clean light grid
          ════════════════════════════════════════════════════════ */}
-      <section className="py-20 lg:py-24 bg-slate-50/60">
+      <section className="py-24 bg-slate-50/40 border-y border-slate-200/60">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-14">
-            <div className="text-2xs uppercase tracking-[0.18em] font-semibold text-primary-700 mb-3">
+          <div className="text-center mb-16">
+            <div className="text-2xs uppercase tracking-[0.2em] font-semibold text-primary-700 mb-3">
               Full platform
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
               24+ integrated modules
             </h2>
-            <p className="text-base text-slate-600 mt-3">
+            <p className="text-base text-slate-600 mt-3 max-w-xl mx-auto">
               No more juggling five different tools for one team.
             </p>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {MODULES.map(([title, sub]) => (
-              <div key={title} className="bg-white border border-slate-200 rounded-xl p-4 hover:border-primary-300 hover:shadow-card-hover transition-all">
+              <div
+                key={title}
+                className="bg-white border border-slate-200/80 rounded-xl p-4 hover:border-primary-300 hover:shadow-[0_4px_24px_-8px_rgba(59,130,246,0.18)] transition-all"
+              >
                 <div className="font-semibold text-sm text-slate-900">{title}</div>
                 <div className="text-xs text-slate-500 mt-0.5">{sub}</div>
               </div>
@@ -205,15 +195,39 @@ export default function MarketingHome() {
       </section>
 
       {/* ════════════════════════════════════════════════════════
-         STATS / SOCIAL PROOF
+         STATS + TESTIMONIAL
          ════════════════════════════════════════════════════════ */}
-      <section className="py-20 bg-white">
+      <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            <BigStat number="60h"    label="HR admin hours saved per month" />
-            <BigStat number="< 1d"   label="Average setup time" />
-            <BigStat number="99.9%"  label="Platform uptime target" />
-            <BigStat number="< 200ms" label="API response time" />
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Stats grid */}
+            <div className="grid grid-cols-2 gap-8">
+              <BigStat number="60h"     label="HR admin hours saved per month" />
+              <BigStat number="< 1d"    label="Average setup time" />
+              <BigStat number="99.9%"   label="Platform uptime target" />
+              <BigStat number="< 200ms" label="API response time" />
+            </div>
+
+            {/* Testimonial card */}
+            <div className="relative">
+              <div aria-hidden className="absolute -inset-6 -z-10 rounded-3xl bg-gradient-to-br from-primary-100/60 to-accent-100/60 blur-2xl" />
+              <div className="relative bg-white border border-slate-200 rounded-2xl p-8 lg:p-10 shadow-card">
+                <div className="flex items-center gap-1 mb-5">
+                  {[1,2,3,4,5].map((i) => <Star key={i} className="w-4 h-4 fill-accent-500 text-accent-500" />)}
+                </div>
+                <blockquote className="text-lg lg:text-xl text-slate-900 leading-relaxed font-medium">
+                  &ldquo;Replaced four legacy tools with one platform. Saved
+                  60 hours of HR admin per month and made compliance painless.&rdquo;
+                </blockquote>
+                <div className="mt-6 flex items-center gap-3 pt-6 border-t border-slate-100">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white font-bold text-sm shadow-soft">M</div>
+                  <div>
+                    <div className="text-sm font-semibold text-slate-900">Maria · Director of HR</div>
+                    <div className="text-xs text-slate-500">Mid-size hospital · Manila</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -221,10 +235,10 @@ export default function MarketingHome() {
       {/* ════════════════════════════════════════════════════════
          PRICING
          ════════════════════════════════════════════════════════ */}
-      <section id="pricing" className="py-20 lg:py-28 bg-slate-50/60">
+      <section id="pricing" className="py-24 lg:py-32 bg-gradient-to-b from-slate-50/40 via-white to-slate-50/40">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-14 lg:mb-16">
-            <div className="text-2xs uppercase tracking-[0.18em] font-semibold text-primary-700 mb-3">
+          <div className="text-center mb-16">
+            <div className="text-2xs uppercase tracking-[0.2em] font-semibold text-primary-700 mb-3">
               Pricing
             </div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 tracking-tight">
@@ -237,94 +251,66 @@ export default function MarketingHome() {
 
           <div className="grid md:grid-cols-3 gap-5">
             <PricingTier
-              name="Starter"
-              price="₱200"
-              priceUnit="/employee/month"
+              name="Starter" price="₱200" priceUnit="/employee/month"
               forWho="Small teams · 10–50 staff"
-              features={[
-                'Core HR + 201 File',
-                'Attendance + Payroll',
-                'Leave Management',
-                'License Tracking',
-                'Gov Reports (PH)',
-                'Email support',
-              ]}
+              features={[ 'Core HR + 201 File', 'Attendance + Payroll', 'Leave Management', 'License Tracking', 'Gov Reports (PH)', 'Email support' ]}
             />
             <PricingTier
-              name="Pro"
-              price="₱500"
-              priceUnit="/employee/month"
-              forWho="Growing companies · 50–500 staff"
-              highlighted
-              features={[
-                'Everything in Starter',
-                'Shift Scheduling',
-                'Compliance Engine',
-                'Slack / Teams integrations',
-                'Workflow Automations',
-                'Bonus + 13th-Month Auto',
-                'Analytics + Custom Reports',
-                'AI Co-pilot',
-              ]}
+              name="Pro" price="₱500" priceUnit="/employee/month"
+              forWho="Growing companies · 50–500 staff" highlighted
+              features={[ 'Everything in Starter', 'Shift Scheduling', 'Compliance Engine', 'Slack / Teams integrations', 'Workflow Automations', 'Bonus + 13th-Month Auto', 'Analytics + Custom Reports', 'AI Co-pilot' ]}
             />
             <PricingTier
-              name="Enterprise"
-              price="Custom"
-              priceUnit=""
+              name="Enterprise" price="Custom" priceUnit=""
               forWho="Large orgs · 500+ staff"
-              features={[
-                'Everything in Pro',
-                'SSO (SAML/OAuth)',
-                '2FA enforcement',
-                'Custom branding',
-                'Dedicated success manager',
-                'SLA + uptime guarantee',
-                'API access',
-              ]}
+              features={[ 'Everything in Pro', 'SSO (SAML/OAuth)', '2FA enforcement', 'Custom branding', 'Dedicated success manager', 'SLA + uptime guarantee', 'API access' ]}
             />
           </div>
 
-          <p className="text-center text-sm text-slate-500 mt-8">
+          <p className="text-center text-sm text-slate-500 mt-10">
             Annual billing saves 15% · Volume discounts at 200+ employees
           </p>
         </div>
       </section>
 
       {/* ════════════════════════════════════════════════════════
-         CTA — clean, no garish gradients
+         CTA — light glassy with brand glow
          ════════════════════════════════════════════════════════ */}
-      <section id="contact" className="py-20 lg:py-28 bg-[#0F172A] text-white relative overflow-hidden">
-        <div aria-hidden className="absolute inset-0">
-          <div className="absolute top-0 -left-32 w-[480px] h-[480px] bg-primary-500/[0.08] rounded-full blur-[120px]" />
-          <div className="absolute bottom-0 -right-32 w-[480px] h-[480px] bg-accent-500/[0.06] rounded-full blur-[120px]" />
-          <div className="absolute inset-0 bg-grid-pattern opacity-[0.06]" />
+      <section id="contact" className="relative py-24 lg:py-32 overflow-hidden bg-white">
+        <div aria-hidden className="absolute inset-0 -z-10 pointer-events-none">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full bg-gradient-to-br from-primary-100/60 via-accent-100/40 to-transparent blur-[120px]" />
         </div>
 
         <div className="relative max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">
-            Ready to modernize your workforce?
+          <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur border border-slate-200 rounded-full px-3 py-1 text-2xs font-semibold text-slate-700 mb-6 shadow-soft">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary-500" />
+            <span className="uppercase tracking-wider">Ready when you are</span>
+          </div>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-slate-900">
+            Modernize your workforce in
+            <span className="nova-gradient-text"> one platform.</span>
           </h2>
-          <p className="text-white/70 text-lg mt-5 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-slate-600 text-lg mt-5 max-w-2xl mx-auto leading-relaxed">
             Book a 20-minute demo. We&apos;ll show you the platform, answer
             your questions, and set up a free 14-day trial — no commitment.
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 mt-10">
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-9">
             <a
               href="mailto:support@nextnova.ai?subject=Demo%20request"
-              className="bg-primary-500 hover:bg-primary-400 text-white px-6 py-3 rounded-lg font-semibold text-sm transition-all inline-flex items-center gap-2 shadow-[0_6px_24px_-8px_rgba(20,184,166,0.5)]"
+              className="inline-flex items-center gap-2 bg-gradient-to-br from-primary-600 to-accent-600 hover:from-primary-500 hover:to-accent-500 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all shadow-[0_8px_28px_-10px_rgba(59,130,246,0.55)]"
             >
               Email us <ArrowRight className="w-4 h-4" />
             </a>
             <Link
               href="/auth/login"
-              className="border border-white/20 hover:bg-white/5 text-white px-6 py-3 rounded-lg font-semibold text-sm transition-colors inline-flex items-center gap-2"
+              className="inline-flex items-center gap-2 bg-white border border-slate-200 hover:border-slate-300 text-slate-900 px-6 py-3 rounded-xl font-semibold text-sm transition-colors shadow-soft"
             >
               Try the demo
             </Link>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-16 max-w-3xl mx-auto text-left">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-16 max-w-3xl mx-auto">
             <ContactCell label="Email"  value="support@nextnova.ai" />
             <ContactCell label="Hours"  value="Mon–Fri · 9am–6pm PHT" />
             <ContactCell label="Office" value="Manila, Philippines" />
@@ -335,10 +321,10 @@ export default function MarketingHome() {
       {/* ════════════════════════════════════════════════════════
          FOOTER
          ════════════════════════════════════════════════════════ */}
-      <footer className="bg-slate-900 text-slate-400 py-12 border-t border-slate-800">
+      <footer className="border-t border-slate-200/60 bg-white py-10">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <Logo size={28} variant="light" textClassName="text-sm text-white font-semibold" taglineClassName="hidden" />
+            <Logo size={26} />
             <p className="text-xs text-slate-500">
               © {new Date().getFullYear()} {BRAND.name}. All rights reserved.
             </p>
@@ -380,32 +366,32 @@ const MODULES: [string, string][] = [
 ];
 
 // ─────────────────────────────────────────────────────────
-// Sub-components
+// Sub-components — glassmorphism + premium polish
 // ─────────────────────────────────────────────────────────
 
-function KpiCard({ icon: Icon, label, value, sub }: {
-  icon: any; label: string; value: string; sub: string;
-}) {
+function GlassKpi({
+  icon: Icon, label, value, sub,
+}: { icon: any; label: string; value: string; sub: string }) {
   return (
-    <div className="bg-white/[0.04] backdrop-blur border border-white/[0.08] rounded-xl p-4 hover:border-primary-400/40 hover:bg-white/[0.06] transition-all">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-7 h-7 rounded-lg bg-primary-500/15 border border-primary-400/20 flex items-center justify-center text-primary-300">
-          <Icon className="w-3.5 h-3.5" />
+    <div className="group relative bg-white/70 backdrop-blur-xl border border-slate-200/70 rounded-2xl p-5 shadow-soft hover:shadow-card-hover hover:border-primary-200 hover:-translate-y-0.5 transition-all">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-50 to-accent-50 border border-primary-100 text-primary-700 flex items-center justify-center">
+          <Icon className="w-4 h-4" />
         </div>
-        <span className="text-2xs uppercase tracking-wider text-white/50 font-semibold">{label}</span>
+        <span className="text-2xs uppercase tracking-wider text-slate-500 font-semibold">{label}</span>
       </div>
-      <div className="text-xl sm:text-2xl font-bold text-white tracking-tight">{value}</div>
-      <div className="text-xs text-white/55 mt-0.5">{sub}</div>
+      <div className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">{value}</div>
+      <div className="text-xs text-slate-500 mt-1">{sub}</div>
     </div>
   );
 }
 
-function SegmentCard({ icon: Icon, title, detail }: {
-  icon: any; title: string; detail: string;
-}) {
+function Segment({
+  icon: Icon, title, detail,
+}: { icon: any; title: string; detail: string }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-5 text-center hover:border-primary-300 hover:shadow-card transition-all">
-      <div className="w-10 h-10 rounded-xl bg-primary-50 text-primary-700 mx-auto flex items-center justify-center mb-3">
+    <div className="group bg-white border border-slate-200/70 rounded-xl p-5 text-center hover:border-primary-200 hover:shadow-soft transition-all">
+      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary-50 to-accent-50 text-primary-700 mx-auto flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
         <Icon className="w-5 h-5" />
       </div>
       <div className="text-sm font-semibold text-slate-900">{title}</div>
@@ -414,12 +400,12 @@ function SegmentCard({ icon: Icon, title, detail }: {
   );
 }
 
-function PillarCard({ icon: Icon, title, body }: {
-  icon: any; title: string; body: string;
-}) {
+function Pillar({
+  icon: Icon, title, body,
+}: { icon: any; title: string; body: string }) {
   return (
-    <div className="group bg-white border border-slate-200 rounded-2xl p-6 hover:border-primary-300 hover:shadow-card-hover transition-all">
-      <div className="w-11 h-11 rounded-xl bg-primary-50 text-primary-700 flex items-center justify-center mb-4 group-hover:bg-primary-100 transition-colors">
+    <div className="group relative bg-white/80 backdrop-blur-xl border border-slate-200/70 rounded-2xl p-6 hover:border-primary-200 hover:shadow-[0_8px_32px_-12px_rgba(59,130,246,0.25)] hover:-translate-y-0.5 transition-all">
+      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary-50 to-accent-50 border border-primary-100 text-primary-700 flex items-center justify-center mb-5">
         <Icon className="w-5 h-5" />
       </div>
       <h3 className="font-semibold text-slate-900 text-base mb-2 tracking-tight">{title}</h3>
@@ -430,8 +416,8 @@ function PillarCard({ icon: Icon, title, body }: {
 
 function BigStat({ number, label }: { number: string; label: string }) {
   return (
-    <div className="text-center sm:text-left">
-      <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 tracking-tight tabular-nums">
+    <div>
+      <div className="text-4xl sm:text-5xl font-bold tracking-tight tabular-nums nova-gradient-text">
         {number}
       </div>
       <div className="text-xs sm:text-sm text-slate-500 mt-2 leading-snug">{label}</div>
@@ -451,14 +437,14 @@ function PricingTier({
 }) {
   return (
     <div
-      className={`relative bg-white border rounded-2xl p-7 transition-all ${
+      className={`relative rounded-2xl p-7 transition-all ${
         highlighted
-          ? 'border-primary-500 shadow-card-hover lg:scale-[1.03] z-10'
-          : 'border-slate-200 hover:border-slate-300 hover:shadow-card'
+          ? 'bg-white border-2 border-primary-500 shadow-[0_24px_48px_-16px_rgba(59,130,246,0.35)] lg:scale-[1.03] z-10'
+          : 'bg-white border border-slate-200/80 hover:border-slate-300 hover:shadow-card'
       }`}
     >
       {highlighted && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary-600 text-white text-2xs uppercase tracking-wider font-bold px-3 py-1 rounded-full">
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary-600 to-accent-600 text-white text-2xs uppercase tracking-wider font-bold px-3 py-1 rounded-full shadow-soft">
           Most popular
         </div>
       )}
@@ -480,8 +466,8 @@ function PricingTier({
         href="#contact"
         className={`block text-center mt-8 w-full text-sm font-semibold px-4 py-2.5 rounded-lg transition-all ${
           highlighted
-            ? 'bg-primary-600 hover:bg-primary-500 text-white shadow-sm'
-            : 'bg-white border border-slate-200 hover:border-slate-300 text-slate-900'
+            ? 'bg-gradient-to-br from-primary-600 to-accent-600 hover:from-primary-500 hover:to-accent-500 text-white shadow-sm'
+            : 'bg-slate-900 hover:bg-slate-800 text-white'
         }`}
       >
         Get started
@@ -492,9 +478,9 @@ function PricingTier({
 
 function ContactCell({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <div className="text-2xs font-semibold uppercase tracking-widest text-white/50">{label}</div>
-      <div className="font-medium mt-1 text-white">{value}</div>
+    <div className="bg-white/70 backdrop-blur border border-slate-200/60 rounded-xl px-4 py-3 shadow-soft">
+      <div className="text-2xs font-semibold uppercase tracking-widest text-slate-500">{label}</div>
+      <div className="font-medium mt-1 text-slate-900">{value}</div>
     </div>
   );
 }

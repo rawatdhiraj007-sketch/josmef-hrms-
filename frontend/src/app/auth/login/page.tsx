@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import {
-  Eye, EyeOff, ArrowRight, Layers, Smartphone, Sparkles, BarChart3,
+  Eye, EyeOff, ArrowRight, ShieldCheck, Lock, Sparkles,
 } from 'lucide-react';
 import Logo from '@/components/Logo';
 import SplashLoader from '@/components/SplashLoader';
@@ -59,197 +59,161 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex bg-[#0F172A] text-white relative overflow-hidden">
-      {/* Soft brand background */}
-      <div aria-hidden className="absolute inset-0 -z-10">
-        <div className="absolute -top-32 -left-32 w-[720px] h-[720px] rounded-full bg-primary-500/[0.08] blur-[140px]" />
-        <div className="absolute -bottom-32 -right-32 w-[600px] h-[600px] rounded-full bg-accent-500/[0.06] blur-[140px]" />
-        <div className="absolute inset-0 bg-grid-pattern opacity-[0.06]" />
+    <div className="min-h-screen relative flex items-center justify-center px-4 sm:px-6 py-12 bg-white text-slate-900 overflow-hidden">
+      {/* ══════════════════════════════════════════════════════
+         Animated background — light, soft, on-brand
+         ══════════════════════════════════════════════════════ */}
+      <div aria-hidden className="absolute inset-0 -z-10 pointer-events-none">
+        <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[1000px] h-[640px] rounded-full bg-gradient-to-br from-primary-200/40 via-primary-100/30 to-accent-200/30 blur-[120px] animate-aurora bg-[length:200%_200%]" />
+        <div className="absolute top-1/4 -left-32 w-[400px] h-[400px] rounded-full bg-primary-300/20 blur-[100px]" />
+        <div className="absolute bottom-1/4 -right-32 w-[400px] h-[400px] rounded-full bg-accent-300/20 blur-[100px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgb(15_23_42/0.04)_1px,transparent_0)] bg-[size:24px_24px]" />
       </div>
 
-      {/* ════════════════════════════════════════════════════════
-         LEFT PANEL — enterprise brand + stats
-         ════════════════════════════════════════════════════════ */}
-      <div className="hidden lg:flex lg:w-[55%] relative flex-col justify-between p-12 xl:p-16">
-        {/* Logo */}
-        <div className="relative z-10">
-          <Logo size={36} variant="light" textClassName="text-xl text-white font-semibold tracking-tight" />
+      {/* ══════════════════════════════════════════════════════
+         Centered card stack
+         ══════════════════════════════════════════════════════ */}
+      <div className="w-full max-w-md animate-slide-up">
+        {/* Logo above the card */}
+        <div className="flex justify-center mb-7">
+          <Logo size={42} />
         </div>
 
-        {/* Hero */}
-        <div className="relative z-10 max-w-xl animate-slide-up">
-          <div className="inline-flex items-center gap-2 bg-white/[0.04] backdrop-blur border border-white/[0.08] rounded-full px-3 py-1 text-2xs font-medium text-white/75 mb-8">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary-400 animate-pulse" />
-            Workforce intelligence platform
+        {/* The login card — glassmorphism + soft shadow */}
+        <div className="rounded-2xl bg-white/85 backdrop-blur-xl border border-slate-200/70 shadow-[0_24px_64px_-16px_rgba(15,23,42,0.12)] p-7 sm:p-9">
+          {/* Heading */}
+          <div className="text-center mb-7">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              Welcome back
+            </h1>
+            <p className="text-sm text-slate-500 mt-1.5">
+              Sign in to your {BRAND.name} workspace
+            </p>
           </div>
 
-          <h1 className="text-4xl xl:text-5xl font-bold leading-[1.08] tracking-tight">
-            <span className="block text-white/95">{BRAND.name}</span>
-            <span className="block mt-3 nova-gradient-text">
-              The operating system for modern workforce management.
-            </span>
-          </h1>
+          {error && (
+            <div
+              role="alert"
+              className="mb-5 px-4 py-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-sm flex items-start gap-2"
+            >
+              <span className="text-rose-500 mt-0.5">●</span>
+              <span>{error}</span>
+            </div>
+          )}
 
-          <p className="text-white/65 text-base xl:text-lg leading-relaxed mt-6 max-w-lg">
-            Unify workforce operations, compliance, payroll, and AI
-            intelligence in one platform. Built for HR teams, healthcare
-            companies, distributors, and growing enterprises.
-          </p>
-
-          {/* Premium stat cards */}
-          <div className="grid grid-cols-2 gap-3 mt-10">
-            <LoginStat icon={Layers}      title="24+ Modules"       sub="Unified platform" />
-            <LoginStat icon={Smartphone}  title="Mobile Friendly"   sub="iOS · Android" />
-            <LoginStat icon={Sparkles}    title="AI Assisted"       sub="Smart operations" />
-            <LoginStat icon={BarChart3}   title="Real-Time Reports" sub="Live dashboards" />
-          </div>
-        </div>
-
-        {/* Foot quote */}
-        <div className="relative z-10">
-          <blockquote className="border-l-2 border-primary-500/60 pl-4 text-white/65 text-sm max-w-md leading-relaxed">
-            &ldquo;Replaced four legacy tools with one platform. Saved 60
-            hours of HR admin per month.&rdquo;
-          </blockquote>
-          <p className="text-2xs text-white/40 mt-2 pl-5">— Director of HR, Mid-size Hospital</p>
-        </div>
-      </div>
-
-      {/* ════════════════════════════════════════════════════════
-         RIGHT PANEL — sign-in card
-         ════════════════════════════════════════════════════════ */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-10 lg:p-12 relative z-10">
-        <div className="w-full max-w-md animate-slide-up">
-          {/* Mobile-only logo */}
-          <div className="lg:hidden mb-8 flex items-center justify-between">
-            <Logo size={36} variant="light" textClassName="text-lg text-white font-semibold tracking-tight" />
-          </div>
-
-          {/* Card — glass + soft border */}
-          <div className="rounded-2xl bg-white/[0.04] backdrop-blur-xl border border-white/[0.08] shadow-[0_24px_48px_-12px_rgba(0,0,0,0.45)] p-7 sm:p-9">
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-white tracking-tight">
-                Welcome back
-              </h2>
-              <p className="text-white/55 mt-1 text-sm">
-                Sign in to your {BRAND.name} workspace
-              </p>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-2xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-2.5 bg-white border border-slate-200 hover:border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500 transition-all"
+                placeholder="you@company.com"
+                required
+                autoComplete="email"
+              />
             </div>
 
-            {error && (
-              <div
-                role="alert"
-                className="mb-5 px-4 py-3 bg-rose-500/10 border border-rose-500/30 rounded-lg text-rose-200 text-sm"
-              >
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-2xs font-semibold text-white/70 mb-1.5 uppercase tracking-wider">
-                  Email
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label htmlFor="password" className="block text-2xs font-semibold text-slate-700 uppercase tracking-wider">
+                  Password
                 </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-white/[0.04] border border-white/[0.10] rounded-lg text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500/60 transition-all"
-                  placeholder="you@company.com"
-                  required
-                  autoComplete="email"
-                />
+                <button type="button" className="text-2xs text-primary-700 hover:text-primary-900 font-medium transition-colors">
+                  Forgot?
+                </button>
               </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label htmlFor="password" className="block text-2xs font-semibold text-white/70 uppercase tracking-wider">
-                    Password
-                  </label>
-                  <button type="button" className="text-2xs text-primary-300 hover:text-primary-200 font-medium">
-                    Forgot?
-                  </button>
-                </div>
-                <div className="relative">
-                  <input
-                    id="password"
-                    type={showPass ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-2.5 pr-11 bg-white/[0.04] border border-white/[0.10] rounded-lg text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500/60 transition-all"
-                    placeholder="Enter your password"
-                    required
-                    autoComplete="current-password"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPass(!showPass)}
-                    aria-label={showPass ? 'Hide password' : 'Show password'}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
-                  >
-                    {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={submitting || demoLoading}
-                className="w-full inline-flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-400 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_6px_20px_-6px_rgba(20,184,166,0.55)]"
-              >
-                {submitting ? (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <>
-                    Sign in
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </form>
-
-            {/* Demo logins */}
-            <div className="mt-7">
               <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-white/[0.06]"></div>
-                </div>
-                <div className="relative flex justify-center">
-                  <span className="bg-[#11192c] px-3 text-2xs text-white/40 uppercase tracking-wider font-semibold">
-                    Or try a demo
-                  </span>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3 mt-4">
+                <input
+                  id="password"
+                  type={showPass ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-2.5 pr-11 bg-white border border-slate-200 hover:border-slate-300 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500 transition-all"
+                  placeholder="Enter your password"
+                  required
+                  autoComplete="current-password"
+                />
                 <button
                   type="button"
-                  onClick={() => handleDemoLogin('admin')}
-                  disabled={submitting || demoLoading}
-                  className="bg-white/[0.04] border border-white/[0.10] hover:bg-white/[0.08] hover:border-white/[0.15] text-white/90 py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
+                  onClick={() => setShowPass(!showPass)}
+                  aria-label={showPass ? 'Hide password' : 'Show password'}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors"
                 >
-                  HR Admin
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDemoLogin('employee')}
-                  disabled={submitting || demoLoading}
-                  className="bg-white/[0.04] border border-white/[0.10] hover:bg-white/[0.08] hover:border-white/[0.15] text-white/90 py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
-                >
-                  Employee
+                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting || demoLoading}
+              className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-br from-primary-600 to-accent-600 hover:from-primary-500 hover:to-accent-500 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_8px_24px_-8px_rgba(59,130,246,0.55)]"
+            >
+              {submitting ? (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <>
+                  Sign in
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Demo logins divider */}
+          <div className="mt-7">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200"></div>
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-white/85 px-3 text-2xs text-slate-400 uppercase tracking-wider font-semibold">
+                  Or try a demo
+                </span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <button
+                type="button"
+                onClick={() => handleDemoLogin('admin')}
+                disabled={submitting || demoLoading}
+                className="bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
+              >
+                HR Admin
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDemoLogin('employee')}
+                disabled={submitting || demoLoading}
+                className="bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 py-2.5 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
+              >
+                Employee
+              </button>
             </div>
           </div>
+        </div>
 
-          {/* Footer below card */}
-          <div className="mt-6 flex items-center justify-between text-2xs text-white/40">
-            <span>© {new Date().getFullYear()} {BRAND.name}</span>
-            <div className="flex gap-4">
-              <a href="#" className="hover:text-white/80 transition-colors">Privacy</a>
-              <a href="#" className="hover:text-white/80 transition-colors">Terms</a>
-              <a href="#" className="hover:text-white/80 transition-colors">Help</a>
-            </div>
+        {/* ══════════════════════════════════════════════════════
+           Trust indicators — below the card
+           ══════════════════════════════════════════════════════ */}
+        <div className="mt-7 flex items-center justify-center gap-4 sm:gap-6 text-2xs text-slate-500 flex-wrap">
+          <TrustChip icon={Lock}        label="Encrypted in transit" />
+          <TrustChip icon={ShieldCheck} label="SOC-grade security" />
+          <TrustChip icon={Sparkles}    label="AI co-pilot" />
+        </div>
+
+        {/* Footer */}
+        <div className="mt-7 flex items-center justify-between text-2xs text-slate-400">
+          <span>© {new Date().getFullYear()} {BRAND.name}</span>
+          <div className="flex gap-4">
+            <a href="#" className="hover:text-slate-700 transition-colors">Privacy</a>
+            <a href="#" className="hover:text-slate-700 transition-colors">Terms</a>
+            <a href="#" className="hover:text-slate-700 transition-colors">Help</a>
           </div>
         </div>
       </div>
@@ -257,17 +221,12 @@ export default function LoginPage() {
   );
 }
 
-// ─── Sub-components ──────────────────────────────────────────
-function LoginStat({
-  icon: Icon, title, sub,
-}: { icon: any; title: string; sub: string }) {
+// ─── Trust indicator chip ──────────────────────────────────
+function TrustChip({ icon: Icon, label }: { icon: any; label: string }) {
   return (
-    <div className="bg-white/[0.04] backdrop-blur border border-white/[0.08] rounded-xl p-4 hover:bg-white/[0.06] hover:border-primary-400/30 transition-all">
-      <div className="w-8 h-8 rounded-lg bg-primary-500/15 border border-primary-400/20 flex items-center justify-center text-primary-300 mb-2.5">
-        <Icon className="w-4 h-4" />
-      </div>
-      <div className="text-sm font-semibold text-white tracking-tight">{title}</div>
-      <div className="text-2xs text-white/50 mt-0.5">{sub}</div>
-    </div>
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/70 backdrop-blur border border-slate-200/70 text-slate-600 shadow-soft">
+      <Icon className="w-3 h-3 text-primary-600" />
+      {label}
+    </span>
   );
 }
