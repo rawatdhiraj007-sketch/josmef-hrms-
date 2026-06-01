@@ -10,6 +10,7 @@ import api from '@/lib/api';
 import Link from 'next/link';
 import { useWorkspace } from '@/hooks/useWorkspace';
 import { AiCreditsWidget } from '@/components/ai';
+import { CheckInWidgetDark } from './CheckInWidget';
 
 /**
  * Zoho People-style topbar:
@@ -110,6 +111,9 @@ export default function Topbar() {
 
           {/* Spacer */}
           <div className="flex-1" />
+
+          {/* Check-in / out with live timer */}
+          <CheckInWidgetDark />
 
           {/* Quick-add */}
           <button

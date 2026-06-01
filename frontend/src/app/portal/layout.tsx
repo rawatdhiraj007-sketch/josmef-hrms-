@@ -12,6 +12,7 @@ import {
 
 import Avatar from '@/components/ui/Avatar';
 import Dropdown, { DropdownItem, DropdownDivider, DropdownLabel } from '@/components/ui/Dropdown';
+import CheckInWidget from '@/components/layout/CheckInWidget';
 import BottomNav from '@/components/portal/BottomNav';
 
 // All nav items — used by both desktop top-tabs and mobile bottom-nav
@@ -46,6 +47,12 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
           <Link href="/portal" className="flex items-center gap-2">
             <Logo width={140} />
           </Link>
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Online check-in / check-out with live timer */}
+          <CheckInWidget />
 
           {/* User menu */}
           <Dropdown
