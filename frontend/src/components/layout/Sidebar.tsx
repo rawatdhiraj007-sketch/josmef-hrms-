@@ -1,189 +1,144 @@
 'use client';
 
+/**
+ * Vertical icon-column sidebar inspired by Zoho People's layout.
+ *
+ * Visual model:
+ *   - Dark navy column, ~80px wide
+ *   - Logo mark at the very top (square)
+ *   - Stack of icon-with-label-below items
+ *   - Active item has a left blue indicator + soft tint
+ *   - Mobile (< lg) collapses into a slide-in drawer
+ *
+ * Curated to the most-used 10 destinations. Everything else lives
+ * under "More" which expands into a popover with the full nav.
+ *
+ * Preserves: localStorage collapsed state key (no longer used for
+ * width switching since the column is always narrow, but kept for
+ * topbar offset compatibility).
+ */
+
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
+import { useEffect, useState } from 'react';
 import {
-  LayoutDashboard,
-  Users,
-  UserPlus,
-  GraduationCap,
-  Clock,
-  DollarSign,
-  LogOut,
-  ClipboardCheck,
-  Sparkles,
-  Archive,
-  CreditCard,
-  AlertTriangle,
-  FileWarning,
-  AlertCircle,
-  Award,
-  ChevronRight,
-  ChevronLeft,
-  ChevronsLeft,
-  ShieldAlert,
-  History,
-  Plane,
-  Gift,
-  FileBarChart,
-  BarChart3,
-  Stethoscope,
-  Briefcase,
-  Plug,
-  Zap,
-  X,
-  Settings,
+  Home, Users, Clock, CalendarCheck, DollarSign, GraduationCap,
+  ShieldAlert, BarChart3, Sparkles, MoreHorizontal, X,
+  UserPlus, Briefcase, Plane, Gift, ClipboardCheck, CreditCard,
+  AlertTriangle, FileWarning, AlertCircle, Award, FileBarChart,
+  History, Plug, Zap, Settings, Stethoscope, Archive,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
 import Logo from '@/components/Logo';
 
-interface NavItem {
-  label: string;
-  href: string;
-  icon: any;
-  badge?: string;
-}
+const LS_COLLAPSED = 'nn:sidebar:collapsed';
 
-interface NavSection {
-  label: string;
-  items: NavItem[];
-}
+// Primary nav — always visible in the column.
+const PRIMARY = [
+  { label: 'Home',       href: '/dashboard',            icon: Home },
+  { label: 'Employees',  href: '/dashboard/employees',  icon: Users },
+  { label: 'Attendance', href: '/dashboard/attendance', icon: Clock },
+  { label: 'Leave',      href: '/dashboard/leave',      icon: Plane },
+  { label: 'Payroll',    href: '/dashboard/payroll',    icon: DollarSign },
+  { label: 'Shifts',     href: '/dashboard/shifts',     icon: CalendarCheck },
+  { label: 'Training',   href: '/dashboard/training',   icon: GraduationCap },
+  { label: 'Compliance', href: '/dashboard/compliance', icon: ShieldAlert },
+  { label: 'AI',         href: '/dashboard/ai',         icon: Sparkles },
+  { label: 'Analytics',  href: '/dashboard/analytics',  icon: BarChart3 },
+];
 
-// ⚠️  Same nav data as before — preserved 1:1
-const navSections: NavSection[] = [
+// Everything else surfaces under the "More" popover.
+const MORE_GROUPS: { title: string; items: { label: string; href: string; icon: any }[] }[] = [
   {
-    label: 'Workspace',
+    title: 'Recruitment',
     items: [
-      { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
-      { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+      { label: 'Jobs',         href: '/dashboard/jobs',         icon: Briefcase },
+      { label: 'Applicants',   href: '/dashboard/applicants',   icon: UserPlus },
+      { label: 'Trainees',     href: '/dashboard/trainees',     icon: GraduationCap },
     ],
   },
   {
-    label: 'Recruitment',
+    title: 'People',
     items: [
-      { label: 'Jobs', href: '/dashboard/jobs', icon: Briefcase },
-      { label: 'Applicants', href: '/dashboard/applicants', icon: UserPlus },
-      { label: 'Trainees', href: '/dashboard/trainees', icon: GraduationCap },
+      { label: 'Licenses',         href: '/dashboard/licenses',          icon: Stethoscope },
+      { label: 'Former Employees', href: '/dashboard/former-employees',  icon: Archive },
     ],
   },
   {
-    label: 'People',
+    title: 'Operations',
     items: [
-      { label: 'Employees', href: '/dashboard/employees', icon: Users },
-      { label: 'Licenses', href: '/dashboard/licenses', icon: Stethoscope },
-      { label: 'Former Employees', href: '/dashboard/former-employees', icon: Archive },
-      { label: 'Training', href: '/dashboard/training', icon: GraduationCap },
+      { label: 'Bonus Runs',     href: '/dashboard/bonus',           icon: Gift },
+      { label: 'Exit Clearance', href: '/dashboard/exit-clearance',  icon: ClipboardCheck },
+      { label: 'Kiosk Mode',     href: '/kiosk',                     icon: Clock },
     ],
   },
   {
-    label: 'Operations',
+    title: '201 File',
     items: [
-      { label: 'Shifts', href: '/dashboard/shifts', icon: Clock },
-      { label: 'Attendance', href: '/dashboard/attendance', icon: Clock },
-      { label: 'Kiosk Mode', href: '/kiosk', icon: Clock },
-      { label: 'Payroll', href: '/dashboard/payroll', icon: DollarSign },
-      { label: 'Bonus Runs', href: '/dashboard/bonus', icon: Gift },
-      { label: 'Leave Management', href: '/dashboard/leave', icon: Plane },
-      { label: 'Exit Clearance', href: '/dashboard/exit-clearance', icon: ClipboardCheck },
-    ],
-  },
-  {
-    label: '201 File',
-    items: [
-      { label: 'Loans', href: '/dashboard/loans', icon: CreditCard },
-      { label: 'Disciplinary', href: '/dashboard/disciplinary', icon: AlertTriangle },
-      { label: 'NTE', href: '/dashboard/nte', icon: FileWarning },
-      { label: 'Incident Reports', href: '/dashboard/incident-reports', icon: AlertCircle },
+      { label: 'Loans',             href: '/dashboard/loans',             icon: CreditCard },
+      { label: 'Disciplinary',      href: '/dashboard/disciplinary',      icon: AlertTriangle },
+      { label: 'NTE',               href: '/dashboard/nte',               icon: FileWarning },
+      { label: 'Incident Reports',  href: '/dashboard/incident-reports',  icon: AlertCircle },
       { label: 'Work Certificates', href: '/dashboard/work-certificates', icon: Award },
     ],
   },
   {
-    label: 'Insights',
+    title: 'Insights',
     items: [
-      { label: 'Compliance', href: '/dashboard/compliance', icon: ShieldAlert },
       { label: 'Gov Reports', href: '/dashboard/gov-reports', icon: FileBarChart },
-      { label: 'Audit Log', href: '/dashboard/audit', icon: History },
-      { label: 'AI Hub', href: '/dashboard/ai', icon: Sparkles },
+      { label: 'Audit Log',   href: '/dashboard/audit',       icon: History },
     ],
   },
   {
-    label: 'Connect',
+    title: 'Workspace',
     items: [
-      { label: 'Integrations', href: '/dashboard/integrations', icon: Plug },
-      { label: 'Automations', href: '/dashboard/automations', icon: Zap },
-    ],
-  },
-  {
-    label: 'Workspace',
-    items: [
-      { label: 'Settings', href: '/dashboard/settings', icon: Settings },
+      { label: 'Integrations', href: '/dashboard/integrations',  icon: Plug },
+      { label: 'Automations',  href: '/dashboard/automations',   icon: Zap },
+      { label: 'Settings',     href: '/dashboard/settings',      icon: Settings },
     ],
   },
 ];
 
-const LS_COLLAPSED = 'nn:sidebar:collapsed';
-const LS_SECTION = 'nn:sidebar:section';
-const LS_MOBILE_OPEN = 'nn:sidebar:mobileopen';
-
 export default function Sidebar() {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
-
-  // Sidebar-wide collapse (icon-only mode)
-  const [collapsed, setCollapsed] = useState(false);
-  // Per-section collapse state
-  const [sectionState, setSectionState] = useState<Record<string, boolean>>({});
-  // Mobile drawer state
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
 
-  // ── Restore preferences from localStorage ──
+  // Keep legacy key wired to topbar offset (collapsed = always true now).
   useEffect(() => {
-    try {
-      const c = localStorage.getItem(LS_COLLAPSED);
-      if (c === 'true') setCollapsed(true);
-      const s = localStorage.getItem(LS_SECTION);
-      if (s) setSectionState(JSON.parse(s));
-    } catch { /* ignore */ }
+    try { localStorage.setItem(LS_COLLAPSED, 'true'); } catch { /* */ }
   }, []);
 
+  // Close drawers on Esc
   useEffect(() => {
-    try { localStorage.setItem(LS_COLLAPSED, String(collapsed)); } catch {}
-  }, [collapsed]);
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') { setMoreOpen(false); setMobileOpen(false); }
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
 
-  useEffect(() => {
-    try { localStorage.setItem(LS_SECTION, JSON.stringify(sectionState)); } catch {}
-  }, [sectionState]);
-
-  // Close mobile drawer on route change
-  useEffect(() => { setMobileOpen(false); }, [pathname]);
-
-  const isActive = (href: string) =>
-    href === '/dashboard' ? pathname === href : pathname.startsWith(href);
-
-  const toggleSection = (label: string) =>
-    setSectionState(prev => ({ ...prev, [label]: !prev[label] }));
-
-  const width = collapsed ? 'lg:w-[76px]' : 'lg:w-[260px]';
+  function isActive(href: string) {
+    if (href === '/dashboard') return pathname === '/dashboard';
+    return pathname === href || pathname.startsWith(href + '/');
+  }
 
   return (
     <>
-      {/* ─── Mobile top bar trigger ──────────────────── */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-nova-900/90 backdrop-blur-md border-b border-white/[0.06] flex items-center px-4">
+      {/* ── Mobile top-bar (only visible < lg) ── */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-[#1a2545] flex items-center px-4">
         <button
           onClick={() => setMobileOpen(true)}
-          className="text-white/70 hover:text-white p-2 -ml-2 rounded-lg hover:bg-white/[0.06] transition-colors"
+          className="text-white/80 hover:text-white p-2 -ml-2 rounded-lg hover:bg-white/[0.06] transition-colors"
           aria-label="Open menu"
         >
-          <ChevronsLeft className="w-5 h-5 rotate-180" />
+          <MoreHorizontal className="w-5 h-5" />
         </button>
         <div className="ml-2">
-          {/* Mobile top-bar logo (visible when sidebar is closed on mobile) */}
           <Logo width={120} variant="light" />
         </div>
       </div>
 
-      {/* ─── Mobile backdrop ─────────────────────────── */}
+      {/* ── Mobile backdrop ── */}
       {mobileOpen && (
         <div
           className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-fade-in"
@@ -191,194 +146,155 @@ export default function Sidebar() {
         />
       )}
 
-      {/* ─── Floating sidebar ────────────────────────── */}
+      {/* ── Sidebar column ── */}
       <aside
         className={`
-          fixed top-0 left-0 z-50 h-screen
-          ${width}
+          fixed top-0 left-0 z-50 h-screen w-[78px]
           ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0
-          transition-all duration-300 ease-out
-          p-3 group/aside
-          [html[data-sidebar-style=flush]_&]:p-0
+          transition-transform duration-300 ease-out
+          bg-[#1a2545]
+          flex flex-col
         `}
       >
-        <div className="relative h-full flex flex-col bg-nova-900/95 backdrop-blur-xl border border-white/[0.06] shadow-dark-card overflow-hidden
-                        rounded-2xl
-                        [html[data-sidebar-style=flush]_&]:rounded-none
-                        [html[data-sidebar-style=flush]_&]:border-y-0
-                        [html[data-sidebar-style=flush]_&]:border-l-0">
-          {/* Subtle aurora highlight at top */}
-          <div className="pointer-events-none absolute -top-32 -left-16 w-64 h-64 bg-primary-500/10 rounded-full blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-32 -right-16 w-64 h-64 bg-accent-600/10 rounded-full blur-3xl" />
+        {/* Logo / mark at top */}
+        <div className="h-14 flex items-center justify-center border-b border-white/[0.06]">
+          <Link href="/dashboard" aria-label="NextNova home">
+            <Logo collapsed width={36} />
+          </Link>
+        </div>
 
-          {/* Header / Logo
-              Sized per branding spec: 150px-wide lockup when expanded
-              (≈100px tall), 40px square mark when collapsed.
-              Header height is auto-driven by py-5 so the logo fits
-              without cropping. */}
-          <div className="relative py-5 px-4 flex items-center justify-between border-b border-white/[0.06]">
-            {collapsed ? (
-              <div className="w-full flex justify-center">
-                <Logo collapsed width={40} glow />
-              </div>
-            ) : (
-              <Logo width={150} variant="light" glow />
-            )}
-            {/* Mobile close */}
-            <button
-              onClick={() => setMobileOpen(false)}
-              className="lg:hidden p-1.5 rounded-lg hover:bg-white/[0.06] text-white/60 hover:text-white"
-              aria-label="Close menu"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+        {/* Mobile close (visible only when drawer open on mobile) */}
+        {mobileOpen && (
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="lg:hidden absolute top-3 right-3 w-7 h-7 rounded-md hover:bg-white/[0.08] text-white/60 hover:text-white flex items-center justify-center"
+            aria-label="Close menu"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
 
-          {/* Nav body */}
-          <nav className="relative flex-1 overflow-y-auto py-3 px-2.5 space-y-4 nn-scroll">
-            {navSections.map(section => {
-              const isSectionCollapsed = !!sectionState[section.label];
-              return (
-                <div key={section.label}>
-                  {/* Section label (hidden in collapsed mode) */}
-                  {!collapsed && (
-                    <button
-                      onClick={() => toggleSection(section.label)}
-                      className="w-full flex items-center justify-between px-2.5 mb-1.5 group"
-                    >
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/30 group-hover:text-white/50 transition-colors">
-                        {section.label}
-                      </span>
-                      <ChevronRight
-                        className={`w-3 h-3 text-white/30 transition-transform duration-200 ${
-                          isSectionCollapsed ? '' : 'rotate-90'
-                        }`}
-                      />
-                    </button>
-                  )}
+        {/* Primary icon column */}
+        <nav className="flex-1 overflow-y-auto py-2">
+          <ul className="space-y-0.5 px-1.5">
+            {PRIMARY.map((item) => (
+              <li key={item.href}>
+                <IconItem
+                  href={item.href}
+                  label={item.label}
+                  icon={item.icon}
+                  active={isActive(item.href)}
+                  onClick={() => setMobileOpen(false)}
+                />
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-                  {(!isSectionCollapsed || collapsed) && (
-                    <div className="space-y-0.5">
-                      {section.items.map(item => {
-                        const active = isActive(item.href);
-                        return (
-                          <Link
-                            key={item.href}
-                            href={item.href}
-                            title={collapsed ? item.label : undefined}
-                            className={`
-                              group relative flex items-center gap-3
-                              ${collapsed ? 'justify-center px-0' : 'px-2.5'}
-                              py-2 rounded-lg text-sm font-medium
-                              transition-all duration-200
-                              ${active
-                                ? 'text-white bg-gradient-to-r from-primary-500/20 via-primary-500/15 to-transparent'
-                                : 'text-white/55 hover:text-white hover:bg-white/[0.04]'}
-                            `}
-                          >
-                            {/* Active glow bar */}
-                            {active && (
-                              <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-gradient-to-b from-primary-400 to-accent-500 shadow-[0_0_8px_rgba(99,102,241,0.6)]" />
-                            )}
-                            <item.icon
-                              className={`w-[18px] h-[18px] flex-shrink-0 transition-all ${
-                                active
-                                  ? 'text-primary-300'
-                                  : 'text-white/40 group-hover:text-white/80'
-                              }`}
-                            />
-                            {!collapsed && (
-                              <>
-                                <span className="truncate">{item.label}</span>
-                                {item.badge && (
-                                  <span className="ml-auto bg-primary-500/20 text-primary-300 text-[10px] font-semibold px-1.5 py-0.5 rounded">
-                                    {item.badge}
-                                  </span>
-                                )}
-                              </>
-                            )}
-                            {/* Tooltip when collapsed */}
-                            {collapsed && (
-                              <span className="pointer-events-none absolute left-[calc(100%+12px)] whitespace-nowrap text-xs font-medium text-white bg-nova-700 px-2.5 py-1.5 rounded-lg shadow-dark-card border border-white/[0.06] opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                                {item.label}
-                              </span>
-                            )}
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </nav>
-
-          {/* Bottom — user card + collapse toggle */}
-          <div className="relative border-t border-white/[0.06] p-2.5 space-y-1">
-            {/* User card */}
-            <div
-              className={`flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-white/[0.04] transition-colors ${
-                collapsed ? 'justify-center' : ''
-              }`}
-            >
-              <div className="relative shrink-0">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-accent-600 flex items-center justify-center text-white text-xs font-bold ring-2 ring-white/10">
-                  {(user?.firstName?.[0] ?? 'U').toUpperCase()}
-                </div>
-                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full ring-2 ring-nova-900" />
-              </div>
-              {!collapsed && (
-                <>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-semibold text-white truncate">
-                      {user?.firstName} {user?.lastName}
-                    </div>
-                    <div className="text-[10px] text-white/40 capitalize truncate">
-                      {user?.role?.replace('_', ' ') ?? 'User'}
-                    </div>
-                  </div>
-                  <button
-                    onClick={logout}
-                    className="text-white/30 hover:text-rose-400 hover:bg-rose-500/10 p-1.5 rounded-md transition-colors"
-                    title="Sign out"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* Collapse toggle (desktop only) */}
-            <button
-              onClick={() => setCollapsed(!collapsed)}
-              className={`hidden lg:flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/[0.04] transition-colors text-xs ${
-                collapsed ? 'justify-center' : ''
-              }`}
-              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              {collapsed ? (
-                <ChevronRight className="w-4 h-4" />
-              ) : (
-                <>
-                  <ChevronLeft className="w-4 h-4" />
-                  <span>Collapse</span>
-                  <kbd className="ml-auto text-[10px] font-mono bg-white/[0.04] text-white/40 px-1.5 py-0.5 rounded border border-white/[0.06]">
-                    ⌘\
-                  </kbd>
-                </>
-              )}
-            </button>
-          </div>
+        {/* More button */}
+        <div className="border-t border-white/[0.06] px-1.5 py-2">
+          <button
+            type="button"
+            onClick={() => setMoreOpen((s) => !s)}
+            className={`
+              w-full flex flex-col items-center gap-1 py-2 rounded-lg
+              text-2xs font-medium transition-colors
+              ${moreOpen ? 'bg-white/[0.08] text-white' : 'text-white/55 hover:text-white hover:bg-white/[0.04]'}
+            `}
+            aria-expanded={moreOpen}
+            aria-label="More navigation"
+          >
+            <MoreHorizontal className="w-5 h-5" />
+            <span>More</span>
+          </button>
         </div>
       </aside>
 
-      {/* Custom scrollbar styling for the dark sidebar nav */}
-      <style jsx global>{`
-        .nn-scroll::-webkit-scrollbar { width: 4px; }
-        .nn-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
-        .nn-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
-      `}</style>
+      {/* ── "More" popover ── */}
+      {moreOpen && (
+        <>
+          <div
+            aria-hidden
+            onClick={() => setMoreOpen(false)}
+            className="fixed inset-0 z-[55] bg-black/30 backdrop-blur-sm animate-fade-in"
+          />
+          <div
+            role="dialog"
+            aria-label="All navigation"
+            className="fixed z-[60] left-[78px] bottom-3 ml-2 w-[560px] max-w-[calc(100vw-100px)] max-h-[80vh] overflow-y-auto bg-white rounded-2xl shadow-[0_24px_56px_-12px_rgba(0,0,0,0.25)] border border-slate-200 p-5 animate-slide-up"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-slate-900">All navigation</h2>
+              <button
+                onClick={() => setMoreOpen(false)}
+                className="w-7 h-7 rounded-md hover:bg-slate-100 text-slate-500 flex items-center justify-center"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-5">
+              {MORE_GROUPS.map((group) => (
+                <div key={group.title}>
+                  <div className="text-2xs font-semibold uppercase tracking-[0.12em] text-slate-400 px-2 mb-1.5">
+                    {group.title}
+                  </div>
+                  <ul className="space-y-0.5">
+                    {group.items.map((item) => (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          onClick={() => setMoreOpen(false)}
+                          className={`flex items-center gap-2.5 px-2 py-1.5 rounded-md text-sm transition-colors ${
+                            isActive(item.href)
+                              ? 'bg-primary-50 text-primary-700 font-medium'
+                              : 'text-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          <item.icon className="w-4 h-4 text-slate-400" />
+                          {item.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </>
+  );
+}
+
+// ─── Icon item ───────────────────────────────────────────────
+function IconItem({
+  href, label, icon: Icon, active, onClick,
+}: {
+  href: string; label: string; icon: any; active: boolean; onClick: () => void;
+}) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      aria-current={active ? 'page' : undefined}
+      className={`
+        relative flex flex-col items-center gap-1 py-2 rounded-lg
+        text-2xs font-medium transition-colors
+        ${active
+          ? 'bg-white/[0.08] text-white'
+          : 'text-white/55 hover:text-white hover:bg-white/[0.04]'}
+      `}
+    >
+      {active && (
+        <span
+          aria-hidden
+          className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-blue-400 rounded-r-full"
+        />
+      )}
+      <Icon className="w-5 h-5" />
+      <span className="leading-tight text-center">{label}</span>
+    </Link>
   );
 }
